@@ -14,7 +14,7 @@ func createTable(tx *pg.Tx, tableName string, withDependency int) (err error) {
 	tableModel := util.Table[tableName]
 	if _, alreadyCreated := tableCreated[tableModel]; alreadyCreated == false {
 		tableCreated[tableModel] = true
-		err = createEnum(tx, tableName)
+		err = upsertEnum(tx, tableName)
 		if err == nil {
 			if withDependency == 1 {
 				err = createTableDependencies(tx, tableModel)
@@ -45,7 +45,7 @@ func createTableDependencies(tx *pg.Tx, tableModel interface{}) (err error) {
 
 					//creating ref table dep tables
 					tableCreated[refTableModel] = true
-					if err = createEnum(tx, refTable); err == nil {
+					if err = upsertEnum(tx, refTable); err == nil {
 						err = createTableDependencies(tx, refTableModel)
 					}
 

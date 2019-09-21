@@ -9,8 +9,8 @@ import (
 	util "github.com/mayur-tolexo/pg-shifter/util.go"
 )
 
-//Create Enum in database
-func createEnum(tx *pg.Tx, tableName string) (err error) {
+//upsertEnum Enum in database
+func upsertEnum(tx *pg.Tx, tableName string) (err error) {
 	tableModel := util.Table[tableName]
 	fields := util.GetStructField(tableModel)
 	for _, refFeild := range fields {
@@ -31,19 +31,12 @@ func createEnumByName(tx *pg.Tx, tableName, enumName string) (err error) {
 	if _, created := enumCreated[enumName]; created == false {
 		if enumValue, exists := util.EnumList[enumName]; exists {
 			if enumSQL, enumExists := getEnumQuery(tx, enumName, enumValue); enumExists == false {
-				if _, err = tx.Exec(enumSQL); err == nil {
-					enumCreated[enumName] = struct{}{}
-					fmt.Printf("Enum %v created\n", enumName)
-				} else {
-					msg := fmt.Sprintf("Table: %v Enum: %v", tableName, enumName)
-					err = flaw.CreateError(err, msg)
-					fmt.Println("Enum Error:", msg, err.Error())
-				}
+				err = createEnum(tx, tableName, enumName, enumSQL)
 			} else {
 				err = updateEnum(tx, tableName, enumName)
 			}
 		} else {
-			msg := fmt.Sprintf("Table: %v Enum: %v", tableName, enumName)
+			msg := fmt.Sprintf("Table: %v Enum: %v not found", tableName, enumName)
 			err = flaw.CustomError(msg)
 			fmt.Println("Enum Error:", msg)
 		}
@@ -51,9 +44,24 @@ func createEnumByName(tx *pg.Tx, tableName, enumName string) (err error) {
 	return
 }
 
+//createEnum will create enum
+func createEnum(tx *pg.Tx, tableName, enumName, enumSQL string) (err error) {
+	if _, err = tx.Exec(enumSQL); err == nil {
+		enumCreated[enumName] = struct{}{}
+		fmt.Printf("Enum %v created\n", enumName)
+	} else {
+		msg := fmt.Sprintf("Table: %v Enum: %v", tableName, enumName)
+		err = flaw.CreateError(err, msg)
+		fmt.Println("Enum Error:", msg, err.Error())
+	}
+	return
+}
+
 //updateEnum will update enum if changed in enum map
 func updateEnum(tx *pg.Tx, tableName, enumName string) (err error) {
+	var dbEnumVal []string
 	enumValue := util.EnumList[enumName]
+
 	if dbEnumVal, err = util.GetEnumValue(tx, enumName); err == nil {
 		//comparing old and new enum values
 		if newValue := compareEnumValue(dbEnumVal, enumValue); len(newValue) > 0 {
