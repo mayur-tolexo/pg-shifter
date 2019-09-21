@@ -13,11 +13,9 @@ import (
 
 //variables
 var (
-	Table    map[string]interface{}
-	EnumList map[string][]string
-	QueryFp  *os.File
-	Y        = "y"
-	Yes      = "yes"
+	QueryFp *os.File
+	Y       = "y"
+	Yes     = "yes"
 )
 
 //GetColumnSchema : Get Column Schema of given table

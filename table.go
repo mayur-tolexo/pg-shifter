@@ -10,17 +10,17 @@ import (
 )
 
 //Create Table in database
-func createTable(tx *pg.Tx, tableName string, withDependency int) (err error) {
-	tableModel := util.Table[tableName]
+func (s *Shifter) createTable(tx *pg.Tx, tableName string, withDependency int) (err error) {
+	tableModel := s.table[tableName]
 	if _, alreadyCreated := tableCreated[tableModel]; alreadyCreated == false {
 		tableCreated[tableModel] = true
-		err = upsertEnum(tx, tableName)
+		err = s.upsertEnum(tx, tableName)
 		if err == nil {
 			if withDependency == 1 {
-				err = createTableDependencies(tx, tableModel)
+				err = s.createTableDependencies(tx, tableModel)
 			}
 			if err == nil {
-				err = execTableCreation(tx, tableName)
+				err = s.execTableCreation(tx, tableName)
 			}
 		}
 	}
@@ -28,22 +28,22 @@ func createTable(tx *pg.Tx, tableName string, withDependency int) (err error) {
 }
 
 //Create all Tables if not exists whose Fk present in table Model
-func createTableDependencies(tx *pg.Tx, tableModel interface{}) (err error) {
+func (s *Shifter) createTableDependencies(tx *pg.Tx, tableModel interface{}) (err error) {
 	fields := util.GetStructField(tableModel)
 	for _, curField := range fields {
 		refTable := util.RefTable(curField)
 		if len(refTable) > 0 {
-			if refTableModel, isValid := util.Table[refTable]; isValid == true {
+			if refTableModel, isValid := s.table[refTable]; isValid == true {
 				if _, alreadyCreated := tableCreated[refTableModel]; alreadyCreated == false {
 
 					//creating ref table dep tables
 					tableCreated[refTableModel] = true
 					//create/update enum
-					if err = upsertEnum(tx, refTable); err == nil {
+					if err = s.upsertEnum(tx, refTable); err == nil {
 						//creating dependent table
-						if err = createTableDependencies(tx, refTableModel); err == nil {
+						if err = s.createTableDependencies(tx, refTableModel); err == nil {
 							//creating table
-							err = execTableCreation(tx, refTable)
+							err = s.execTableCreation(tx, refTable)
 						}
 					}
 					if err != nil {
@@ -57,8 +57,8 @@ func createTableDependencies(tx *pg.Tx, tableModel interface{}) (err error) {
 }
 
 //execTableCreation will execute table creation
-func execTableCreation(tx *pg.Tx, tableName string) (err error) {
-	tableModel := util.Table[tableName]
+func (s *Shifter) execTableCreation(tx *pg.Tx, tableName string) (err error) {
+	tableModel := s.table[tableName]
 	if err = tx.CreateTable(tableModel,
 		&orm.CreateTableOptions{IfNotExists: true}); err == nil {
 		fmt.Println("Table Created if not exists: ", tableName)

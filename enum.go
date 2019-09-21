@@ -10,13 +10,13 @@ import (
 )
 
 //upsertEnum Enum in database
-func upsertEnum(tx *pg.Tx, tableName string) (err error) {
-	tableModel := util.Table[tableName]
+func (s *Shifter) upsertEnum(tx *pg.Tx, tableName string) (err error) {
+	tableModel := s.table[tableName]
 	fields := util.GetStructField(tableModel)
 	for _, refFeild := range fields {
 		fType := util.FieldType(refFeild)
-		if _, exists := util.EnumList[fType]; exists {
-			if err = createEnumByName(tx, tableName, fType); err != nil {
+		if _, exists := s.enumList[fType]; exists {
+			if err = s.createEnumByName(tx, tableName, fType); err != nil {
 				break
 			}
 		}
@@ -25,13 +25,13 @@ func upsertEnum(tx *pg.Tx, tableName string) (err error) {
 }
 
 //Create Enum in database
-func createEnumByName(tx *pg.Tx, tableName, enumName string) (err error) {
+func (s *Shifter) createEnumByName(tx *pg.Tx, tableName, enumName string) (err error) {
 	if _, created := enumCreated[enumName]; created == false {
-		if enumValue, exists := util.EnumList[enumName]; exists {
+		if enumValue, exists := s.enumList[enumName]; exists {
 			if enumSQL, enumExists := getEnumQuery(tx, enumName, enumValue); enumExists == false {
-				err = createEnum(tx, tableName, enumName, enumSQL)
+				err = s.createEnum(tx, tableName, enumName, enumSQL)
 			} else {
-				err = updateEnum(tx, tableName, enumName)
+				err = s.updateEnum(tx, tableName, enumName)
 			}
 		} else {
 			msg := fmt.Sprintf("Table: %v Enum: %v not found", tableName, enumName)
@@ -43,7 +43,7 @@ func createEnumByName(tx *pg.Tx, tableName, enumName string) (err error) {
 }
 
 //createEnum will create enum
-func createEnum(tx *pg.Tx, tableName, enumName, enumSQL string) (err error) {
+func (s *Shifter) createEnum(tx *pg.Tx, tableName, enumName, enumSQL string) (err error) {
 	if _, err = tx.Exec(enumSQL); err == nil {
 		enumCreated[enumName] = struct{}{}
 		fmt.Printf("Enum %v created\n", enumName)
@@ -56,9 +56,9 @@ func createEnum(tx *pg.Tx, tableName, enumName, enumSQL string) (err error) {
 }
 
 //updateEnum will update enum if changed in enum map
-func updateEnum(tx *pg.Tx, tableName, enumName string) (err error) {
+func (s *Shifter) updateEnum(tx *pg.Tx, tableName, enumName string) (err error) {
 	var dbEnumVal []string
-	enumValue := util.EnumList[enumName]
+	enumValue := s.enumList[enumName]
 
 	if dbEnumVal, err = util.GetEnumValue(tx, enumName); err == nil {
 		//comparing old and new enum values
@@ -69,10 +69,6 @@ func updateEnum(tx *pg.Tx, tableName, enumName string) (err error) {
 
 			if choice == util.Yes {
 				if _, err = tx.Exec(enumAlterSQL); err == nil {
-					// util.QueryFp.WriteString(fmt.Sprintf("-- ALTER ENUM\n%v\n", enumAlterSQL))
-					// log.Println(fmt.Sprintf("----ALTER TABLE: %v", tableName))
-					// log.Println(fmt.Sprintf("ENUM TYPE MODIFIED:\t%v\nPREV VALUE:\t%v\nNEW VALUE:\t%v\n",
-					// enumName, dbEnumVal, enumValue))
 				} else {
 					msg := fmt.Sprintf("Table: %v Enum: %v", tableName, enumName)
 					err = flaw.UpdateError(err, msg)
