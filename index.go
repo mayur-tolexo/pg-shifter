@@ -56,7 +56,7 @@ func (s *Shifter) GetIndex(tableName string) (idx map[string]string) {
 	if m.IsValid() {
 		out := m.Call([]reflect.Value{})
 		if len(out) > 0 && out[0].Kind() == reflect.Map {
-			idx = out[0].Interface().(map[string]string)
+			idx, _ = out[0].Interface().(map[string]string)
 		}
 	}
 	return
