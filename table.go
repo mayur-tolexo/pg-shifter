@@ -38,12 +38,13 @@ func createTableDependencies(tx *pg.Tx, tableModel interface{}) (err error) {
 
 					//creating ref table dep tables
 					tableCreated[refTableModel] = true
+					//create/update enum
 					if err = upsertEnum(tx, refTable); err == nil {
-						err = createTableDependencies(tx, refTableModel)
-					}
-					//creating ref table
-					if err == nil {
-						err = execTableCreation(tx, refTable)
+						//creating dependent table
+						if err = createTableDependencies(tx, refTableModel); err == nil {
+							//creating table
+							err = execTableCreation(tx, refTable)
+						}
 					}
 					if err != nil {
 						break
