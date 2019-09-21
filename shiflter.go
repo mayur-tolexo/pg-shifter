@@ -35,11 +35,30 @@ func (s *Shifter) CreateAllTable(conn *pg.DB) (err error) {
 	for tableName := range s.table {
 		var tx *pg.Tx
 		if tx, err = conn.Begin(); err == nil {
-			err = s.CreateTable(tx, tableName)
+			if err = s.CreateTable(tx, tableName); err == nil {
+				tx.Commit()
+			} else {
+				tx.Rollback()
+			}
 		} else {
 			err = flaw.TxError(err)
 			break
 		}
+	}
+	return
+}
+
+//CreateEnum will create enum by enum name
+func (s *Shifter) CreateEnum(conn *pg.DB, tableName, enumName string) (err error) {
+	var tx *pg.Tx
+	if tx, err = conn.Begin(); err == nil {
+		if err = s.createEnumByName(tx, tableName, enumName); err == nil {
+			tx.Commit()
+		} else {
+			tx.Rollback()
+		}
+	} else {
+		err = flaw.TxError(err)
 	}
 	return
 }
