@@ -20,14 +20,7 @@ func createTable(tx *pg.Tx, tableName string, withDependency int) (err error) {
 				err = createTableDependencies(tx, tableModel)
 			}
 			if err == nil {
-				if err = tx.CreateTable(tableModel,
-					&orm.CreateTableOptions{IfNotExists: true}); err == nil {
-					fmt.Println("Table Created if not exists: ", tableName)
-					// createHistory(tx, tableName)
-				} else {
-					err = flaw.CreateError(err)
-					fmt.Println("Table Creation Error:", tableName, err.Error())
-				}
+				err = execTableCreation(tx, tableName)
 			}
 		}
 	}
@@ -48,25 +41,30 @@ func createTableDependencies(tx *pg.Tx, tableModel interface{}) (err error) {
 					if err = upsertEnum(tx, refTable); err == nil {
 						err = createTableDependencies(tx, refTableModel)
 					}
-
 					//creating ref table
 					if err == nil {
-						if err = tx.CreateTable(refTableModel,
-							&orm.CreateTableOptions{IfNotExists: true}); err == nil {
-							fmt.Println("Table Created if not exists: ", refTable)
-							// createHistory(tx, refTable)
-						} else {
-							err = flaw.CreateError(err)
-							fmt.Println("Dependency Creation Error:", refTable, err.Error())
-						}
+						err = execTableCreation(tx, refTable)
 					}
-
 					if err != nil {
 						break
 					}
 				}
 			}
 		}
+	}
+	return
+}
+
+//execTableCreation will execute table creation
+func execTableCreation(tx *pg.Tx, tableName string) (err error) {
+	tableModel := util.Table[tableName]
+	if err = tx.CreateTable(tableModel,
+		&orm.CreateTableOptions{IfNotExists: true}); err == nil {
+		fmt.Println("Table Created if not exists: ", tableName)
+		// createHistory(tx, refTable)
+	} else {
+		err = flaw.CreateError(err)
+		fmt.Println("Table Error:", tableName, err.Error())
 	}
 	return
 }
