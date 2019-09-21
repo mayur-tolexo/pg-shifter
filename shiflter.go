@@ -1,6 +1,8 @@
 package shifter
 
 import (
+	"reflect"
+
 	"github.com/go-pg/pg"
 	"github.com/mayur-tolexo/flaw"
 )
@@ -68,6 +70,33 @@ func (s *Shifter) CreateEnum(conn *pg.DB, tableName, enumName string) (err error
 		}
 	} else {
 		err = flaw.TxError(err)
+	}
+	return
+}
+
+//SetTableModel will set table model
+func (s *Shifter) SetTableModel(table interface{}) (err error) {
+	refObj := reflect.ValueOf(table)
+	if refObj.Kind() != reflect.Ptr || refObj.Elem().Kind() != reflect.Struct {
+		err = flaw.CustomError("Invalid struct pointer")
+	} else {
+		refObj = refObj.Elem()
+		if field, exists := refObj.Type().FieldByName("tableName"); exists {
+			tableName := field.Tag.Get("sql")
+			s.table[tableName] = table
+		} else {
+			err = flaw.CustomError("tableName field not found")
+		}
+	}
+	return
+}
+
+//SetTableModels will set table models
+func (s *Shifter) SetTableModels(tables []interface{}) (err error) {
+	for _, table := range tables {
+		if err = s.SetTableModel(table); err != nil {
+			break
+		}
 	}
 	return
 }

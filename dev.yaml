@@ -1,0 +1,17 @@
+database:
+    master:
+        engine: "postgres"
+        username: "test"
+        password: "test"
+        host:     "localhost"
+        port:     "5432"
+        db:       "test"
+    slaves:
+        - database.slave1
+    slave1:
+        engine: "postgres"
+        username: "test"
+        password: "test"
+        host:     "localhost"
+        port:     "5432"
+        db:       "test"
