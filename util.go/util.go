@@ -60,10 +60,10 @@ func GetCompositeUniqueKey(conn *pg.DB, tableName string) (ukSchema []model.UKSc
 }
 
 //EnumExists : Check if Enum Type Exists in database
-func EnumExists(conn *pg.DB, enumName string) (flag bool) {
+func EnumExists(tx *pg.Tx, enumName string) (flag bool) {
 	var num int
 	enumSQL := `SELECT 1 FROM pg_type WHERE typname = ?;`
-	if _, err := conn.Query(pg.Scan(&num), enumSQL, enumName); err == nil && num == 1 {
+	if _, err := tx.Query(pg.Scan(&num), enumSQL, enumName); err == nil && num == 1 {
 		flag = true
 	}
 	return
@@ -128,6 +128,17 @@ func FieldType(refField reflect.StructField) (fType string) {
 	if len(vals) > 1 {
 		fType = vals[1]
 		fType = strings.Trim(strings.Split(fType, " ")[0], " ")
+	}
+	return
+}
+
+//RefTable will reutrn reference table
+func RefTable(refField reflect.StructField) (refTable string) {
+	sqlTag := getSQLTag(refField)
+	refTag := strings.Split(sqlTag, "references")
+	if len(refTag) > 1 {
+		refTable = strings.Split(refTag[1], "(")[0]
+		refTable = strings.Trim(refTable, " ")
 	}
 	return
 }
