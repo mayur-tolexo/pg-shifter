@@ -26,8 +26,6 @@ func upsertEnum(tx *pg.Tx, tableName string) (err error) {
 
 //Create Enum in database
 func createEnumByName(tx *pg.Tx, tableName, enumName string) (err error) {
-
-	// var dbEnumVal []string
 	if _, created := enumCreated[enumName]; created == false {
 		if enumValue, exists := util.EnumList[enumName]; exists {
 			if enumSQL, enumExists := getEnumQuery(tx, enumName, enumValue); enumExists == false {
