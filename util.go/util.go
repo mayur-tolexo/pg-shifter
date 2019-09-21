@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/go-pg/pg"
+	"github.com/mayur-tolexo/flaw"
 	"github.com/mayur-tolexo/pg-shifter/model"
 )
 
@@ -15,6 +16,8 @@ var (
 	Table    map[string]interface{}
 	EnumList map[string][]string
 	QueryFp  *os.File
+	Y        = "y"
+	Yes      = "yes"
 )
 
 //GetColumnSchema : Get Column Schema of given table
@@ -79,6 +82,18 @@ func TableExists(conn *pg.DB, tableName string) (flag bool) {
 	return
 }
 
+//GetEnumValue enum values by enumType
+func GetEnumValue(tx *pg.Tx, enumName string) (enumValue []string, err error) {
+	enumSQL := `SELECT e.enumlabel as enum_value
+	  FROM pg_enum e
+	  JOIN pg_type t ON e.enumtypid = t.oid
+	  WHERE t.typname = ?;`
+	if _, err = tx.Query(&enumValue, enumSQL, enumName); err != nil {
+		err = flaw.SelectError(err, "Enum", enumName)
+	}
+	return
+}
+
 //GetStructField will return struct fields
 func GetStructField(model interface{}) (fields map[reflect.Value]reflect.StructField) {
 	refObj := reflect.ValueOf(model)
@@ -139,6 +154,17 @@ func RefTable(refField reflect.StructField) (refTable string) {
 	if len(refTag) > 1 {
 		refTable = strings.Split(refTag[1], "(")[0]
 		refTable = strings.Trim(refTable, " ")
+	}
+	return
+}
+
+//GetChoice will ask user choice
+func GetChoice(sql string) (choice string) {
+	fmt.Printf("%v\nWant to continue (y/n):", sql)
+	fmt.Scan(&choice)
+	choice = strings.ToLower(choice)
+	if choice == Y {
+		choice = Yes
 	}
 	return
 }

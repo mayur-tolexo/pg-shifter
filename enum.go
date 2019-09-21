@@ -40,33 +40,62 @@ func createEnumByName(tx *pg.Tx, tableName, enumName string) (err error) {
 					fmt.Println("Enum Error:", msg, err.Error())
 				}
 			} else {
-				// if dbEnumVal, err = getEnumValue(tx, enumName); err == nil {
-				// 	//comparing old and new enum values
-				// 	if newValue := compareEnumValue(dbEnumVal, enumValue); len(newValue) > 0 {
-				// 		var choice string
-				// 		enumAlterSQL := getEnumAlterQuery(enumName, newValue)
-				// 		fmt.Printf("%v\nWant to continue (y/n): ", enumAlterSQL)
-				// 		fmt.Scan(&choice)
-				// 		if choice == util.YES_CHOICE {
-				// 			if _, err = tx.Exec(enumAlterSQL); err == nil {
-				// 				util.QueryFp.WriteString(fmt.Sprintf("-- ALTER ENUM\n%v\n", enumAlterSQL))
-				// 				log.Println(fmt.Sprintf("----ALTER TABLE: %v", tableName))
-				// 				log.Println(fmt.Sprintf("ENUM TYPE MODIFIED:\t%v\nPREV VALUE:\t%v\nNEW VALUE:\t%v\n",
-				// 					enumName, dbEnumVal, enumValue))
-				// 			} else {
-				// 				fmt.Println("createEnumByName: Enum Alter Error: ", tableName, err.Error())
-				// 			}
-				// 		}
-				// 	}
-				// } else {
-				// 	fmt.Println("createEnumByName: Enum Value fetch Error: ", tableName, err.Error())
-				// }
+				err = updateEnum(tx, tableName, enumName)
 			}
 		} else {
 			msg := fmt.Sprintf("Table: %v Enum: %v", tableName, enumName)
 			err = flaw.CustomError(msg)
 			fmt.Println("Enum Error:", msg)
 		}
+	}
+	return
+}
+
+//updateEnum will update enum if changed in enum map
+func updateEnum(tx *pg.Tx, tableName, enumName string) (err error) {
+	enumValue := util.EnumList[enumName]
+	if dbEnumVal, err = util.GetEnumValue(tx, enumName); err == nil {
+		//comparing old and new enum values
+		if newValue := compareEnumValue(dbEnumVal, enumValue); len(newValue) > 0 {
+
+			enumAlterSQL := getEnumAlterQuery(enumName, newValue)
+			choice := util.GetChoice(enumAlterSQL)
+
+			if choice == util.Yes {
+				if _, err = tx.Exec(enumAlterSQL); err == nil {
+					util.QueryFp.WriteString(fmt.Sprintf("-- ALTER ENUM\n%v\n", enumAlterSQL))
+					// log.Println(fmt.Sprintf("----ALTER TABLE: %v", tableName))
+					// log.Println(fmt.Sprintf("ENUM TYPE MODIFIED:\t%v\nPREV VALUE:\t%v\nNEW VALUE:\t%v\n",
+					// enumName, dbEnumVal, enumValue))
+				} else {
+					msg := fmt.Sprintf("Table: %v Enum: %v", tableName, enumName)
+					err = flaw.UpdateError(err, msg)
+					fmt.Println("Enum Alter Error:", msg, err.Error())
+				}
+			}
+		}
+	}
+	return
+}
+
+//Compare enum values
+func compareEnumValue(dbEnumVal, structEnumValue []string) (newValue []string) {
+	var enumValueMap = make(map[string]struct{})
+	for _, curEnumVal := range dbEnumVal {
+		enumValueMap[curEnumVal] = struct{}{}
+	}
+	for _, curEnumVal := range structEnumValue {
+		if _, exists := enumValueMap[curEnumVal]; exists == false {
+			newValue = append(newValue, curEnumVal)
+		}
+	}
+	return
+}
+
+//Create enum alter query by enumType and new values
+func getEnumAlterQuery(enumName string, newValue []string) (enumAlterSQL string) {
+	for _, curValue := range newValue {
+		enumAlterSQL += fmt.Sprintf("ALTER type %v ADD VALUE '%v'; ", enumName, curValue)
 	}
 	return
 }
