@@ -63,7 +63,7 @@ func updateEnum(tx *pg.Tx, tableName, enumName string) (err error) {
 
 			if choice == util.Yes {
 				if _, err = tx.Exec(enumAlterSQL); err == nil {
-					util.QueryFp.WriteString(fmt.Sprintf("-- ALTER ENUM\n%v\n", enumAlterSQL))
+					// util.QueryFp.WriteString(fmt.Sprintf("-- ALTER ENUM\n%v\n", enumAlterSQL))
 					// log.Println(fmt.Sprintf("----ALTER TABLE: %v", tableName))
 					// log.Println(fmt.Sprintf("ENUM TYPE MODIFIED:\t%v\nPREV VALUE:\t%v\nNEW VALUE:\t%v\n",
 					// enumName, dbEnumVal, enumValue))
