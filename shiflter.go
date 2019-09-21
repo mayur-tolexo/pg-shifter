@@ -30,12 +30,21 @@ func (s *Shifter) CreateTable(tx *pg.Tx, tableName string) (err error) {
 	return
 }
 
+//CreateAllIndex will create table all index if not exists
+func (s *Shifter) CreateAllIndex(tx *pg.Tx, tableName string, skipPrompt bool) (err error) {
+	err = s.createIndex(tx, tableName, skipPrompt)
+	return
+}
+
 //CreateAllTable will create all tables
 func (s *Shifter) CreateAllTable(conn *pg.DB) (err error) {
 	for tableName := range s.table {
 		var tx *pg.Tx
 		if tx, err = conn.Begin(); err == nil {
 			if err = s.CreateTable(tx, tableName); err == nil {
+				err = s.CreateAllIndex(tx, tableName, true)
+			}
+			if err == nil {
 				tx.Commit()
 			} else {
 				tx.Rollback()

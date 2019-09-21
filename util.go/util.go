@@ -157,12 +157,16 @@ func RefTable(refField reflect.StructField) (refTable string) {
 }
 
 //GetChoice will ask user choice
-func GetChoice(sql string) (choice string) {
-	fmt.Printf("%v\nWant to continue (y/n):", sql)
-	fmt.Scan(&choice)
-	choice = strings.ToLower(choice)
-	if choice == Y {
+func GetChoice(sql string, skipPrompt bool) (choice string) {
+	if skipPrompt {
 		choice = Yes
+	} else {
+		fmt.Printf("%v\nWant to continue (y/n):", sql)
+		fmt.Scan(&choice)
+		choice = strings.ToLower(choice)
+		if choice == Y {
+			choice = Yes
+		}
 	}
 	return
 }

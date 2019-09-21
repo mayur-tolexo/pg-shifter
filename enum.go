@@ -65,7 +65,7 @@ func (s *Shifter) updateEnum(tx *pg.Tx, tableName, enumName string) (err error) 
 		if newValue := compareEnumValue(dbEnumVal, enumValue); len(newValue) > 0 {
 
 			enumAlterSQL := getEnumAlterQuery(enumName, newValue)
-			choice := util.GetChoice(enumAlterSQL)
+			choice := util.GetChoice(enumAlterSQL, false)
 
 			if choice == util.Yes {
 				if _, err = tx.Exec(enumAlterSQL); err == nil {
