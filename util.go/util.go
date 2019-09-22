@@ -71,10 +71,12 @@ func EnumExists(tx *pg.Tx, enumName string) (flag bool) {
 }
 
 //TableExists : Check if Table Exists in database
-func TableExists(conn *pg.DB, tableName string) (flag bool) {
+func TableExists(tx *pg.Tx, tableName string) (flag bool) {
 	var num int
-	enumSQL := `SELECT 1 FROM pg_tables WHERE tablename = ?;`
-	if _, err := conn.Query(pg.Scan(&num), enumSQL, tableName); err == nil && num == 1 {
+	sql := `SELECT 1 FROM pg_tables WHERE tablename = ?;`
+	if _, err := tx.Query(pg.Scan(&num), sql, tableName); err != nil {
+		err = flaw.SelectError(err)
+	} else if num == 1 {
 		flag = true
 	}
 	return
@@ -166,6 +168,19 @@ func GetChoice(sql string, skipPrompt bool) (choice string) {
 		choice = strings.ToLower(choice)
 		if choice == Y {
 			choice = Yes
+		}
+	}
+	return
+}
+
+//SkipTag will check skiptag exists in model or not
+func SkipTag(object interface{}) (flag bool) {
+	refObj := reflect.ValueOf(object).Elem()
+	if refObj.Kind() == reflect.Struct {
+		if refObj.NumField() > 0 {
+			if tag, exists := refObj.Type().Field(0).Tag.Lookup("history"); exists && tag == "skip" {
+				flag = true
+			}
 		}
 	}
 	return
