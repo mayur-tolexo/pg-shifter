@@ -18,6 +18,11 @@ var (
 	Yes     = "yes"
 )
 
+//const in histroy
+const (
+	HistoryTag = "_history"
+)
+
 //GetColumnSchema : Get Column Schema of given table
 func GetColumnSchema(conn *pg.DB, tableName string) (columnSchema []model.DBCSchema, err error) {
 	query := `SELECT column_name,column_default, data_type, 
@@ -184,4 +189,29 @@ func SkipTag(object interface{}) (flag bool) {
 		}
 	}
 	return
+}
+
+//GetHistoryTableName will reutrn history table name
+func GetHistoryTableName(tableName string) string {
+	return tableName + HistoryTag
+}
+
+//GetBeforeInsertTriggerName will return before insert trigger name
+func GetBeforeInsertTriggerName(tableName string) string {
+	return tableName + "_before_update"
+}
+
+//GetAfterInsertTriggerName will return after insert trigger name
+func GetAfterInsertTriggerName(tableName string) string {
+	return tableName + "_after_insert"
+}
+
+//GetAfterUpdateTriggerName will return after update trigger name
+func GetAfterUpdateTriggerName(tableName string) string {
+	return tableName + "_after_update"
+}
+
+//GetAfterDeleteTriggerName will return after delete trigger name
+func GetAfterDeleteTriggerName(tableName string) string {
+	return tableName + "_after_delete"
 }
