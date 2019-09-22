@@ -6,6 +6,7 @@ import (
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
 	"github.com/mayur-tolexo/flaw"
+	"github.com/mayur-tolexo/pg-shifter/model"
 	util "github.com/mayur-tolexo/pg-shifter/util.go"
 )
 
@@ -99,6 +100,42 @@ func execTableDrop(tx *pg.Tx, tableName string, cascade bool) (err error) {
 	} else {
 		err = flaw.DropError(err)
 		fmt.Println("Drop Error:", tableName, err.Error())
+	}
+	return
+}
+
+//Alter Table
+func (s *Shifter) alterTable(tx *pg.Tx, tableName string) (err error) {
+	// initStructTableMap()
+	var (
+		columnSchema []model.DBCSchema
+		constraint   []model.DBCSchema
+		// uniqueKeySchema []model.UniqueKeySchema
+	)
+	_, isValid := s.table[tableName]
+	if isValid == true {
+		if columnSchema, err = util.GetColumnSchema(tx, tableName); err == nil {
+			if constraint, err = util.GetConstraint(tx, tableName); err == nil {
+				tableSchema := util.MergeColumnConstraint(columnSchema, constraint)
+
+				fmt.Println(tableSchema)
+
+				// if err = checkTableToAlter(tx, tableSchema, tableModel, tableName); err == nil {
+				// 	if uniqueKeySchema, err = util.GetCompositeUniqueKey(conn, tableName); err == nil {
+				// 		if empty.IsEmptyInterface(uniqueKeySchema) == false {
+				// 			if err = checkUniqueKeyToAlter(tx, uniqueKeySchema, tableName); err != nil {
+				// 				return
+				// 			}
+				// 		}
+				// 		tx.Commit()
+				// 	} else {
+				// 		fmt.Println("Composite unique key Fetch Error: ", tableName, err.Error())
+				// 	}
+				// }
+			}
+		}
+	} else {
+		fmt.Println("Invalid Table Name: ", tableName)
 	}
 	return
 }

@@ -24,16 +24,20 @@ const (
 )
 
 //GetColumnSchema : Get Column Schema of given table
-func GetColumnSchema(conn *pg.DB, tableName string) (columnSchema []model.DBCSchema, err error) {
+func GetColumnSchema(tx *pg.Tx, tableName string) (columnSchema []model.DBCSchema, err error) {
 	query := `SELECT column_name,column_default, data_type, 
 	udt_name, is_nullable,character_maximum_length 
 	FROM information_schema.columns WHERE table_name = ?;`
-	_, err = conn.Query(&columnSchema, query, tableName)
+	if _, err = tx.Query(&columnSchema, query, tableName); err != nil {
+		msg := fmt.Sprintf("Table: %v", tableName)
+		err = flaw.SelectError(err, msg)
+		fmt.Println("DB Column Schema Error:", msg, err)
+	}
 	return
 }
 
 //GetConstraint : Get Constraint of table from database
-func GetConstraint(conn *pg.DB, tableName string) (constraint []model.DBCSchema, err error) {
+func GetConstraint(tx *pg.Tx, tableName string) (constraint []model.DBCSchema, err error) {
 	query := `SELECT tc.constraint_type,
     tc.constraint_name, tc.is_deferrable, tc.initially_deferred, 
     kcu.column_name AS column_name, ccu.table_name AS foreign_table_name, 
@@ -48,12 +52,16 @@ func GetConstraint(conn *pg.DB, tableName string) (constraint []model.DBCSchema,
     conrelid=?::regclass::oid WHERE tc.constraint_type 
     IN('FOREIGN KEY','PRIMARY KEY','UNIQUE') AND tc.table_name = ?
     AND array_length(pgc.conkey,1) = 1;`
-	_, err = conn.Query(&constraint, query, tableName, tableName)
+	if _, err = tx.Query(&constraint, query, tableName, tableName); err != nil {
+		msg := fmt.Sprintf("Table: %v", tableName)
+		err = flaw.SelectError(err, msg)
+		fmt.Println("DB Constraint Error:", msg, err)
+	}
 	return
 }
 
 //GetCompositeUniqueKey : Get composite unique key name and columns
-func GetCompositeUniqueKey(conn *pg.DB, tableName string) (ukSchema []model.UKSchema, err error) {
+func GetCompositeUniqueKey(tx *pg.Tx, tableName string) (ukSchema []model.UKSchema, err error) {
 	query := `select string_agg(c.column_name,',') as col, pgc.conname 
 	from pg_constraint as pgc join
 	information_schema.table_constraints tc on pgc.conname = tc.constraint_name, 
@@ -61,7 +69,7 @@ func GetCompositeUniqueKey(conn *pg.DB, tableName string) (ukSchema []model.UKSc
 	on c.ordinal_position = colNo and c.table_name = ? 
 	where array_length(pgc.conkey,1)>1 and pgc.contype='u'
 	and pgc.conrelid=c.table_name::regclass::oid group by pgc.conname;`
-	_, err = conn.Query(&ukSchema, query, tableName)
+	_, err = tx.Query(&ukSchema, query, tableName)
 	return
 }
 
@@ -214,4 +222,30 @@ func GetAfterUpdateTriggerName(tableName string) string {
 //GetAfterDeleteTriggerName will return after delete trigger name
 func GetAfterDeleteTriggerName(tableName string) string {
 	return tableName + "_after_delete"
+}
+
+//MergeColumnConstraint : Merge Table Schema with Constraint
+func MergeColumnConstraint(columnSchema,
+	constraint []model.DBCSchema) map[string]model.DBCSchema {
+
+	constraintMap := make(map[string]model.DBCSchema)
+	tableSchema := make(map[string]model.DBCSchema)
+	for _, curConstraint := range constraint {
+		constraintMap[curConstraint.ColumnName] = curConstraint
+	}
+	for _, curColumnSchema := range columnSchema {
+		if curConstraint, exists :=
+			constraintMap[curColumnSchema.ColumnName]; exists == true {
+			curColumnSchema.ConstraintType = curConstraint.ConstraintType
+			curColumnSchema.ConstraintName = curConstraint.ConstraintName
+			curColumnSchema.IsDeferrable = curConstraint.IsDeferrable
+			curColumnSchema.InitiallyDeferred = curConstraint.InitiallyDeferred
+			curColumnSchema.ForeignTableName = curConstraint.ForeignTableName
+			curColumnSchema.ForeignColumnName = curConstraint.ForeignColumnName
+			curColumnSchema.UpdateType = curConstraint.UpdateType
+			curColumnSchema.DeleteType = curConstraint.DeleteType
+		}
+		tableSchema[curColumnSchema.ColumnName] = curColumnSchema
+	}
+	return tableSchema
 }
