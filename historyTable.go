@@ -32,7 +32,7 @@ func (s *Shifter) createHistory(tx *pg.Tx, tableName string) (err error) {
 func (s *Shifter) dropHistory(tx *pg.Tx, tableName string, cascade bool) (err error) {
 	historyTable := tableName + HistoryTag
 	if tableExists := util.TableExists(tx, historyTable); tableExists == true {
-		err = execTableDrop(tx, tableName, cascade)
+		err = execTableDrop(tx, historyTable, cascade)
 	}
 	return
 }
