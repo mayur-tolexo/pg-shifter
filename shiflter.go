@@ -74,6 +74,12 @@ func (s *Shifter) CreateEnum(conn *pg.DB, tableName, enumName string) (err error
 	return
 }
 
+//DropTable will drop table if exists
+func (s *Shifter) DropTable(conn *pg.DB, tableName string, cascade bool) (err error) {
+	err = s.dropTable(conn, tableName, cascade)
+	return
+}
+
 //SetTableModel will set table model
 func (s *Shifter) SetTableModel(table interface{}) (err error) {
 	refObj := reflect.ValueOf(table)

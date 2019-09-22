@@ -69,3 +69,17 @@ func (s *Shifter) execTableCreation(tx *pg.Tx, tableName string) (err error) {
 	}
 	return
 }
+
+//dropTable will drop table
+func (s *Shifter) dropTable(conn *pg.DB, tableName string, cascade bool) (err error) {
+	if tableModel, exists := s.table[tableName]; exists {
+		if err = conn.DropTable(tableModel,
+			&orm.DropTableOptions{IfExists: true, Cascade: cascade}); err == nil {
+			fmt.Println("Table Dropped if exists: ", tableName)
+		} else {
+			err = flaw.DropError(err)
+			fmt.Println("Drop Error:", tableName, err.Error())
+		}
+	}
+	return
+}
