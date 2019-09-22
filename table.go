@@ -62,7 +62,7 @@ func (s *Shifter) execTableCreation(tx *pg.Tx, tableName string) (err error) {
 	if err = tx.CreateTable(tableModel,
 		&orm.CreateTableOptions{IfNotExists: true}); err == nil {
 		fmt.Println("Table Created if not exists: ", tableName)
-		// createHistory(tx, refTable)
+		err = s.createHistory(tx, tableName)
 	} else {
 		err = flaw.CreateError(err)
 		fmt.Println("Table Error:", tableName, err.Error())
@@ -72,14 +72,33 @@ func (s *Shifter) execTableCreation(tx *pg.Tx, tableName string) (err error) {
 
 //dropTable will drop table
 func (s *Shifter) dropTable(conn *pg.DB, tableName string, cascade bool) (err error) {
-	if tableModel, exists := s.table[tableName]; exists {
-		if err = conn.DropTable(tableModel,
-			&orm.DropTableOptions{IfExists: true, Cascade: cascade}); err == nil {
-			fmt.Println("Table Dropped if exists: ", tableName)
-		} else {
-			err = flaw.DropError(err)
-			fmt.Println("Drop Error:", tableName, err.Error())
+	var tx *pg.Tx
+	if tx, err = conn.Begin(); err == nil {
+		if err = execTableDrop(tx, tableName, cascade); err == nil {
+			err = s.dropHistory(tx, tableName, cascade)
 		}
+		if err == nil {
+			tx.Commit()
+		} else {
+			tx.Rollback()
+		}
+	} else {
+		err = flaw.TxError(err, "Table", tableName)
+	}
+	return
+}
+
+//execTableDrop will execute table drop
+func execTableDrop(tx *pg.Tx, tableName string, cascade bool) (err error) {
+	sql := fmt.Sprintf("DROP TABLE IF EXISTS %v", tableName)
+	if cascade {
+		sql += " CASCADE"
+	}
+	if _, err = tx.Exec(sql); err == nil {
+		fmt.Println("Table Dropped if exists: ", tableName)
+	} else {
+		err = flaw.DropError(err)
+		fmt.Println("Drop Error:", tableName, err.Error())
 	}
 	return
 }
