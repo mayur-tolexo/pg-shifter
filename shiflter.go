@@ -4,7 +4,6 @@ import (
 	"reflect"
 
 	"github.com/go-pg/pg"
-	"github.com/mayur-tolexo/contour/adapter/psql"
 	"github.com/mayur-tolexo/flaw"
 )
 
@@ -42,7 +41,7 @@ func (s *Shifter) CreateAllIndex(tx *pg.Tx, tableName string, skipPrompt bool) (
 //CreateAllTable will create all tables
 func (s *Shifter) CreateAllTable(conn *pg.DB) (err error) {
 	for tableName := range s.table {
-		psql.StartLogging = true
+		// psql.StartLogging = true
 		var tx *pg.Tx
 		if tx, err = conn.Begin(); err == nil {
 			if err = s.CreateTable(tx, tableName); err == nil {
