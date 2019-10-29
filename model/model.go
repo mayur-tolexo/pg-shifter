@@ -35,7 +35,7 @@ type SCSchema struct {
 	ConstraintType    string
 	IsDeferrable      string
 	InitiallyDeferred string
-	ForiegnTableName  string
+	ForeignTableName  string
 	ForeignColumnName string
 	UpdateType        string
 	DeleteType        string

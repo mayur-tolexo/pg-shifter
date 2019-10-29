@@ -238,37 +238,38 @@ func getColMaxChar(cType string) (maxLen string) {
 //setColConstraint will set column constraints
 //here we are setting the pk,uk or fk and deferrable and initially defered constraings
 func setColConstraint(schema *model.SCSchema, tag string) {
+	cSet := false
 	if strings.Contains(tag, "primary key") {
-
+		cSet = true
 		schema.ConstraintType = PrimaryKey
 		//in case of primary key reference table is itself
-		schema.ForiegnTableName = schema.TableName
+		schema.ForeignTableName = schema.TableName
 	} else if strings.Contains(tag, "unique") {
-
+		cSet = true
 		schema.ConstraintType = Unique
 		//in case of unique key reference table is itself
-		schema.ForiegnTableName = schema.TableName
+		schema.ForeignTableName = schema.TableName
 	} else if strings.Contains(tag, references) {
-
+		cSet = true
 		schema.ConstraintType = ForeignKey
 		referenceCheck := strings.Split(tag, references)
 
 		//setting reference table and on cascade flags
 		if len(referenceCheck) > 1 {
-			schema.ForiegnTableName, schema.ForeignColumnName =
-				getFkDetail(referenceCheck[1])
+			schema.ForeignTableName, schema.ForeignColumnName = getFkDetail(referenceCheck[1])
 			schema.DeleteType = getConstraintFlagByKey(referenceCheck[1], "delete")
 			schema.UpdateType = getConstraintFlagByKey(referenceCheck[1], "update")
 		}
 	}
-
-	schema.IsDeferrable = No
-	if strings.Contains(tag, "deferrable") {
-		schema.IsDeferrable = Yes
-	}
-	schema.InitiallyDeferred = No
-	if strings.Contains(tag, "initially deferred") {
-		schema.InitiallyDeferred = Yes
+	if cSet {
+		schema.IsDeferrable = No
+		if strings.Contains(tag, "deferrable") {
+			schema.IsDeferrable = Yes
+		}
+		schema.InitiallyDeferred = No
+		if strings.Contains(tag, "initially deferred") {
+			schema.InitiallyDeferred = Yes
+		}
 	}
 }
 
@@ -277,7 +278,8 @@ func getFkDetail(refCheck string) (table, column string) {
 	refDetail := strings.Split(strings.Trim(refCheck, " "), " ")
 	if len(refDetail) > 0 {
 		if strings.Contains(refDetail[0], "(") == true {
-			tableDetail := strings.Split(refDetail[0], "(")
+			refTable := strings.Trim(refDetail[0], " ")
+			tableDetail := strings.Split(refTable, "(")
 			if len(tableDetail) > 1 {
 				table = tableDetail[0]
 				column = strings.Trim(tableDetail[1], ")")
