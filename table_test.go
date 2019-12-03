@@ -12,7 +12,7 @@ func TestAlterTable(t *testing.T) {
 		tx, _ := conn.Begin()
 		s := NewShifter()
 		s.SetTableModel(&TestAddress{})
-		s.alterTable(tx, "test_address")
-		tx.Rollback()
+		s.alterTable(tx, "test_address", true)
+		tx.Commit()
 	}
 }

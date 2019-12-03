@@ -8,4 +8,6 @@ const (
 	references = "references"
 	No         = "NO"
 	Yes        = "YES"
+	Add        = "ADD"
+	Drop       = "DROP"
 )

@@ -1,7 +1,8 @@
 package model
 
-//TableSchema : Table Column Schema Model
-type TableSchema struct {
+//ColSchema : Table Column Schema Model
+type ColSchema struct {
+	TableName         string `sql:"-"`
 	ColumnName        string `sql:"column_name"`
 	ColumnDefault     string `sql:"column_default"`
 	DataType          string `sql:"data_type"`
@@ -22,21 +23,4 @@ type TableSchema struct {
 type UKSchema struct {
 	ConstraintName string `sql:"conname"`
 	Columns        string `sql:"col"`
-}
-
-//StructSchema : Struct Column Schema Model
-type StructSchema struct {
-	TableName         string
-	ColumnName        string
-	ColumnDefault     string
-	DataType          string
-	IsNullable        string
-	CharMaxLen        string
-	ConstraintType    string
-	IsDeferrable      string
-	InitiallyDeferred string
-	ForeignTableName  string
-	ForeignColumnName string
-	UpdateType        string
-	DeleteType        string
 }

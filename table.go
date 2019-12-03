@@ -4,13 +4,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/fatih/structs"
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
 	"github.com/mayur-tolexo/flaw"
 	"github.com/mayur-tolexo/pg-shifter/model"
 	"github.com/mayur-tolexo/pg-shifter/util"
 )
+
+//rDataAlias is reverse data alias
+var rDataAlias map[string]string
 
 //DataAlias alias to table value mapping
 var DataAlias = map[string]string{
@@ -32,6 +34,13 @@ var DataAlias = map[string]string{
 	"timetz":      "time with time zone",
 	"timestamp":   "timestamp without time zone",
 	"timestamptz": "timestamp with time zone",
+}
+
+func init() {
+	rDataAlias = make(map[string]string)
+	for k, v := range DataAlias {
+		rDataAlias[v] = k
+	}
 }
 
 //Create Table in database
@@ -129,22 +138,23 @@ func execTableDrop(tx *pg.Tx, tableName string, cascade bool) (err error) {
 }
 
 //Alter Table
-func (s *Shifter) alterTable(tx *pg.Tx, tableName string) (err error) {
+func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPromt bool) (err error) {
 	// initStructTableMap()
 	var (
-		columnSchema []model.TableSchema
-		constraint   []model.TableSchema
+		columnSchema []model.ColSchema
+		constraint   []model.ColSchema
 		// uniqueKeySchema []model.UniqueKeySchema
 	)
 	_, isValid := s.table[tableName]
 	if isValid == true {
 		if columnSchema, err = util.GetColumnSchema(tx, tableName); err == nil {
 			if constraint, err = util.GetConstraint(tx, tableName); err == nil {
-				tSchema := util.MergeColumnConstraint(columnSchema, constraint)
+				tSchema := util.MergeColumnConstraint(tableName, columnSchema, constraint)
 				sSchema := s.GetStructSchema(tableName)
-				printSchema(tSchema, sSchema)
+				err = compareSchema(tx, tSchema, sSchema, skipPromt)
+				// printSchema(tSchema, sSchema)
 
-				// if err = checkTableToAlter(tx, tableSchema, tableModel, tableName); err == nil {
+				// if err = checkTableToAlter(tx, ColSchema, tableModel, tableName); err == nil {
 				// 	if uniqueKeySchema, err = util.GetCompositeUniqueKey(conn, tableName); err == nil {
 				// 		if empty.IsEmptyInterface(uniqueKeySchema) == false {
 				// 			if err = checkUniqueKeyToAlter(tx, uniqueKeySchema, tableName); err != nil {
@@ -165,14 +175,14 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string) (err error) {
 }
 
 //GetStructSchema will return struct schema
-func (s *Shifter) GetStructSchema(tableName string) (sSchema map[string]model.StructSchema) {
+func (s *Shifter) GetStructSchema(tableName string) (sSchema map[string]model.ColSchema) {
 	tModel, isValid := s.table[tableName]
-	sSchema = make(map[string]model.StructSchema)
+	sSchema = make(map[string]model.ColSchema)
 	if isValid {
 		fields := util.GetStructField(tModel)
 
 		for _, field := range fields {
-			var schema model.StructSchema
+			var schema model.ColSchema
 			tag := strings.ToLower(field.Tag.Get("sql"))
 			schema.TableName = tableName
 			schema.ColumnName = getColName(tag)
@@ -237,13 +247,14 @@ func getColMaxChar(cType string) (maxLen string) {
 
 //setColConstraint will set column constraints
 //here we are setting the pk,uk or fk and deferrable and initially defered constraings
-func setColConstraint(schema *model.StructSchema, tag string) {
+func setColConstraint(schema *model.ColSchema, tag string) {
 	cSet := false
 	if strings.Contains(tag, "primary key") {
 		cSet = true
 		schema.ConstraintType = PrimaryKey
 		//in case of primary key reference table is itself
 		schema.ForeignTableName = schema.TableName
+		schema.ForeignColumnName = schema.ColumnName
 	} else if strings.Contains(tag, "unique") {
 		cSet = true
 		schema.ConstraintType = Unique
@@ -324,19 +335,4 @@ func getConstraintFlag(key string) (flag string) {
 		flag = "d"
 	}
 	return
-}
-
-func printSchema(tSchema map[string]model.TableSchema, sSchema map[string]model.StructSchema) {
-	for k, v1 := range tSchema {
-		fmt.Println(k)
-		if v2, exists := sSchema[k]; exists {
-			tv := structs.Map(v1)
-			sv := structs.Map(v2)
-			for k, v := range tv {
-				fmt.Println(k, v)
-				fmt.Println(k, sv[k])
-			}
-			fmt.Println("---")
-		}
-	}
 }

@@ -24,7 +24,7 @@ const (
 )
 
 //GetColumnSchema : Get Column Schema of given table
-func GetColumnSchema(tx *pg.Tx, tableName string) (columnSchema []model.TableSchema, err error) {
+func GetColumnSchema(tx *pg.Tx, tableName string) (columnSchema []model.ColSchema, err error) {
 	query := `SELECT column_name,column_default, data_type, 
 	udt_name, is_nullable,character_maximum_length 
 	FROM information_schema.columns WHERE table_name = ?;`
@@ -37,7 +37,7 @@ func GetColumnSchema(tx *pg.Tx, tableName string) (columnSchema []model.TableSch
 }
 
 //GetConstraint : Get Constraint of table from database
-func GetConstraint(tx *pg.Tx, tableName string) (constraint []model.TableSchema, err error) {
+func GetConstraint(tx *pg.Tx, tableName string) (constraint []model.ColSchema, err error) {
 	query := `SELECT tc.constraint_type,
     tc.constraint_name, tc.is_deferrable, tc.initially_deferred, 
     kcu.column_name AS column_name, ccu.table_name AS foreign_table_name, 
@@ -225,11 +225,11 @@ func GetAfterDeleteTriggerName(tableName string) string {
 }
 
 //MergeColumnConstraint : Merge Table Schema with Constraint
-func MergeColumnConstraint(columnSchema,
-	constraint []model.TableSchema) map[string]model.TableSchema {
+func MergeColumnConstraint(tName string, columnSchema,
+	constraint []model.ColSchema) map[string]model.ColSchema {
 
-	constraintMap := make(map[string]model.TableSchema)
-	tableSchema := make(map[string]model.TableSchema)
+	constraintMap := make(map[string]model.ColSchema)
+	ColSchema := make(map[string]model.ColSchema)
 	for _, curConstraint := range constraint {
 		constraintMap[curConstraint.ColumnName] = curConstraint
 	}
@@ -245,7 +245,8 @@ func MergeColumnConstraint(columnSchema,
 			curColumnSchema.UpdateType = curConstraint.UpdateType
 			curColumnSchema.DeleteType = curConstraint.DeleteType
 		}
-		tableSchema[curColumnSchema.ColumnName] = curColumnSchema
+		curColumnSchema.TableName = tName
+		ColSchema[curColumnSchema.ColumnName] = curColumnSchema
 	}
-	return tableSchema
+	return ColSchema
 }
