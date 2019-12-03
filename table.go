@@ -9,7 +9,7 @@ import (
 	"github.com/go-pg/pg/orm"
 	"github.com/mayur-tolexo/flaw"
 	"github.com/mayur-tolexo/pg-shifter/model"
-	util "github.com/mayur-tolexo/pg-shifter/util.go"
+	"github.com/mayur-tolexo/pg-shifter/util"
 )
 
 //DataAlias alias to table value mapping
@@ -132,8 +132,8 @@ func execTableDrop(tx *pg.Tx, tableName string, cascade bool) (err error) {
 func (s *Shifter) alterTable(tx *pg.Tx, tableName string) (err error) {
 	// initStructTableMap()
 	var (
-		columnSchema []model.DBCSchema
-		constraint   []model.DBCSchema
+		columnSchema []model.TableSchema
+		constraint   []model.TableSchema
 		// uniqueKeySchema []model.UniqueKeySchema
 	)
 	_, isValid := s.table[tableName]
@@ -165,14 +165,14 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string) (err error) {
 }
 
 //GetStructSchema will return struct schema
-func (s *Shifter) GetStructSchema(tableName string) (sSchema map[string]model.SCSchema) {
+func (s *Shifter) GetStructSchema(tableName string) (sSchema map[string]model.StructSchema) {
 	tModel, isValid := s.table[tableName]
-	sSchema = make(map[string]model.SCSchema)
+	sSchema = make(map[string]model.StructSchema)
 	if isValid {
 		fields := util.GetStructField(tModel)
 
 		for _, field := range fields {
-			var schema model.SCSchema
+			var schema model.StructSchema
 			tag := strings.ToLower(field.Tag.Get("sql"))
 			schema.TableName = tableName
 			schema.ColumnName = getColName(tag)
@@ -237,7 +237,7 @@ func getColMaxChar(cType string) (maxLen string) {
 
 //setColConstraint will set column constraints
 //here we are setting the pk,uk or fk and deferrable and initially defered constraings
-func setColConstraint(schema *model.SCSchema, tag string) {
+func setColConstraint(schema *model.StructSchema, tag string) {
 	cSet := false
 	if strings.Contains(tag, "primary key") {
 		cSet = true
@@ -326,7 +326,7 @@ func getConstraintFlag(key string) (flag string) {
 	return
 }
 
-func printSchema(tSchema map[string]model.DBCSchema, sSchema map[string]model.SCSchema) {
+func printSchema(tSchema map[string]model.TableSchema, sSchema map[string]model.StructSchema) {
 	for k, v1 := range tSchema {
 		fmt.Println(k)
 		if v2, exists := sSchema[k]; exists {

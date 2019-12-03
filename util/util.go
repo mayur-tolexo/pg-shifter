@@ -24,7 +24,7 @@ const (
 )
 
 //GetColumnSchema : Get Column Schema of given table
-func GetColumnSchema(tx *pg.Tx, tableName string) (columnSchema []model.DBCSchema, err error) {
+func GetColumnSchema(tx *pg.Tx, tableName string) (columnSchema []model.TableSchema, err error) {
 	query := `SELECT column_name,column_default, data_type, 
 	udt_name, is_nullable,character_maximum_length 
 	FROM information_schema.columns WHERE table_name = ?;`
@@ -37,7 +37,7 @@ func GetColumnSchema(tx *pg.Tx, tableName string) (columnSchema []model.DBCSchem
 }
 
 //GetConstraint : Get Constraint of table from database
-func GetConstraint(tx *pg.Tx, tableName string) (constraint []model.DBCSchema, err error) {
+func GetConstraint(tx *pg.Tx, tableName string) (constraint []model.TableSchema, err error) {
 	query := `SELECT tc.constraint_type,
     tc.constraint_name, tc.is_deferrable, tc.initially_deferred, 
     kcu.column_name AS column_name, ccu.table_name AS foreign_table_name, 
@@ -226,10 +226,10 @@ func GetAfterDeleteTriggerName(tableName string) string {
 
 //MergeColumnConstraint : Merge Table Schema with Constraint
 func MergeColumnConstraint(columnSchema,
-	constraint []model.DBCSchema) map[string]model.DBCSchema {
+	constraint []model.TableSchema) map[string]model.TableSchema {
 
-	constraintMap := make(map[string]model.DBCSchema)
-	tableSchema := make(map[string]model.DBCSchema)
+	constraintMap := make(map[string]model.TableSchema)
+	tableSchema := make(map[string]model.TableSchema)
 	for _, curConstraint := range constraint {
 		constraintMap[curConstraint.ColumnName] = curConstraint
 	}

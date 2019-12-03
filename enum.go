@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-pg/pg"
 	"github.com/mayur-tolexo/flaw"
-	util "github.com/mayur-tolexo/pg-shifter/util.go"
+	"github.com/mayur-tolexo/pg-shifter/util"
 )
 
 //upsertEnum Enum in database

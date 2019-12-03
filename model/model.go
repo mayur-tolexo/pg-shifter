@@ -1,7 +1,7 @@
 package model
 
-//DBCSchema : Database Column Schema Model
-type DBCSchema struct {
+//TableSchema : Table Column Schema Model
+type TableSchema struct {
 	ColumnName        string `sql:"column_name"`
 	ColumnDefault     string `sql:"column_default"`
 	DataType          string `sql:"data_type"`
@@ -24,8 +24,8 @@ type UKSchema struct {
 	Columns        string `sql:"col"`
 }
 
-//SCSchema : Struct Column Schema
-type SCSchema struct {
+//StructSchema : Struct Column Schema Model
+type StructSchema struct {
 	TableName         string
 	ColumnName        string
 	ColumnDefault     string
