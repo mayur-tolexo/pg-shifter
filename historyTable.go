@@ -48,7 +48,7 @@ func (s *Shifter) dropHistoryConstraint(tx *pg.Tx, historyTable string) (err err
 
 //execHistoryTable will execute history table creation
 func (s *Shifter) execHistoryTable(tx *pg.Tx, tableName, historyTable string) (err error) {
-	if _, err = tx.Exec(fmt.Sprintf("CREATE TABLE %v AS SELECT * FROM %v WHERE 1=2",
+	if _, err = tx.Exec(fmt.Sprintf("CREATE TABLE %v AS SELECT * FROM %v WHERE false",
 		historyTable, tableName)); err != nil {
 		msg := fmt.Sprintf("Table: %v", tableName)
 		err = flaw.ExecError(err, msg)
