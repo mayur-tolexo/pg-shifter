@@ -9,6 +9,30 @@ import (
 	"github.com/mayur-tolexo/pg-shifter/util"
 )
 
+//Alter Table
+func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPromt bool) (err error) {
+	// initStructTableMap()
+	var (
+		columnSchema []model.ColSchema
+		constraint   []model.ColSchema
+		// uniqueKeySchema []model.UniqueKeySchema
+	)
+	_, isValid := s.table[tableName]
+	if isValid == true {
+		if columnSchema, err = util.GetColumnSchema(tx, tableName); err == nil {
+			if constraint, err = util.GetConstraint(tx, tableName); err == nil {
+				tSchema := util.MergeColumnConstraint(tableName, columnSchema, constraint)
+				sSchema := s.GetStructSchema(tableName)
+				err = s.compareSchema(tx, tSchema, sSchema, skipPromt)
+				// printSchema(tSchema, sSchema)
+			}
+		}
+	} else {
+		fmt.Println("Invalid Table Name: ", tableName)
+	}
+	return
+}
+
 //compareSchema will compare then table and struct column scheam and change accordingly
 func (s *Shifter) compareSchema(tx *pg.Tx, tSchema, sSchema map[string]model.ColSchema, skipPromt bool) (err error) {
 
@@ -68,6 +92,16 @@ func addCol(tx *pg.Tx, schema model.ColSchema, skipPrompt bool) (err error) {
 		schema.TableName, schema.ColumnName, dType)
 
 	sql += "," + getAddFkConstraintSQL(schema)
+	choice := util.GetChoice(sql, skipPrompt)
+	if choice == util.Yes {
+		_, err = tx.Exec(sql)
+	}
+	return
+}
+
+//dropCol will drop column from table
+func dropCol(tx *pg.Tx, schema model.ColSchema, skipPrompt bool) (err error) {
+	sql := fmt.Sprintf("ALTER TABLE %v DROP %v\n", schema.TableName, schema.ColumnName)
 	choice := util.GetChoice(sql, skipPrompt)
 	if choice == util.Yes {
 		_, err = tx.Exec(sql)
@@ -165,7 +199,6 @@ func getDataTypeByStruct(schema model.ColSchema) (dType string) {
 	dType += getUniqueDTypeSQL(schema.ConstraintType)
 	dType += getNullDTypeSQL(schema.IsNullable)
 	dType += getDefaultDTypeSQL(schema)
-
 	return
 }
 
@@ -224,16 +257,6 @@ func getNullDTypeSQL(isNullable string) (str string) {
 func getUniqueDTypeSQL(constraintType string) (str string) {
 	if constraintType == Unique {
 		str = " " + Unique
-	}
-	return
-}
-
-//dropCol will drop column in table
-func dropCol(tx *pg.Tx, schema model.ColSchema, skipPrompt bool) (err error) {
-	sql := fmt.Sprintf("ALTER TABLE %v DROP %v\n", schema.TableName, schema.ColumnName)
-	choice := util.GetChoice(sql, skipPrompt)
-	if choice == util.Yes {
-		_, err = tx.Exec(sql)
 	}
 	return
 }
