@@ -103,8 +103,10 @@ func (s *Shifter) addCol(tx *pg.Tx, schema model.ColSchema, skipPrompt bool) (er
 	//checking history table exists
 	if s.hisExists {
 		hName := util.GetHistoryTableName(schema.TableName)
+		dType = getStructDataType(schema)
 		sql += ";" + getAddColSQL(hName, schema.ColumnName, dType)
 	}
+	//history alter sql end
 	choice := util.GetChoice(sql, skipPrompt)
 	if choice == util.Yes {
 		if _, err = tx.Exec(sql); err == nil {
@@ -128,6 +130,7 @@ func (s *Shifter) dropCol(tx *pg.Tx, schema model.ColSchema, skipPrompt bool) (e
 		hName := util.GetHistoryTableName(schema.TableName)
 		sql += ";" + getDropColSQL(hName, schema.ColumnName)
 	}
+	//history alter sql end
 	choice := util.GetChoice(sql, skipPrompt)
 	if choice == util.Yes {
 		if _, err = tx.Exec(sql); err == nil {
