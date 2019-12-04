@@ -340,9 +340,9 @@ func (s *Shifter) modifyNotNullConstraint(tx *pg.Tx, tSchema, sSchema model.ColS
 	skipPrompt bool) (isAlter bool, err error) {
 
 	if tSchema.IsNullable != sSchema.IsNullable {
-		option := "SET"
+		option := Set
 		if sSchema.IsNullable == Yes {
-			option = "DROP"
+			option = Drop
 		}
 		sql := getNotNullColSQL(sSchema.TableName, sSchema.ColumnName, option)
 		isAlter, err = execByChoice(tx, sql, skipPrompt)

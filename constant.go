@@ -11,4 +11,5 @@ const (
 	Add         = "ADD"
 	Drop        = "DROP"
 	UserDefined = "USER-DEFINED"
+	Set         = "SET"
 )
