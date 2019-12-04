@@ -13,7 +13,7 @@ func TestAlterTable(t *testing.T) {
 		tx, _ := conn.Begin()
 		s := NewShifter()
 		s.SetTableModel(&TestAddress{})
-		if err = s.alterTable(tx, "test_address", false); err == nil {
+		if err = s.alterTable(tx, "test_address", true); err == nil {
 			tx.Commit()
 		} else {
 			tx.Rollback()

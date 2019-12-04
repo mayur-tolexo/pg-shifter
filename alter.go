@@ -67,7 +67,7 @@ func addCol(tx *pg.Tx, schema model.ColSchema, skipPrompt bool) (err error) {
 	sql := fmt.Sprintf("ALTER TABLE %v ADD %v %v",
 		schema.TableName, schema.ColumnName, dType)
 
-	sql += getAddFkConstraint(schema)
+	sql += "," + getAddFkConstraintSQL(schema)
 	choice := util.GetChoice(sql, skipPrompt)
 	if choice == util.Yes {
 		_, err = tx.Exec(sql)
@@ -75,21 +75,11 @@ func addCol(tx *pg.Tx, schema model.ColSchema, skipPrompt bool) (err error) {
 	return
 }
 
-//getAddFkConstraint will return fk constraint while adding column
-func getAddFkConstraint(schema model.ColSchema) (sql string) {
-	var tag string
-	if schema.ConstraintType == ForeignKey {
-		tag, sql = getConstraintSQL(schema)
-		sql = `, ADD CONSTRAINT ` + tag + " " + ForeignKey + " " + sql
-	}
-	return
-}
-
 //addFk will add fk in column if exists in schema
 func addFk(tx *pg.Tx, schema model.ColSchema, skipPrompt bool) (err error) {
 	if schema.ConstraintType == ForeignKey {
-
-		sql := getAddConstraintSQL(schema)
+		sql := getStructConstraintSQL(schema)
+		sql = fmt.Sprintf("ALTER TABLE %v %v", schema.TableName, sql)
 		choice := util.GetChoice(sql, skipPrompt)
 		if choice == util.Yes {
 			_, err = tx.Exec(sql)
@@ -98,34 +88,53 @@ func addFk(tx *pg.Tx, schema model.ColSchema, skipPrompt bool) (err error) {
 	return
 }
 
-//getAddConstraintSQL will return add constraint sql
-func getAddConstraintSQL(schema model.ColSchema) (sql string) {
-	if schema.ConstraintType != "" {
-		tag, constraintSQL := getConstraintSQL(schema)
-		sql = fmt.Sprintf("ALTER TABLE %v ADD CONSTRAINT %v_%v_%v %v %v",
-			schema.TableName, schema.TableName, schema.ColumnName, tag, schema.ConstraintType, constraintSQL)
+//getAddFkConstraintSQL will return fk constraint sql
+func getAddFkConstraintSQL(schema model.ColSchema) (sql string) {
+	if schema.ConstraintType == ForeignKey {
+		sql = getStructConstraintSQL(schema)
+		fkName := getConstraintName(schema)
+		sql = fmt.Sprintf("ADD CONSTRAINT %v %v (%v) %v",
+			fkName, ForeignKey, schema.ColumnName, sql)
 	}
 	return
 }
 
-//getConstraintSQL will return constraing sql
-func getConstraintSQL(schema model.ColSchema) (tag, sql string) {
+//getFkName will return primary/unique/foreign key name
+func getConstraintName(schema model.ColSchema) (keyName string) {
+	var tag string
 	switch schema.ConstraintType {
 	case PrimaryKey:
 		tag = "pkey"
-		// sql = PrimaryKey
 	case Unique:
 		tag = "key"
-		// sql = Unique
 	case ForeignKey:
 		tag = "fkey"
+	}
+	keyName = fmt.Sprintf("%v_%v_%v", schema.TableName, schema.ColumnName, tag)
+	return
+}
+
+//getStructConstraintSQL will return constraint sql from scheam model
+func getStructConstraintSQL(schema model.ColSchema) (sql string) {
+	switch schema.ConstraintType {
+	case PrimaryKey:
+		sql = " " + PrimaryKey
+	case Unique:
+		sql = getUniqueDTypeSQL(Unique)
+	case ForeignKey:
 		deleteTag := getConstraintTagByFlag(schema.DeleteType)
 		updateTag := getConstraintTagByFlag(schema.UpdateType)
-		sql = fmt.Sprintf("(%v) REFERENCES %v(%v) ON DELETE %v ON UPDATE %v",
-			schema.ColumnName, schema.ForeignTableName, schema.ForeignColumnName, deleteTag, updateTag)
+		sql = fmt.Sprintf(" REFERENCES %v(%v) ON DELETE %v ON UPDATE %v",
+			schema.ForeignTableName, schema.ForeignColumnName, deleteTag, updateTag)
 	}
+	sql += getDefferSQL(schema)
+	return
+}
+
+//getDefferSQL will reutrn deferable and initiall deferred sql
+func getDefferSQL(schema model.ColSchema) (sql string) {
 	if schema.IsDeferrable == Yes {
-		sql += " DEFERRABLE"
+		sql = " DEFERRABLE"
 	}
 	if schema.InitiallyDeferred == Yes {
 		sql += " INITIALLY DEFERRED"
@@ -215,22 +224,6 @@ func getNullDTypeSQL(isNullable string) (str string) {
 func getUniqueDTypeSQL(constraintType string) (str string) {
 	if constraintType == Unique {
 		str = " " + Unique
-	}
-	return
-}
-
-//getStructConstraintSQL will return constraint sql from scheam model
-func getStructConstraintSQL(schema model.ColSchema) (str string) {
-	switch schema.ConstraintType {
-	case PrimaryKey:
-		str = " " + PrimaryKey
-	case Unique:
-		str = getUniqueDTypeSQL(Unique)
-	case ForeignKey:
-		deleteTag := getConstraintTagByFlag(schema.DeleteType)
-		updateTag := getConstraintTagByFlag(schema.UpdateType)
-		str = fmt.Sprintf(" REFERENCES %v(%v) ON DELETE %v ON UPDATE %v",
-			schema.ForeignTableName, schema.ForeignColumnName, deleteTag, updateTag)
 	}
 	return
 }
