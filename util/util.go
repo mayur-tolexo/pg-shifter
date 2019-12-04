@@ -255,3 +255,19 @@ func MergeColumnConstraint(tName string, columnSchema,
 	}
 	return ColSchema
 }
+
+//IsAfterUpdateTriggerExists will check if after update triger exists
+func IsAfterUpdateTriggerExists(tx *pg.Tx, tName string) (exists bool, err error) {
+	var count int
+	sql := `
+	SELECT count(*) 
+	FROM information_schema.triggers 
+	WHERE event_object_table = ? 
+	AND trigger_name = ?
+	AND action_timing = 'AFTER'`
+	afterUpdate := GetAfterUpdateTriggerName(tName)
+	if _, err = tx.Query(&count, sql, tName, afterUpdate); err == nil && count > 0 {
+		exists = true
+	}
+	return
+}

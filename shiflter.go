@@ -14,8 +14,9 @@ var (
 
 //Shifter model
 type Shifter struct {
-	table    map[string]interface{}
-	enumList map[string][]string
+	table     map[string]interface{}
+	enumList  map[string][]string
+	hisExists bool
 }
 
 //NewShifter will return shifter model

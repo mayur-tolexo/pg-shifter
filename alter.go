@@ -1,6 +1,7 @@
 package shifter
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/fatih/structs"
@@ -18,50 +19,59 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPromt bool) (err e
 		// uniqueKeySchema []model.UniqueKeySchema
 	)
 	_, isValid := s.table[tableName]
+
 	if isValid == true {
 		if columnSchema, err = util.GetColumnSchema(tx, tableName); err == nil {
 			if constraint, err = util.GetConstraint(tx, tableName); err == nil {
 				tSchema := util.MergeColumnConstraint(tableName, columnSchema, constraint)
 				sSchema := s.GetStructSchema(tableName)
-				err = s.compareSchema(tx, tSchema, sSchema, skipPromt)
+
+				if s.hisExists, err = util.IsAfterUpdateTriggerExists(tx, tableName); err == nil {
+					err = s.compareSchema(tx, tSchema, sSchema, skipPromt)
+				}
 				// printSchema(tSchema, sSchema)
 			}
 		}
 	} else {
-		fmt.Println("Invalid Table Name: ", tableName)
+		msg := "Invalid Table Name: " + tableName
+		fmt.Println(msg)
+		err = errors.New(msg)
 	}
 	return
 }
 
 //compareSchema will compare then table and struct column scheam and change accordingly
-func (s *Shifter) compareSchema(tx *pg.Tx, tSchema, sSchema map[string]model.ColSchema, skipPromt bool) (err error) {
+func (s *Shifter) compareSchema(tx *pg.Tx, tSchema, sSchema map[string]model.ColSchema,
+	skipPromt bool) (err error) {
 
 	var (
 		added   bool
 		removed bool
+		modify  bool
 	)
 	// psql.StartLogging = true
 	//adding column exists in struct but missing in db table
-	if added, err = addRemoveCol(tx, sSchema, tSchema, Add, skipPromt); err == nil {
+	if added, err = s.addRemoveCol(tx, sSchema, tSchema, Add, skipPromt); err == nil {
 		//removing column exists in db table but missing in struct
-		if removed, err = addRemoveCol(tx, tSchema, sSchema, Drop, skipPromt); err == nil {
+		if removed, err = s.addRemoveCol(tx, tSchema, sSchema, Drop, skipPromt); err == nil {
 			//TODO: modify column
+			modify, err = modifyCol(tx, tSchema, sSchema, skipPromt)
 		}
 	}
-	if added || removed {
+	if added || removed || modify {
 		err = s.createAlterStructLog(tSchema)
 	}
 	return
 }
 
 //addRemoveCol will add/drop missing column which exists in a but not in b
-func addRemoveCol(tx *pg.Tx, a, b map[string]model.ColSchema,
+func (s *Shifter) addRemoveCol(tx *pg.Tx, a, b map[string]model.ColSchema,
 	op string, skipPrompt bool) (isAlter bool, err error) {
 
 	for col, schema := range a {
 		if v, exists := b[col]; exists == false {
 			isAlter = true
-			if err = alterCol(tx, schema, op, skipPrompt); err != nil {
+			if err = s.alterCol(tx, schema, op, skipPrompt); err != nil {
 				break
 			}
 		} else if v.StructColumnName == "" {
@@ -73,39 +83,63 @@ func addRemoveCol(tx *pg.Tx, a, b map[string]model.ColSchema,
 }
 
 //alterCol will add/drop column in table
-func alterCol(tx *pg.Tx, schema model.ColSchema,
+func (s *Shifter) alterCol(tx *pg.Tx, schema model.ColSchema,
 	op string, skipPrompt bool) (err error) {
 
 	switch op {
 	case Add:
-		err = addCol(tx, schema, skipPrompt)
+		err = s.addCol(tx, schema, skipPrompt)
 	case Drop:
-		err = dropCol(tx, schema, skipPrompt)
+		err = s.dropCol(tx, schema, skipPrompt)
 	}
 	return
 }
 
 //alterCol will add column in table
-func addCol(tx *pg.Tx, schema model.ColSchema, skipPrompt bool) (err error) {
+func (s *Shifter) addCol(tx *pg.Tx, schema model.ColSchema, skipPrompt bool) (err error) {
 	dType := getDataTypeByStruct(schema)
-	sql := fmt.Sprintf("ALTER TABLE %v ADD %v %v",
-		schema.TableName, schema.ColumnName, dType)
-
+	sql := getAddColSQL(schema.TableName, schema.ColumnName, dType)
 	sql += "," + getAddFkConstraintSQL(schema)
+	//checking history table exists
+	if s.hisExists {
+		hName := util.GetHistoryTableName(schema.TableName)
+		sql += ";" + getAddColSQL(hName, schema.ColumnName, dType)
+	}
 	choice := util.GetChoice(sql, skipPrompt)
 	if choice == util.Yes {
-		_, err = tx.Exec(sql)
+		if _, err = tx.Exec(sql); err == nil {
+			err = s.createTrigger(tx, schema.TableName)
+		}
 	}
 	return
 }
 
+//getAddColSQL will return add column sql
+func getAddColSQL(tName, cName, dType string) (sql string) {
+	sql = fmt.Sprintf("ALTER TABLE %v ADD %v %v", tName, cName, dType)
+	return
+}
+
 //dropCol will drop column from table
-func dropCol(tx *pg.Tx, schema model.ColSchema, skipPrompt bool) (err error) {
-	sql := fmt.Sprintf("ALTER TABLE %v DROP %v\n", schema.TableName, schema.ColumnName)
+func (s *Shifter) dropCol(tx *pg.Tx, schema model.ColSchema, skipPrompt bool) (err error) {
+	sql := getDropColSQL(schema.TableName, schema.ColumnName)
+	//checking history table exists
+	if s.hisExists {
+		hName := util.GetHistoryTableName(schema.TableName)
+		sql += ";" + getDropColSQL(hName, schema.ColumnName)
+	}
 	choice := util.GetChoice(sql, skipPrompt)
 	if choice == util.Yes {
-		_, err = tx.Exec(sql)
+		if _, err = tx.Exec(sql); err == nil {
+			err = s.createTrigger(tx, schema.TableName)
+		}
 	}
+	return
+}
+
+//getAddColSQL will return add column sql
+func getDropColSQL(tName, cName string) (sql string) {
+	sql = fmt.Sprintf("ALTER TABLE %v DROP %v\n", tName, cName)
 	return
 }
 
@@ -258,6 +292,13 @@ func getUniqueDTypeSQL(constraintType string) (str string) {
 	if constraintType == Unique {
 		str = " " + Unique
 	}
+	return
+}
+
+//modifyCol will modify column of table by comparing with struct
+func modifyCol(tx *pg.Tx, tSchema, sSchema map[string]model.ColSchema,
+	skipPromt bool) (isAlter bool, err error) {
+	// modifyDataType()
 	return
 }
 
