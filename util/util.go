@@ -25,9 +25,14 @@ const (
 
 //GetColumnSchema : Get Column Schema of given table
 func GetColumnSchema(tx *pg.Tx, tableName string) (columnSchema []model.ColSchema, err error) {
-	query := `SELECT column_name,column_default, data_type, 
-	udt_name, is_nullable,character_maximum_length 
-	FROM information_schema.columns WHERE table_name = ?;`
+	query := `SELECT col.column_name, col.column_default, col.data_type, 
+	col.udt_name, col.is_nullable, col.character_maximum_length 
+	, sq.sequence_name AS seq_name
+	, sq.data_type AS seq_data_type
+	FROM information_schema.columns col
+	left join information_schema.sequences sq
+	ON concat(sq.sequence_schema,'.',sq.sequence_name) = pg_get_serial_sequence(table_name, column_name)
+	WHERE col.table_name = ?;`
 	if _, err = tx.Query(&columnSchema, query, tableName); err != nil {
 		msg := fmt.Sprintf("Table: %v", tableName)
 		err = flaw.SelectError(err, msg)

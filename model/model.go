@@ -3,6 +3,7 @@ package model
 //ColSchema : Table Column Schema Model
 type ColSchema struct {
 	TableName         string `sql:"-"`
+	StructColumnName  string `sql:"-"`
 	ColumnName        string `sql:"column_name"`
 	ColumnDefault     string `sql:"column_default"`
 	DataType          string `sql:"data_type"`
@@ -17,6 +18,8 @@ type ColSchema struct {
 	ForeignColumnName string `sql:"foreign_column_name"`
 	UpdateType        string `sql:"confupdtype"`
 	DeleteType        string `sql:"confdeltype"`
+	SeqName           string `sql:"seq_name"`
+	SeqDataType       string `sql:"seq_data_type"`
 }
 
 //UKSchema : Unique Schema Model

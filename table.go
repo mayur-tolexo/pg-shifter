@@ -11,9 +11,6 @@ import (
 	"github.com/mayur-tolexo/pg-shifter/util"
 )
 
-//rDataAlias is reverse data alias
-var rDataAlias map[string]string
-
 //DataAlias alias to table value mapping
 var DataAlias = map[string]string{
 	"int8":        "bigint",
@@ -36,11 +33,18 @@ var DataAlias = map[string]string{
 	"timestamptz": "timestamp with time zone",
 }
 
-func init() {
-	rDataAlias = make(map[string]string)
-	for k, v := range DataAlias {
-		rDataAlias[v] = k
-	}
+//rDataAlias is reverse data alias
+var rDataAlias = map[string]string{
+	"bit varying":                 "varbit",
+	"boolean":                     "bool",
+	"character":                   "char",
+	"character varying":           "varchar",
+	"double precision":            "float8",
+	"integer":                     "int",
+	"time without time zone":      "time",
+	"time with time zone":         "timetz",
+	"timestamp without time zone": "timestamp",
+	"timestamp with time zone":    "timestamptz",
 }
 
 //Create Table in database
@@ -151,7 +155,7 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPromt bool) (err e
 			if constraint, err = util.GetConstraint(tx, tableName); err == nil {
 				tSchema := util.MergeColumnConstraint(tableName, columnSchema, constraint)
 				sSchema := s.GetStructSchema(tableName)
-				err = compareSchema(tx, tSchema, sSchema, skipPromt)
+				err = s.compareSchema(tx, tSchema, sSchema, skipPromt)
 				// printSchema(tSchema, sSchema)
 
 				// if err = checkTableToAlter(tx, ColSchema, tableModel, tableName); err == nil {
@@ -185,6 +189,7 @@ func (s *Shifter) GetStructSchema(tableName string) (sSchema map[string]model.Co
 			var schema model.ColSchema
 			tag := strings.ToLower(field.Tag.Get("sql"))
 			schema.TableName = tableName
+			schema.StructColumnName = field.Name
 			schema.ColumnName = getColName(tag)
 			schema.ColumnDefault = getColDefault(tag)
 			schema.DataType, schema.CharMaxLen = getColType(tag)
