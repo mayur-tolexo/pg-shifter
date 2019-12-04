@@ -310,16 +310,20 @@ func (s *Shifter) modifyCol(tx *pg.Tx, tSchema, sSchema map[string]model.ColSche
 	for col, tcSchema := range tSchema {
 		var curIsAlter bool
 		if scSchema, exists := sSchema[col]; exists {
+
+			//modify data type
 			if curIsAlter, err = s.modifyDataType(tx, tcSchema, scSchema, skipPrompt); err != nil {
 				break
 			}
-			//if data type is not modified
-			//then only modify default type
+
+			//if data type is not modified then only modify default type
 			if curIsAlter == false {
 				if curIsAlter, err = s.modifyDefault(tx, tcSchema, scSchema, skipPrompt); err != nil {
 					break
 				}
 			}
+
+			//modify not null constraint
 			if curIsAlter, err = s.modifyNotNullConstraint(tx, tcSchema, scSchema, skipPrompt); err != nil {
 				break
 			}
