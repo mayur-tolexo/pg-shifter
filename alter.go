@@ -6,6 +6,7 @@ import (
 
 	"github.com/fatih/structs"
 	"github.com/go-pg/pg"
+	"github.com/mayur-tolexo/contour/adapter/psql"
 	"github.com/mayur-tolexo/pg-shifter/model"
 	"github.com/mayur-tolexo/pg-shifter/util"
 )
@@ -49,17 +50,20 @@ func (s *Shifter) compareSchema(tx *pg.Tx, tSchema, sSchema map[string]model.Col
 		removed bool
 		modify  bool
 	)
-	// psql.StartLogging = true
+	psql.StartLogging = true
 	//adding column exists in struct but missing in db table
 	if added, err = s.addRemoveCol(tx, sSchema, tSchema, Add, skipPromt); err == nil {
 		//removing column exists in db table but missing in struct
 		if removed, err = s.addRemoveCol(tx, tSchema, sSchema, Drop, skipPromt); err == nil {
 			//TODO: modify column
-			modify, err = modifyCol(tx, tSchema, sSchema, skipPromt)
+			modify, err = s.modifyCol(tx, tSchema, sSchema, skipPromt)
 		}
 	}
 	if added || removed || modify {
-		err = s.createAlterStructLog(tSchema)
+		tName := getTableName(sSchema)
+		if err = s.createTrigger(tx, tName); err == nil {
+			err = s.createAlterStructLog(tSchema)
+		}
 	}
 	return
 }
@@ -69,50 +73,54 @@ func (s *Shifter) addRemoveCol(tx *pg.Tx, a, b map[string]model.ColSchema,
 	op string, skipPrompt bool) (isAlter bool, err error) {
 
 	for col, schema := range a {
+		var curIsAlter bool
 		if v, exists := b[col]; exists == false {
-			isAlter = true
-			if err = s.alterCol(tx, schema, op, skipPrompt); err != nil {
+			if curIsAlter, err = s.alterCol(tx, schema, op, skipPrompt); err != nil {
 				break
 			}
 		} else if v.StructColumnName == "" {
 			v.StructColumnName = schema.StructColumnName
 			b[col] = v
 		}
+		isAlter = isAlter || curIsAlter
 	}
 	return
 }
 
 //alterCol will add/drop column in table
 func (s *Shifter) alterCol(tx *pg.Tx, schema model.ColSchema,
-	op string, skipPrompt bool) (err error) {
+	op string, skipPrompt bool) (isAlter bool, err error) {
 
 	switch op {
 	case Add:
-		err = s.addCol(tx, schema, skipPrompt)
+		isAlter, err = s.addCol(tx, schema, skipPrompt)
 	case Drop:
-		err = s.dropCol(tx, schema, skipPrompt)
+		isAlter, err = s.dropCol(tx, schema, skipPrompt)
 	}
 	return
 }
 
 //alterCol will add column in table
-func (s *Shifter) addCol(tx *pg.Tx, schema model.ColSchema, skipPrompt bool) (err error) {
+func (s *Shifter) addCol(tx *pg.Tx, schema model.ColSchema,
+	skipPrompt bool) (isAlter bool, err error) {
+
 	dType := getDataTypeByStruct(schema)
 	sql := getAddColSQL(schema.TableName, schema.ColumnName, dType)
-	sql += "," + getAddFkConstraintSQL(schema)
+	fkSQL := getAddFkConstraintSQL(schema)
+
+	if fkSQL != "" {
+		sql += "," + fkSQL
+	}
+
 	//checking history table exists
 	if s.hisExists {
 		hName := util.GetHistoryTableName(schema.TableName)
 		dType = getStructDataType(schema)
-		sql += ";" + getAddColSQL(hName, schema.ColumnName, dType)
+		sql += ";\n" + getAddColSQL(hName, schema.ColumnName, dType)
 	}
 	//history alter sql end
-	choice := util.GetChoice(sql, skipPrompt)
-	if choice == util.Yes {
-		if _, err = tx.Exec(sql); err == nil {
-			err = s.createTrigger(tx, schema.TableName)
-		}
-	}
+
+	isAlter, err = execByChoice(tx, sql, skipPrompt)
 	return
 }
 
@@ -123,20 +131,18 @@ func getAddColSQL(tName, cName, dType string) (sql string) {
 }
 
 //dropCol will drop column from table
-func (s *Shifter) dropCol(tx *pg.Tx, schema model.ColSchema, skipPrompt bool) (err error) {
+func (s *Shifter) dropCol(tx *pg.Tx, schema model.ColSchema,
+	skipPrompt bool) (isAlter bool, err error) {
+
 	sql := getDropColSQL(schema.TableName, schema.ColumnName)
 	//checking history table exists
 	if s.hisExists {
 		hName := util.GetHistoryTableName(schema.TableName)
-		sql += ";" + getDropColSQL(hName, schema.ColumnName)
+		sql += ";\n" + getDropColSQL(hName, schema.ColumnName)
 	}
 	//history alter sql end
-	choice := util.GetChoice(sql, skipPrompt)
-	if choice == util.Yes {
-		if _, err = tx.Exec(sql); err == nil {
-			err = s.createTrigger(tx, schema.TableName)
-		}
-	}
+
+	isAlter, err = execByChoice(tx, sql, skipPrompt)
 	return
 }
 
@@ -147,14 +153,13 @@ func getDropColSQL(tName, cName string) (sql string) {
 }
 
 //addFk will add fk in column if exists in schema
-func addFk(tx *pg.Tx, schema model.ColSchema, skipPrompt bool) (err error) {
+func addFk(tx *pg.Tx, schema model.ColSchema, skipPrompt bool) (
+	isAlter bool, err error) {
+
 	if schema.ConstraintType == ForeignKey {
 		sql := getStructConstraintSQL(schema)
 		sql = fmt.Sprintf("ALTER TABLE %v %v", schema.TableName, sql)
-		choice := util.GetChoice(sql, skipPrompt)
-		if choice == util.Yes {
-			_, err = tx.Exec(sql)
-		}
+		isAlter, err = execByChoice(tx, sql, skipPrompt)
 	}
 	return
 }
@@ -245,10 +250,10 @@ func getStructDataType(schema model.ColSchema) (dType string) {
 
 	if schema.SeqName != "" {
 		dType = getSerialType(schema.SeqDataType)
-	} else {
-		if dType, exists = rDataAlias[schema.DataType]; exists == false {
-			dType = schema.DataType
-		}
+	} else if schema.DataType == UserDefined {
+		dType = schema.UdtName
+	} else if dType, exists = rDataAlias[schema.DataType]; exists == false {
+		dType = schema.DataType
 	}
 	if schema.CharMaxLen != "" {
 		dType += "(" + schema.CharMaxLen + ")"
@@ -299,9 +304,134 @@ func getUniqueDTypeSQL(constraintType string) (str string) {
 }
 
 //modifyCol will modify column of table by comparing with struct
-func modifyCol(tx *pg.Tx, tSchema, sSchema map[string]model.ColSchema,
-	skipPromt bool) (isAlter bool, err error) {
-	// modifyDataType()
+func (s *Shifter) modifyCol(tx *pg.Tx, tSchema, sSchema map[string]model.ColSchema,
+	skipPrompt bool) (isAlter bool, err error) {
+
+	for col, tcSchema := range tSchema {
+		var curIsAlter bool
+		if scSchema, exists := sSchema[col]; exists {
+			if curIsAlter, err = s.modifyDataType(tx, tcSchema, scSchema, skipPrompt); err != nil {
+				break
+			}
+			//if data type is not modified
+			//then only modify default type
+			if curIsAlter == false {
+				if curIsAlter, err = s.modifyDefault(tx, tcSchema, scSchema, skipPrompt); err != nil {
+					break
+				}
+			}
+			if curIsAlter, err = s.modifyNotNullConstraint(tx, tcSchema, scSchema, skipPrompt); err != nil {
+				break
+			}
+			//TODO: modify constraint
+		}
+		isAlter = isAlter || curIsAlter
+	}
+
+	return
+}
+
+//modifyNotNullConstraint will modify not null by comparing table and structure
+func (s *Shifter) modifyNotNullConstraint(tx *pg.Tx, tSchema, sSchema model.ColSchema,
+	skipPrompt bool) (isAlter bool, err error) {
+
+	if tSchema.IsNullable != sSchema.IsNullable {
+		option := "SET"
+		if sSchema.IsNullable == Yes {
+			option = "DROP"
+		}
+		sql := getNotNullColSQL(sSchema.TableName, sSchema.ColumnName, option)
+		isAlter, err = execByChoice(tx, sql, skipPrompt)
+	}
+	return
+}
+
+//getDropDefaultSQL will return set/drop not null constraint sql
+func getNotNullColSQL(tName, cName, option string) (sql string) {
+	sql = fmt.Sprintf("ALTER TABLE %v ALTER COLUMN %v %v NOT NULL",
+		tName, cName, option)
+	return
+}
+
+//modifyDataType will modify column data type by comparing with structure
+func (s *Shifter) modifyDataType(tx *pg.Tx, tSchema, sSchema model.ColSchema,
+	skipPrompt bool) (isAlter bool, err error) {
+
+	tDataType := getStructDataType(tSchema)
+	sDataType := getStructDataType(sSchema)
+
+	if tDataType != sDataType {
+		//dropping default sql
+		sql := getDropDefaultSQL(sSchema.TableName, sSchema.ColumnName)
+		//modifying column type
+		sql += getModifyColSQL(sSchema.TableName, sSchema.ColumnName, sDataType, sDataType)
+		//adding back default sql
+		sql += getSetDefaultSQL(sSchema.TableName, sSchema.ColumnName, sSchema.ColumnDefault)
+
+		//checking history table exists
+		if s.hisExists {
+			hName := util.GetHistoryTableName(sSchema.TableName)
+			sql += getModifyColSQL(hName, sSchema.ColumnName, sDataType, sDataType)
+		}
+		//history alter sql end
+
+		isAlter, err = execByChoice(tx, sql, skipPrompt)
+	}
+
+	return
+}
+
+//getModifyColSQL will return modify column data type sql
+func getModifyColSQL(tName, cName, dType, udtType string) (sql string) {
+
+	sql = fmt.Sprintf("ALTER TABLE %v ALTER COLUMN %v TYPE %v USING (%v::%v);\n",
+		tName, cName, dType, cName, udtType)
+	return
+}
+
+//modifyDefault will modify default value by comparing table and structure
+func (s *Shifter) modifyDefault(tx *pg.Tx, tSchema, sSchema model.ColSchema,
+	skipPrompt bool) (isAlter bool, err error) {
+
+	//for primary key default is series so should remove it
+	if tSchema.ConstraintType != PrimaryKey &&
+		tSchema.ColumnDefault != sSchema.ColumnDefault {
+		sql := ""
+		if sSchema.ColumnDefault == "" {
+			sql = getDropDefaultSQL(sSchema.TableName, sSchema.ColumnName)
+		} else {
+			sql = getSetDefaultSQL(sSchema.TableName, sSchema.ColumnName, sSchema.ColumnDefault)
+		}
+		isAlter, err = execByChoice(tx, sql, skipPrompt)
+	}
+	return
+}
+
+//getDropDefaultSQL will return drop default constraint sql
+func getDropDefaultSQL(tName, cName string) (sql string) {
+	sql = fmt.Sprintf("ALTER TABLE %v ALTER COLUMN %v DROP DEFAULT;\n",
+		tName, cName)
+	return
+}
+
+//getSetDefaultSQL will return default column sql
+func getSetDefaultSQL(tName, cName, dVal string) (sql string) {
+	if dVal != "" {
+		sql = fmt.Sprintf("ALTER TABLE %v ALTER COLUMN %v SET DEFAULT %v;\n",
+			tName, cName, dVal)
+	}
+	return
+}
+
+//execByChoice will execute by choice
+func execByChoice(tx *pg.Tx, sql string, skipPrompt bool) (
+	isAlter bool, err error) {
+
+	choice := util.GetChoice(sql, skipPrompt)
+	if choice == util.Yes {
+		isAlter = true
+		_, err = tx.Exec(sql)
+	}
 	return
 }
 
