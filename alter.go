@@ -401,7 +401,7 @@ func getModifyColSQL(tName, cName, dType, udtType string) (sql string) {
 func (s *Shifter) modifyDefault(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 	skipPrompt bool) (isAlter bool, err error) {
 
-	tDefault := getTableDefault(tSchema)
+	tDefault := getTableDefault(tSchema, sSchema)
 	sDefault := sSchema.ColumnDefault
 
 	//for primary key default is series so should remove it
@@ -419,11 +419,11 @@ func (s *Shifter) modifyDefault(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 }
 
 //getTableDefault will return table default value based on null allowed
-func getTableDefault(tSchema model.ColSchema) (tDefault string) {
+func getTableDefault(tSchema, sSchema model.ColSchema) (tDefault string) {
 	tDefault = tSchema.ColumnDefault
 
 	if tDefault == "" {
-		if tSchema.IsNullable == Yes {
+		if tSchema.IsNullable == Yes && sSchema.ColumnDefault != "" {
 			tDefault = Null
 		}
 	} else if tSchema.ConstraintType != PrimaryKey &&
