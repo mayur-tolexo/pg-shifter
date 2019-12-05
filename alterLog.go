@@ -2,7 +2,10 @@ package shifter
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
+	"os"
+	"os/exec"
 	"reflect"
 	"text/template"
 	"time"
@@ -38,11 +41,12 @@ var pgToGoType = map[string]string{
 
 //createAlterStructLog will create alter struct log
 func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema) (err error) {
+
 	var (
-		tmpl *template.Template
-		buf  bytes.Buffer
+		fp     *os.File
+		logDir string
+		logStr string
 	)
-	tmplStr := getLogTmpl()
 	tName := getTableName(schema)
 	sName := tName
 	if model, exists := s.table[sName]; exists {
@@ -50,20 +54,59 @@ func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema) (err e
 	}
 
 	sTime := time.Now().UTC()
-	sName = fmt.Sprintf("%v%v", sName, sTime.Unix())
+	sNameWithTime := fmt.Sprintf("%v%v", sName, sTime.Unix())
 
 	log := SLog{
-		StructName: sName,
+		StructName: sNameWithTime,
 		TableName:  tName,
 		Data:       schema,
 		Date:       sTime.Format("Mon _2 Jan 2006 15:04:05"),
 	}
 
+	if logStr, err = execLogTmpl(log); err == nil {
+		if logDir, err = s.makeStructLogDir(sName); err == nil {
+			file := logDir + "/" + sNameWithTime + ".go"
+			if fp, err = os.Create(file); err == nil {
+				fp.WriteString("package " + sName + "\n")
+				fp.WriteString(logStr)
+				err = exec.Command("gofmt", "-w", file).Run()
+			}
+		}
+	}
+	if err != nil {
+		err = errors.New("Log Creation Error: " + err.Error())
+	}
+	return
+}
+
+//makeStructLogDir will create struct log dir if not exists
+func (s *Shifter) makeStructLogDir(structName string) (logDir string, err error) {
+	if s.LogPath == "" {
+		s.LogPath, err = os.Getwd()
+		s.LogPath += "/log/"
+	}
+	if err == nil {
+		logDir = s.LogPath + "/" + structName
+		if _, err = os.Stat(logDir); os.IsNotExist(err) {
+			err = os.MkdirAll(logDir, os.ModePerm)
+		}
+	}
+	return
+}
+
+//execLogTmpl will execute log template
+func execLogTmpl(log SLog) (logStr string, err error) {
+	var (
+		tmpl *template.Template
+		buf  bytes.Buffer
+	)
+	tmplStr := getLogTmpl()
 	if tmpl, err = template.New("template").
 		Funcs(getLogTmplFunc()).
 		Parse(tmplStr); err == nil {
 		if err = tmpl.Execute(&buf, log); err == nil {
 			fmt.Println(buf.String())
+			logStr = buf.String()
 		}
 	}
 	return

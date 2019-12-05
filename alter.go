@@ -51,7 +51,11 @@ func (s *Shifter) compareSchema(tx *pg.Tx, tSchema, sSchema map[string]model.Col
 		removed bool
 		modify  bool
 	)
-	psql.StartLogging = true
+
+	defer func() { psql.StartLogging = false }()
+	if s.Verbrose {
+		psql.StartLogging = true
+	}
 	//adding column exists in struct but missing in db table
 	if added, err = s.addRemoveCol(tx, sSchema, tSchema, Add, skipPromt); err == nil {
 		//removing column exists in db table but missing in struct

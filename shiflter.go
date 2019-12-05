@@ -17,6 +17,8 @@ type Shifter struct {
 	table     map[string]interface{}
 	enumList  map[string][]string
 	hisExists bool
+	Verbrose  bool
+	LogPath   string
 }
 
 //NewShifter will return shifter model
