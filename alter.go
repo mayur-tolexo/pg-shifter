@@ -64,7 +64,7 @@ func (s *Shifter) compareSchema(tx *pg.Tx, tSchema, sSchema map[string]model.Col
 			modify, err = s.modifyCol(tx, tSchema, sSchema, skipPromt)
 		}
 	}
-	if added || removed || modify {
+	if err == nil && (added || removed || modify) {
 		if err = s.createAlterStructLog(tSchema); err == nil {
 
 			if added || removed {
