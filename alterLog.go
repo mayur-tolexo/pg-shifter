@@ -105,7 +105,7 @@ func execLogTmpl(log SLog) (logStr string, err error) {
 		Funcs(getLogTmplFunc()).
 		Parse(tmplStr); err == nil {
 		if err = tmpl.Execute(&buf, log); err == nil {
-			fmt.Println(buf.String())
+			// fmt.Println(buf.String())
 			logStr = buf.String()
 		}
 	}
