@@ -97,7 +97,7 @@ func getColType(tag string) (cType string, maxLen string) {
 //getColIsNullable will return col nullable allowed from struct tag
 func getColIsNullable(tag string) (nullable string) {
 	nullable = Yes
-	if strings.Contains(tag, " not null ") ||
+	if strings.Contains(tag, "not null") ||
 		strings.Contains(tag, "primary key") {
 		nullable = No
 	}

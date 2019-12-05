@@ -319,6 +319,7 @@ func (s *Shifter) modifyCol(tx *pg.Tx, tSchema, sSchema map[string]model.ColSche
 			if curIsAlter, err = s.modifyDataType(tx, tcSchema, scSchema, skipPrompt); err != nil {
 				break
 			}
+			isAlter = isAlter || curIsAlter
 
 			//if data type is not modified then only modify default type
 			if curIsAlter == false {
@@ -326,14 +327,16 @@ func (s *Shifter) modifyCol(tx *pg.Tx, tSchema, sSchema map[string]model.ColSche
 					break
 				}
 			}
+			isAlter = isAlter || curIsAlter
 
 			//modify not null constraint
 			if curIsAlter, err = s.modifyNotNullConstraint(tx, tcSchema, scSchema, skipPrompt); err != nil {
 				break
 			}
+			isAlter = isAlter || curIsAlter
+
 			//TODO: modify constraint
 		}
-		isAlter = isAlter || curIsAlter
 	}
 
 	return
