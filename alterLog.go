@@ -3,8 +3,8 @@ package shifter
 import (
 	"bytes"
 	"fmt"
-	"html/template"
 	"reflect"
+	"text/template"
 	"time"
 
 	"github.com/iancoleman/strcase"
@@ -13,9 +13,10 @@ import (
 
 //SLog : structure log model
 type SLog struct {
-	Name string
-	Data map[string]model.ColSchema
-	Date string
+	StructName string
+	TableName  string
+	Data       map[string]model.ColSchema
+	Date       string
 }
 
 //pgToStructType to golang type mapping
@@ -43,12 +44,21 @@ func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema) (err e
 	)
 	tmplStr := getLogTmpl()
 	tName := getTableName(schema)
-	if model, exists := s.table[tName]; exists {
-		tName = getTableNameFromStruct(model)
+	sName := tName
+	if model, exists := s.table[sName]; exists {
+		sName = getTableNameFromStruct(model)
 	}
 
-	sTime := time.Now().UTC().Format("Mon _2 Jan 2006 15:04:05")
-	log := SLog{Name: tName, Data: schema, Date: sTime}
+	sTime := time.Now().UTC()
+	sName = fmt.Sprintf("%v%v", sName, sTime.Unix())
+
+	log := SLog{
+		StructName: sName,
+		TableName:  tName,
+		Data:       schema,
+		Date:       sTime.Format("Mon _2 Jan 2006 15:04:05"),
+	}
+
 	if tmpl, err = template.New("template").
 		Funcs(getLogTmplFunc()).
 		Parse(tmplStr); err == nil {
@@ -109,8 +119,9 @@ func getFieldName(k string) (f string) {
 func getLogTmpl() (tmplStr string) {
 
 	tmplStr = `
-//{{ .Name }} model as on {{ .Date }} UTC
-type {{ .Name }} struct {
+//{{ .StructName }} : {{ .TableName }} table model [As on {{ .Date }} UTC]
+type {{ .StructName }} struct {
+	tableName struct{} ` + "`sql:\"{{ .TableName }}\"`" + `
 {{- range $key, $value := .Data}}
 	{{ if eq $value.StructColumnName "" -}}
 		{{ Title $value.ColumnName -}}
