@@ -455,9 +455,9 @@ func (s *Shifter) modifyConstraint(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 	//if table and struct constraint doesn't match
 	if tSchema.ConstraintType != sSchema.ConstraintType {
 		if sSchema.ConstraintType == "" {
-			isAlter, err = dropConstraint(tx, tSchema.TableName, tSchema.ConstraintName, skipPrompt)
+			isAlter, err = dropColAllConstraints(tx, tSchema, skipPrompt)
 		} else if tSchema.ConstraintType == "" {
-			isAlter, err = addConstraint(tx, sSchema, skipPrompt)
+			isAlter, err = addColAllConstraints(tx, sSchema, skipPrompt)
 		} else {
 
 			// sql := ""
@@ -472,12 +472,29 @@ func (s *Shifter) modifyConstraint(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 			// 	sql += getDropConstraintSQL(tSchema.TableName, tSchema.ConstraintName)
 			// }
 
-			fmt.Println(sql)
+			// fmt.Println(sql)
 		}
 	} else if tSchema.ConstraintType == ForeignKey {
 		isAlter, err = modifyFkUniqueConstraint(tx, tSchema, sSchema, skipPrompt)
 	}
 
+	return
+}
+
+//dropColConstraints will drop column all constraints
+func dropColAllConstraints(tx *pg.Tx, tSchema model.ColSchema, skipPrompt bool) (
+	isAlter bool, err error) {
+
+	if isAlter, err = dropConstraint(tx, tSchema, skipPrompt); err == nil {
+		//TODO: also drop unique constraint if exists in table
+		//with foreign key
+		if tSchema.IsFkUnique {
+			var curAtler bool
+			tSchema.ConstraintName = tSchema.FkUniqueName
+			curAtler, err = dropConstraint(tx, tSchema, skipPrompt)
+			isAlter = isAlter || curAtler
+		}
+	}
 	return
 }
 
@@ -487,28 +504,50 @@ func modifyFkUniqueConstraint(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 	skipPrompt bool) (isAlter bool, err error) {
 	if tSchema.IsFkUnique != sSchema.IsFkUnique {
 		if sSchema.IsFkUnique {
+			//adding unique constraint in table
+			//as its exists with foreign key
 			sSchema.ConstraintType = Unique
 			isAlter, err = addConstraint(tx, sSchema, skipPrompt)
 		} else {
-			isAlter, err = dropConstraint(tx, tSchema.TableName, tSchema.FkUniqueName, skipPrompt)
+			//droping unique constraint from table
+			//as its not exists with foreign key in struct anymore
+			tSchema.ConstraintName = tSchema.FkUniqueName
+			isAlter, err = dropConstraint(tx, tSchema, skipPrompt)
 		}
 	}
 	return
 }
 
 //dropConstraint will drop constraint from table
-func dropConstraint(tx *pg.Tx, tName, constraintName string,
-	skipPrompt bool) (isAlter bool, err error) {
-	sql := getDropConstraintSQL(tName, constraintName)
+func dropConstraint(tx *pg.Tx, tSchema model.ColSchema, skipPrompt bool) (isAlter bool, err error) {
+	sql := getDropConstraintSQL(tSchema)
 	if isAlter, err = execByChoice(tx, sql, skipPrompt); err != nil {
-		err = getWrapError(tName, "drop constraint", sql, err)
+		err = getWrapError(tSchema.TableName, "drop constraint", sql, err)
 	}
 	return
 }
 
 //getDropConstraintSQL will return drop constraint sql
-func getDropConstraintSQL(tName, constraintName string) (sql string) {
-	return fmt.Sprintf("ALTER TABLE %v DROP CONSTRAINT %v;\n", tName, constraintName)
+func getDropConstraintSQL(tSchema model.ColSchema) (sql string) {
+	sql = fmt.Sprintf("ALTER TABLE %v DROP CONSTRAINT %v;\n", tSchema.TableName, tSchema.ConstraintName)
+	return
+}
+
+//addColAllConstraints will add column all constraints
+func addColAllConstraints(tx *pg.Tx, sSchema model.ColSchema, skipPrompt bool) (
+	isAlter bool, err error) {
+
+	if isAlter, err = addConstraint(tx, sSchema, skipPrompt); err == nil {
+		//TODO: also adding unique constraint if exists in struct
+		//with foreign key
+		if sSchema.IsFkUnique {
+			var curAtler bool
+			sSchema.ConstraintType = Unique
+			curAtler, err = addConstraint(tx, sSchema, skipPrompt)
+			isAlter = isAlter || curAtler
+		}
+	}
+	return
 }
 
 //addConstraint will add constraint on table column
@@ -539,8 +578,6 @@ func getAddConstraintSQL(schema model.ColSchema) (sql string) {
 	}
 	return
 }
-
-// func getAddConstraintSQL(schema)
 
 //getWrapError will return wrapped error for better debugging
 func getWrapError(tName, op string, sql string, err error) (werr error) {

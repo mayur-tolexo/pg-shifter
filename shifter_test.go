@@ -19,7 +19,7 @@ type TestAddress struct {
 	// City      string `json:"city" sql:"city,type:varchar(255) UNIQUE"`
 	// Status string `json:"status,omitempty" sql:"status,type:status_only_type DEFAULT 'enable'"`
 	Status    string `json:"status,omitempty" sql:"status,type:varchar(200)"`
-	CreatedBy int    `json:"created_by" sql:"created_by,type:int NOT NULL UNIQUE "`
+	CreatedBy int    `json:"created_by" sql:"created_by,type:int NOT NULL UNIQUE REFERENCES test_address(address_id)"`
 	// CreatedAt time.Time `json:"-" sql:"created_at,type:time NOT NULL DEFAULT NOW()"`
 	// UpdatedAt time.Time `json:"-" sql:"updated_at,type:timetz NOT NULL DEFAULT NOW()"`
 	// REFERENCES test_address(address_id) ON DELETE RESTRICT ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED
