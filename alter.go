@@ -124,7 +124,7 @@ func (s *Shifter) addCol(tx *pg.Tx, schema model.ColSchema,
 	if s.hisExists {
 		hName := util.GetHistoryTableName(schema.TableName)
 		dType = getStructDataType(schema)
-		sql += ";\n" + getAddColSQL(hName, schema.ColumnName, dType)
+		sql += getAddColSQL(hName, schema.ColumnName, dType)
 	}
 	//history alter sql end
 
@@ -283,8 +283,8 @@ func getNullDTypeSQL(isNullable string) (str string) {
 }
 
 //getUniqueDTypeSQL will return unique constraint string if exists in column
-func getUniqueDTypeSQL(constraintType string) (str string) {
-	if constraintType == Unique {
+func getUniqueDTypeSQL(schema model.ColSchema) (str string) {
+	if schema.ConstraintType == Unique || schema.IsFkUnique {
 		str = " " + Unique
 	}
 	return
@@ -457,34 +457,58 @@ func (s *Shifter) modifyConstraint(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 		if sSchema.ConstraintType == "" {
 			isAlter, err = dropConstraint(tx, tSchema.TableName, tSchema.ConstraintName, skipPrompt)
 		} else if tSchema.ConstraintType == "" {
-			//add constraint
 			isAlter, err = addConstraint(tx, sSchema, skipPrompt)
 		} else {
-			//drop and then add new constraint
-			// isAlter, err = dropConstraint(tx, tSchema.TableName, tSchema.ConstraintName, skipPrompt)
+
+			// sql := ""
+
+			// if tSchema.ConstraintType == ForeignKey && tSchema.IsFkUnique {
+			// 	sql += getDropConstraintSQL(tSchema.TableName, tSchema.ConstraintName)
+			// } else {
+			// 	sql += getAlterAddConstraintSQL(sSchema)
+			// }
+
+			// if tSchema.ConstraintType == Unique && sSchema.IsFkUnique == false {
+			// 	sql += getDropConstraintSQL(tSchema.TableName, tSchema.ConstraintName)
+			// }
+
+			fmt.Println(sql)
 		}
 	} else if tSchema.ConstraintType == ForeignKey {
-		// fmt.Println("HERE===>", sSchema.ColumnName)
-		if tSchema.IsFkUnique != sSchema.IsFkUnique {
-			if sSchema.IsFkUnique {
-				isAlter, err = addConstraint(tx, sSchema, skipPrompt)
-			} else {
-				isAlter, err = dropConstraint(tx, tSchema.TableName, tSchema.FkUniqueName, skipPrompt)
-			}
-		}
+		isAlter, err = modifyFkUniqueConstraint(tx, tSchema, sSchema, skipPrompt)
 	}
 
+	return
+}
+
+//modifyFkUniqueConstraint will modify unique key constraint
+//if exists with foreign key on same column
+func modifyFkUniqueConstraint(tx *pg.Tx, tSchema, sSchema model.ColSchema,
+	skipPrompt bool) (isAlter bool, err error) {
+	if tSchema.IsFkUnique != sSchema.IsFkUnique {
+		if sSchema.IsFkUnique {
+			sSchema.ConstraintType = Unique
+			isAlter, err = addConstraint(tx, sSchema, skipPrompt)
+		} else {
+			isAlter, err = dropConstraint(tx, tSchema.TableName, tSchema.FkUniqueName, skipPrompt)
+		}
+	}
 	return
 }
 
 //dropConstraint will drop constraint from table
 func dropConstraint(tx *pg.Tx, tName, constraintName string,
 	skipPrompt bool) (isAlter bool, err error) {
-	sql := fmt.Sprintf("ALTER TABLE %v DROP CONSTRAINT %v", tName, constraintName)
+	sql := getDropConstraintSQL(tName, constraintName)
 	if isAlter, err = execByChoice(tx, sql, skipPrompt); err != nil {
 		err = getWrapError(tName, "drop constraint", sql, err)
 	}
 	return
+}
+
+//getDropConstraintSQL will return drop constraint sql
+func getDropConstraintSQL(tName, constraintName string) (sql string) {
+	return fmt.Sprintf("ALTER TABLE %v DROP CONSTRAINT %v;\n", tName, constraintName)
 }
 
 //addConstraint will add constraint on table column
@@ -507,12 +531,16 @@ func getAlterAddConstraintSQL(schema model.ColSchema) (sql string) {
 
 //getAddConstraintSQL will return add constraint sql
 func getAddConstraintSQL(schema model.ColSchema) (sql string) {
-	sql = getStructConstraintSQL(schema)
-	fkName := getConstraintName(schema)
-	sql = fmt.Sprintf("ADD CONSTRAINT %v %v (%v) %v",
-		fkName, schema.ConstraintType, schema.ColumnName, sql)
+	if schema.ConstraintType != "" {
+		sql = getStructConstraintSQL(schema)
+		fkName := getConstraintName(schema)
+		sql = fmt.Sprintf("ADD CONSTRAINT %v %v (%v) %v;\n",
+			fkName, schema.ConstraintType, schema.ColumnName, sql)
+	}
 	return
 }
+
+func getAddConstraintSQL(schema)
 
 //getWrapError will return wrapped error for better debugging
 func getWrapError(tName, op string, sql string, err error) (werr error) {
@@ -564,7 +592,7 @@ func MergeColumnConstraint(tName string, columnSchema,
 				v = curConstraint
 				v.IsFkUnique = true
 			} else if v.ConstraintType == ForeignKey && curConstraint.ConstraintType == Unique {
-				v.FkUniqueName = v.ConstraintName
+				v.FkUniqueName = curConstraint.ConstraintName
 				v.IsFkUnique = true
 			}
 			constraintMap[curConstraint.ColumnName] = v
