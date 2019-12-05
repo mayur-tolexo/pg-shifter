@@ -540,7 +540,7 @@ func getAddConstraintSQL(schema model.ColSchema) (sql string) {
 	return
 }
 
-func getAddConstraintSQL(schema)
+// func getAddConstraintSQL(schema)
 
 //getWrapError will return wrapped error for better debugging
 func getWrapError(tName, op string, sql string, err error) (werr error) {
