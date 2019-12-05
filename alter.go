@@ -52,9 +52,9 @@ func (s *Shifter) compareSchema(tx *pg.Tx, tSchema, sSchema map[string]model.Col
 		modify  bool
 	)
 
-	defer func() { psql.StartLogging = false }()
+	defer func() { psql.LogMode(false) }()
 	if s.Verbrose {
-		psql.StartLogging = true
+		psql.LogMode(true)
 	}
 	//adding column exists in struct but missing in db table
 	if added, err = s.addRemoveCol(tx, sSchema, tSchema, Add, skipPromt); err == nil {
@@ -128,7 +128,11 @@ func (s *Shifter) addCol(tx *pg.Tx, schema model.ColSchema,
 	}
 	//history alter sql end
 
-	isAlter, err = execByChoice(tx, sql, skipPrompt)
+	if isAlter, err = execByChoice(tx, sql, skipPrompt); err != nil {
+		msg := fmt.Sprintf("%v add column error %v\nSQL: %v",
+			schema.TableName, err.Error(), sql)
+		err = errors.New(msg)
+	}
 	return
 }
 
@@ -150,7 +154,11 @@ func (s *Shifter) dropCol(tx *pg.Tx, schema model.ColSchema,
 	}
 	//history alter sql end
 
-	isAlter, err = execByChoice(tx, sql, skipPrompt)
+	if isAlter, err = execByChoice(tx, sql, skipPrompt); err != nil {
+		msg := fmt.Sprintf("%v drop column error %v\nSQL: %v",
+			schema.TableName, err.Error(), sql)
+		err = errors.New(msg)
+	}
 	return
 }
 
@@ -356,7 +364,11 @@ func (s *Shifter) modifyNotNullConstraint(tx *pg.Tx, tSchema, sSchema model.ColS
 			option = Drop
 		}
 		sql := getNotNullColSQL(sSchema.TableName, sSchema.ColumnName, option)
-		isAlter, err = execByChoice(tx, sql, skipPrompt)
+		if isAlter, err = execByChoice(tx, sql, skipPrompt); err != nil {
+			msg := fmt.Sprintf("%v modify not null error %v\nSQL: %v",
+				sSchema.TableName, err.Error(), sql)
+			err = errors.New(msg)
+		}
 	}
 	return
 }
@@ -390,7 +402,11 @@ func (s *Shifter) modifyDataType(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 		}
 		//history alter sql end
 
-		isAlter, err = execByChoice(tx, sql, skipPrompt)
+		if isAlter, err = execByChoice(tx, sql, skipPrompt); err != nil {
+			msg := fmt.Sprintf("%v modify datatype error %v\nSQL: %v",
+				sSchema.TableName, err.Error(), sql)
+			err = errors.New(msg)
+		}
 	}
 
 	return
@@ -420,7 +436,11 @@ func (s *Shifter) modifyDefault(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 		} else {
 			sql = getSetDefaultSQL(sSchema.TableName, sSchema.ColumnName, sSchema.ColumnDefault)
 		}
-		isAlter, err = execByChoice(tx, sql, skipPrompt)
+		if isAlter, err = execByChoice(tx, sql, skipPrompt); err != nil {
+			msg := fmt.Sprintf("%v modify default error %v\nSQL: %v",
+				sSchema.TableName, err.Error(), sql)
+			err = errors.New(msg)
+		}
 	}
 	return
 }
