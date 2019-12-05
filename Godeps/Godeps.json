@@ -1,0 +1,153 @@
+{
+	"ImportPath": "github.com/mayur-tolexo/pg-shifter",
+	"GoVersion": "go1.9",
+	"GodepVersion": "v80",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/BurntSushi/toml",
+			"Comment": "v0.3.0-7-ga368813",
+			"Rev": "a368813c5e648fee92e5f6c30e3944ff9d5e8895"
+		},
+		{
+			"ImportPath": "github.com/fatih/structs",
+			"Comment": "v1.0-4-g7e5a8ee",
+			"Rev": "7e5a8eef611ee84dd359503f3969f80df4c50723"
+		},
+		{
+			"ImportPath": "github.com/go-pg/pg",
+			"Comment": "v6.15.1",
+			"Rev": "ae5d5e7df4b2e598390e10b66b849c6af94f092b"
+		},
+		{
+			"ImportPath": "github.com/go-pg/pg/internal",
+			"Comment": "v6.15.1",
+			"Rev": "ae5d5e7df4b2e598390e10b66b849c6af94f092b"
+		},
+		{
+			"ImportPath": "github.com/go-pg/pg/internal/parser",
+			"Comment": "v6.15.1",
+			"Rev": "ae5d5e7df4b2e598390e10b66b849c6af94f092b"
+		},
+		{
+			"ImportPath": "github.com/go-pg/pg/internal/pool",
+			"Comment": "v6.15.1",
+			"Rev": "ae5d5e7df4b2e598390e10b66b849c6af94f092b"
+		},
+		{
+			"ImportPath": "github.com/go-pg/pg/orm",
+			"Comment": "v6.15.1",
+			"Rev": "ae5d5e7df4b2e598390e10b66b849c6af94f092b"
+		},
+		{
+			"ImportPath": "github.com/go-pg/pg/types",
+			"Comment": "v6.15.1",
+			"Rev": "ae5d5e7df4b2e598390e10b66b849c6af94f092b"
+		},
+		{
+			"ImportPath": "github.com/iancoleman/strcase",
+			"Rev": "3605ed457bf7f8caa1371b4fafadadc026673479"
+		},
+		{
+			"ImportPath": "github.com/jacobstr/confer",
+			"Comment": "0.1.0-7-g9a227d3",
+			"Rev": "9a227d38758a4f48761c1b9d295f55f0dc5c2bcf"
+		},
+		{
+			"ImportPath": "github.com/jacobstr/confer/errors",
+			"Comment": "0.1.0-7-g9a227d3",
+			"Rev": "9a227d38758a4f48761c1b9d295f55f0dc5c2bcf"
+		},
+		{
+			"ImportPath": "github.com/jacobstr/confer/maps",
+			"Comment": "0.1.0-7-g9a227d3",
+			"Rev": "9a227d38758a4f48761c1b9d295f55f0dc5c2bcf"
+		},
+		{
+			"ImportPath": "github.com/jacobstr/confer/reader",
+			"Comment": "0.1.0-7-g9a227d3",
+			"Rev": "9a227d38758a4f48761c1b9d295f55f0dc5c2bcf"
+		},
+		{
+			"ImportPath": "github.com/jacobstr/confer/source",
+			"Comment": "0.1.0-7-g9a227d3",
+			"Rev": "9a227d38758a4f48761c1b9d295f55f0dc5c2bcf"
+		},
+		{
+			"ImportPath": "github.com/jinzhu/gorm",
+			"Comment": "v1.0",
+			"Rev": "5174cc5c242a728b435ea2be8a2f7f998e15429b"
+		},
+		{
+			"ImportPath": "github.com/jinzhu/inflection",
+			"Rev": "1c35d901db3da928c72a72d8458480cc9ade058f"
+		},
+		{
+			"ImportPath": "github.com/kr/pretty",
+			"Comment": "go.weekly.2011-12-22-36-gcfb55aa",
+			"Rev": "cfb55aafdaf3ec08f0db22699ab822c50091b1c4"
+		},
+		{
+			"ImportPath": "github.com/kr/text",
+			"Rev": "7cafcd837844e784b526369c9bce262804aebc60"
+		},
+		{
+			"ImportPath": "github.com/mayur-tolexo/aero/conf",
+			"Rev": "f290fde29961d49cd70fa924db62dc8e7bcacf05"
+		},
+		{
+			"ImportPath": "github.com/mayur-tolexo/contour/adapter/psql",
+			"Rev": "bac093b799f5cd6de86652fb92baab4043fb4a5a"
+		},
+		{
+			"ImportPath": "github.com/mayur-tolexo/flaw",
+			"Rev": "0b1b55ffadda078c00d6936312d1fc430e1f7f83"
+		},
+		{
+			"ImportPath": "github.com/serenize/snaker",
+			"Rev": "1c7f65329f6524115af8ca01ab604c00cddf5558"
+		},
+		{
+			"ImportPath": "github.com/spf13/cast",
+			"Comment": "v1.1.0",
+			"Rev": "acbeb36b902d72a7a4c18e8f3241075e7ab763e4"
+		},
+		{
+			"ImportPath": "github.com/spf13/jwalterweatherman",
+			"Rev": "0efa5202c04663c757d84f90f5219c1250baf94f"
+		},
+		{
+			"ImportPath": "github.com/spf13/pflag",
+			"Comment": "v1.0.0",
+			"Rev": "e57e3eeb33f795204c1ca35f56c44f83227c6e66"
+		},
+		{
+			"ImportPath": "github.com/tolexo/aero/conf",
+			"Rev": "a4598568b2e10be9c2cffb539ad8fa5218834096"
+		},
+		{
+			"ImportPath": "gitlab.com/tolexo/plib/migrator/model",
+			"Rev": "3474ba2ed3dfa289b8deea9f94737d1bf0350285"
+		},
+		{
+			"ImportPath": "gitlab.com/tolexo/plib/migrator/util",
+			"Rev": "3474ba2ed3dfa289b8deea9f94737d1bf0350285"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/pbkdf2",
+			"Rev": "505ab145d0a99da450461ae2c1a9f6cd10d1f447"
+		},
+		{
+			"ImportPath": "gopkg.in/yaml.v2",
+			"Comment": "v2.2.1",
+			"Rev": "5420a8b6744d3b0345ab293f6fcba19c978f1183"
+		},
+		{
+			"ImportPath": "mellium.im/sasl",
+			"Comment": "v0.2.1-6-g80f447d",
+			"Rev": "80f447d8107c05f712682c349a26e081488de60c"
+		}
+	]
+}
