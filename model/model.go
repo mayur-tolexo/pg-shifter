@@ -20,6 +20,8 @@ type ColSchema struct {
 	DeleteType        string `sql:"confdeltype"`
 	SeqName           string `sql:"seq_name"`
 	SeqDataType       string `sql:"seq_data_type"`
+	IsFkUnique        bool   `sql:"-"`
+	FkUniqueName      string `sql:"-"`
 }
 
 //UKSchema : Unique Schema Model

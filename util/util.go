@@ -229,33 +229,6 @@ func GetAfterDeleteTriggerName(tableName string) string {
 	return tableName + "_after_delete"
 }
 
-//MergeColumnConstraint : Merge Table Schema with Constraint
-func MergeColumnConstraint(tName string, columnSchema,
-	constraint []model.ColSchema) map[string]model.ColSchema {
-
-	constraintMap := make(map[string]model.ColSchema)
-	ColSchema := make(map[string]model.ColSchema)
-	for _, curConstraint := range constraint {
-		constraintMap[curConstraint.ColumnName] = curConstraint
-	}
-	for _, curColumnSchema := range columnSchema {
-		if curConstraint, exists :=
-			constraintMap[curColumnSchema.ColumnName]; exists == true {
-			curColumnSchema.ConstraintType = curConstraint.ConstraintType
-			curColumnSchema.ConstraintName = curConstraint.ConstraintName
-			curColumnSchema.IsDeferrable = curConstraint.IsDeferrable
-			curColumnSchema.InitiallyDeferred = curConstraint.InitiallyDeferred
-			curColumnSchema.ForeignTableName = curConstraint.ForeignTableName
-			curColumnSchema.ForeignColumnName = curConstraint.ForeignColumnName
-			curColumnSchema.UpdateType = curConstraint.UpdateType
-			curColumnSchema.DeleteType = curConstraint.DeleteType
-		}
-		curColumnSchema.TableName = tName
-		ColSchema[curColumnSchema.ColumnName] = curColumnSchema
-	}
-	return ColSchema
-}
-
 //IsAfterUpdateTriggerExists will check if after update triger exists
 func IsAfterUpdateTriggerExists(tx *pg.Tx, tName string) (exists bool, err error) {
 	var count int

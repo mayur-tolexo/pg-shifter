@@ -25,7 +25,7 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPromt bool) (err e
 	if isValid == true {
 		if columnSchema, err = util.GetColumnSchema(tx, tableName); err == nil {
 			if constraint, err = util.GetConstraint(tx, tableName); err == nil {
-				tSchema := util.MergeColumnConstraint(tableName, columnSchema, constraint)
+				tSchema := MergeColumnConstraint(tableName, columnSchema, constraint)
 				sSchema := s.GetStructSchema(tableName)
 
 				if s.hisExists, err = util.IsAfterUpdateTriggerExists(tx, tableName); err == nil {
@@ -112,12 +112,12 @@ func (s *Shifter) alterCol(tx *pg.Tx, schema model.ColSchema,
 func (s *Shifter) addCol(tx *pg.Tx, schema model.ColSchema,
 	skipPrompt bool) (isAlter bool, err error) {
 
-	dType := getDataTypeByStruct(schema)
+	dType := getAddColTypeSQL(schema)
 	sql := getAddColSQL(schema.TableName, schema.ColumnName, dType)
-	fkSQL := getAddFkConstraintSQL(schema)
+	cSQL := getAddConstraintSQL(schema)
 
-	if fkSQL != "" {
-		sql += "," + fkSQL
+	if cSQL != "" {
+		sql += "," + cSQL
 	}
 
 	//checking history table exists
@@ -129,9 +129,7 @@ func (s *Shifter) addCol(tx *pg.Tx, schema model.ColSchema,
 	//history alter sql end
 
 	if isAlter, err = execByChoice(tx, sql, skipPrompt); err != nil {
-		msg := fmt.Sprintf("%v add column error %v\nSQL: %v",
-			schema.TableName, err.Error(), sql)
-		err = errors.New(msg)
+		err = getWrapError(schema.TableName, "add column", sql, err)
 	}
 	return
 }
@@ -155,9 +153,7 @@ func (s *Shifter) dropCol(tx *pg.Tx, schema model.ColSchema,
 	//history alter sql end
 
 	if isAlter, err = execByChoice(tx, sql, skipPrompt); err != nil {
-		msg := fmt.Sprintf("%v drop column error %v\nSQL: %v",
-			schema.TableName, err.Error(), sql)
-		err = errors.New(msg)
+		err = getWrapError(schema.TableName, "drop column", sql, err)
 	}
 	return
 }
@@ -165,29 +161,6 @@ func (s *Shifter) dropCol(tx *pg.Tx, schema model.ColSchema,
 //getAddColSQL will return add column sql
 func getDropColSQL(tName, cName string) (sql string) {
 	sql = fmt.Sprintf("ALTER TABLE %v DROP %v\n", tName, cName)
-	return
-}
-
-//addFk will add fk in column if exists in schema
-func addFk(tx *pg.Tx, schema model.ColSchema, skipPrompt bool) (
-	isAlter bool, err error) {
-
-	if schema.ConstraintType == ForeignKey {
-		sql := getStructConstraintSQL(schema)
-		sql = fmt.Sprintf("ALTER TABLE %v %v", schema.TableName, sql)
-		isAlter, err = execByChoice(tx, sql, skipPrompt)
-	}
-	return
-}
-
-//getAddFkConstraintSQL will return fk constraint sql
-func getAddFkConstraintSQL(schema model.ColSchema) (sql string) {
-	if schema.ConstraintType == ForeignKey {
-		sql = getStructConstraintSQL(schema)
-		fkName := getConstraintName(schema)
-		sql = fmt.Sprintf("ADD CONSTRAINT %v %v (%v) %v",
-			fkName, ForeignKey, schema.ColumnName, sql)
-	}
 	return
 }
 
@@ -210,9 +183,7 @@ func getConstraintName(schema model.ColSchema) (keyName string) {
 func getStructConstraintSQL(schema model.ColSchema) (sql string) {
 	switch schema.ConstraintType {
 	case PrimaryKey:
-		sql = " " + PrimaryKey
 	case Unique:
-		sql = getUniqueDTypeSQL(Unique)
 	case ForeignKey:
 		deleteTag := getConstraintTagByFlag(schema.DeleteType)
 		updateTag := getConstraintTagByFlag(schema.UpdateType)
@@ -251,10 +222,10 @@ func getConstraintTagByFlag(flag string) (tag string) {
 	return
 }
 
-//getDataTypeByStruct will return data type from struct
-func getDataTypeByStruct(schema model.ColSchema) (dType string) {
+//getAddColTypeSQL will return add column type sql
+func getAddColTypeSQL(schema model.ColSchema) (dType string) {
 	dType = getStructDataType(schema)
-	dType += getUniqueDTypeSQL(schema.ConstraintType)
+	// dType += getUniqueDTypeSQL(schema.ConstraintType)
 	dType += getNullDTypeSQL(schema.IsNullable)
 	dType += getDefaultDTypeSQL(schema)
 	return
@@ -347,7 +318,11 @@ func (s *Shifter) modifyCol(tx *pg.Tx, tSchema, sSchema map[string]model.ColSche
 			}
 			isAlter = isAlter || curIsAlter
 
-			//TODO: modify constraint
+			//modify pk/uk/fk constraint
+			if curIsAlter, err = s.modifyConstraint(tx, tcSchema, scSchema, skipPrompt); err != nil {
+				break
+			}
+			isAlter = isAlter || curIsAlter
 		}
 	}
 
@@ -365,9 +340,7 @@ func (s *Shifter) modifyNotNullConstraint(tx *pg.Tx, tSchema, sSchema model.ColS
 		}
 		sql := getNotNullColSQL(sSchema.TableName, sSchema.ColumnName, option)
 		if isAlter, err = execByChoice(tx, sql, skipPrompt); err != nil {
-			msg := fmt.Sprintf("%v modify not null error %v\nSQL: %v",
-				sSchema.TableName, err.Error(), sql)
-			err = errors.New(msg)
+			err = getWrapError(sSchema.TableName, "modify not null", sql, err)
 		}
 	}
 	return
@@ -403,9 +376,7 @@ func (s *Shifter) modifyDataType(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 		//history alter sql end
 
 		if isAlter, err = execByChoice(tx, sql, skipPrompt); err != nil {
-			msg := fmt.Sprintf("%v modify datatype error %v\nSQL: %v",
-				sSchema.TableName, err.Error(), sql)
-			err = errors.New(msg)
+			err = getWrapError(sSchema.TableName, "modify datatype", sql, err)
 		}
 	}
 
@@ -437,9 +408,7 @@ func (s *Shifter) modifyDefault(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 			sql = getSetDefaultSQL(sSchema.TableName, sSchema.ColumnName, sSchema.ColumnDefault)
 		}
 		if isAlter, err = execByChoice(tx, sql, skipPrompt); err != nil {
-			msg := fmt.Sprintf("%v modify default error %v\nSQL: %v",
-				sSchema.TableName, err.Error(), sql)
-			err = errors.New(msg)
+			err = getWrapError(sSchema.TableName, "modify default", sql, err)
 		}
 	}
 	return
@@ -478,6 +447,81 @@ func getSetDefaultSQL(tName, cName, dVal string) (sql string) {
 	return
 }
 
+//modifyConstraint will modify primary key/ unique key/ foreign key constraints by comparing table and structure
+func (s *Shifter) modifyConstraint(tx *pg.Tx, tSchema, sSchema model.ColSchema,
+	skipPrompt bool) (isAlter bool, err error) {
+
+	fmt.Println(sSchema.ColumnName, "T", tSchema.IsFkUnique, tSchema.ConstraintType, "S", sSchema.IsFkUnique, sSchema.ConstraintType)
+	//if table and struct constraint doesn't match
+	if tSchema.ConstraintType != sSchema.ConstraintType {
+		if sSchema.ConstraintType == "" {
+			isAlter, err = dropConstraint(tx, tSchema.TableName, tSchema.ConstraintName, skipPrompt)
+		} else if tSchema.ConstraintType == "" {
+			//add constraint
+			isAlter, err = addConstraint(tx, sSchema, skipPrompt)
+		} else {
+			//drop and then add new constraint
+			// isAlter, err = dropConstraint(tx, tSchema.TableName, tSchema.ConstraintName, skipPrompt)
+		}
+	} else if tSchema.ConstraintType == ForeignKey {
+		// fmt.Println("HERE===>", sSchema.ColumnName)
+		if tSchema.IsFkUnique != sSchema.IsFkUnique {
+			if sSchema.IsFkUnique {
+				isAlter, err = addConstraint(tx, sSchema, skipPrompt)
+			} else {
+				isAlter, err = dropConstraint(tx, tSchema.TableName, tSchema.FkUniqueName, skipPrompt)
+			}
+		}
+	}
+
+	return
+}
+
+//dropConstraint will drop constraint from table
+func dropConstraint(tx *pg.Tx, tName, constraintName string,
+	skipPrompt bool) (isAlter bool, err error) {
+	sql := fmt.Sprintf("ALTER TABLE %v DROP CONSTRAINT %v", tName, constraintName)
+	if isAlter, err = execByChoice(tx, sql, skipPrompt); err != nil {
+		err = getWrapError(tName, "drop constraint", sql, err)
+	}
+	return
+}
+
+//addConstraint will add constraint on table column
+func addConstraint(tx *pg.Tx, schema model.ColSchema, skipPrompt bool) (
+	isAlter bool, err error) {
+
+	sql := getAlterAddConstraintSQL(schema)
+	if isAlter, err = execByChoice(tx, sql, skipPrompt); err != nil {
+		err = getWrapError(schema.TableName, "add constraint", sql, err)
+	}
+	return
+}
+
+//getAlterAddConstraintSQL will return add constraint with alter table
+func getAlterAddConstraintSQL(schema model.ColSchema) (sql string) {
+	sql = getAddConstraintSQL(schema)
+	sql = fmt.Sprintf("ALTER TABLE %v %v", schema.TableName, sql)
+	return
+}
+
+//getAddConstraintSQL will return add constraint sql
+func getAddConstraintSQL(schema model.ColSchema) (sql string) {
+	sql = getStructConstraintSQL(schema)
+	fkName := getConstraintName(schema)
+	sql = fmt.Sprintf("ADD CONSTRAINT %v %v (%v) %v",
+		fkName, schema.ConstraintType, schema.ColumnName, sql)
+	return
+}
+
+//getWrapError will return wrapped error for better debugging
+func getWrapError(tName, op string, sql string, err error) (werr error) {
+	msg := fmt.Sprintf("%v %v error %v\nSQL: %v",
+		tName, op, err.Error(), sql)
+	werr = errors.New(msg)
+	return
+}
+
 //execByChoice will execute by choice
 func execByChoice(tx *pg.Tx, sql string, skipPrompt bool) (
 	isAlter bool, err error) {
@@ -504,4 +548,46 @@ func printSchema(tSchema, sSchema map[string]model.ColSchema) {
 			fmt.Println("---")
 		}
 	}
+}
+
+//MergeColumnConstraint : Merge Table Schema with Constraint
+func MergeColumnConstraint(tName string, columnSchema,
+	constraint []model.ColSchema) map[string]model.ColSchema {
+
+	constraintMap := make(map[string]model.ColSchema)
+	ColSchema := make(map[string]model.ColSchema)
+	for _, curConstraint := range constraint {
+		if v, exists := constraintMap[curConstraint.ColumnName]; exists {
+			//if curent column is unique as foreign key as well
+			if v.ConstraintType == Unique && curConstraint.ConstraintType == ForeignKey {
+				v.FkUniqueName = v.ConstraintName
+				v = curConstraint
+				v.IsFkUnique = true
+			} else if v.ConstraintType == ForeignKey && curConstraint.ConstraintType == Unique {
+				v.FkUniqueName = v.ConstraintName
+				v.IsFkUnique = true
+			}
+			constraintMap[curConstraint.ColumnName] = v
+		} else {
+			constraintMap[curConstraint.ColumnName] = curConstraint
+		}
+	}
+	for _, curColumnSchema := range columnSchema {
+		if curConstraint, exists :=
+			constraintMap[curColumnSchema.ColumnName]; exists == true {
+			curColumnSchema.ConstraintType = curConstraint.ConstraintType
+			curColumnSchema.ConstraintName = curConstraint.ConstraintName
+			curColumnSchema.IsDeferrable = curConstraint.IsDeferrable
+			curColumnSchema.InitiallyDeferred = curConstraint.InitiallyDeferred
+			curColumnSchema.ForeignTableName = curConstraint.ForeignTableName
+			curColumnSchema.ForeignColumnName = curConstraint.ForeignColumnName
+			curColumnSchema.UpdateType = curConstraint.UpdateType
+			curColumnSchema.DeleteType = curConstraint.DeleteType
+			curColumnSchema.IsFkUnique = curConstraint.IsFkUnique
+			curColumnSchema.FkUniqueName = curConstraint.FkUniqueName
+		}
+		curColumnSchema.TableName = tName
+		ColSchema[curColumnSchema.ColumnName] = curColumnSchema
+	}
+	return ColSchema
 }

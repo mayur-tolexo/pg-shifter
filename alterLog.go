@@ -126,6 +126,7 @@ func getSQLTag(schema model.ColSchema) (dType string) {
 	dType = getStructDataType(schema)
 	dType += getNullDTypeSQL(schema.IsNullable)
 	dType += getDefaultDTypeSQL(schema)
+	dType += getUniqueDTypeSQL(schema.ConstraintType)
 	dType += getStructConstraintSQL(schema)
 	return
 }

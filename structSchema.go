@@ -97,8 +97,8 @@ func getColType(tag string) (cType string, maxLen string) {
 //getColIsNullable will return col nullable allowed from struct tag
 func getColIsNullable(tag string) (nullable string) {
 	nullable = Yes
-	if strings.Contains(tag, "not null") ||
-		strings.Contains(tag, "primary key") {
+	if strings.Contains(tag, NotNullTag) ||
+		strings.Contains(tag, PrimaryKeyTag) {
 		nullable = No
 	}
 	return
@@ -119,7 +119,7 @@ func getColMaxChar(cType string) (maxLen string) {
 //here we are setting the pk,uk or fk and deferrable and initially defered constraings
 func setColConstraint(schema *model.ColSchema, tag string) {
 	cSet := false
-	if strings.Contains(tag, "primary key") {
+	if strings.Contains(tag, PrimaryKeyTag) {
 		cSet = true
 		schema.ConstraintType = PrimaryKey
 		//in case of primary key reference table is itself
@@ -130,8 +130,12 @@ func setColConstraint(schema *model.ColSchema, tag string) {
 		schema.ConstraintType = Unique
 		//in case of unique key reference table is itself
 		schema.ForeignTableName = schema.TableName
-	} else if strings.Contains(tag, references) {
+	}
+	if strings.Contains(tag, references) {
 		cSet = true
+		if schema.ConstraintType != "" {
+			schema.IsFkUnique = true
+		}
 		schema.ConstraintType = ForeignKey
 		referenceCheck := strings.Split(tag, references)
 

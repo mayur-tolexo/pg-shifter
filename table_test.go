@@ -12,6 +12,7 @@ func TestAlterTable(t *testing.T) {
 	if conn, err := psql.Conn(true); err == nil {
 		tx, _ := conn.Begin()
 		s := NewShifter()
+		s.Verbrose = true
 		s.SetTableModel(&TestAddress{})
 		if err = s.alterTable(tx, "test_address", true); err == nil {
 			tx.Commit()
