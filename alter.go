@@ -3,6 +3,7 @@ package shifter
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/fatih/structs"
 	"github.com/go-pg/pg"
@@ -60,9 +61,12 @@ func (s *Shifter) compareSchema(tx *pg.Tx, tSchema, sSchema map[string]model.Col
 		}
 	}
 	if added || removed || modify {
-		tName := getTableName(sSchema)
-		if err = s.createTrigger(tx, tName); err == nil {
-			err = s.createAlterStructLog(tSchema)
+		if err = s.createAlterStructLog(tSchema); err == nil {
+
+			if added || removed {
+				tName := getTableName(sSchema)
+				err = s.createTrigger(tx, tName)
+			}
 		}
 	}
 	return
@@ -397,9 +401,12 @@ func getModifyColSQL(tName, cName, dType, udtType string) (sql string) {
 func (s *Shifter) modifyDefault(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 	skipPrompt bool) (isAlter bool, err error) {
 
+	tDefault := getTableDefault(tSchema)
+	sDefault := sSchema.ColumnDefault
+
 	//for primary key default is series so should remove it
 	if tSchema.ConstraintType != PrimaryKey &&
-		tSchema.ColumnDefault != sSchema.ColumnDefault {
+		tDefault != sDefault {
 		sql := ""
 		if sSchema.ColumnDefault == "" {
 			sql = getDropDefaultSQL(sSchema.TableName, sSchema.ColumnName)
@@ -408,6 +415,23 @@ func (s *Shifter) modifyDefault(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 		}
 		isAlter, err = execByChoice(tx, sql, skipPrompt)
 	}
+	return
+}
+
+//getTableDefault will return table default value based on null allowed
+func getTableDefault(tSchema model.ColSchema) (tDefault string) {
+	tDefault = tSchema.ColumnDefault
+
+	if tDefault == "" {
+		if tSchema.IsNullable == Yes {
+			tDefault = Null
+		}
+	} else if tSchema.ConstraintType != PrimaryKey &&
+		tSchema.SeqName == "" && strings.Contains(tDefault, "::") {
+		tDefault = strings.Split(tDefault, "::")[0]
+	}
+	tDefault = strings.ToLower(tDefault)
+
 	return
 }
 

@@ -12,4 +12,5 @@ const (
 	Drop        = "DROP"
 	UserDefined = "USER-DEFINED"
 	Set         = "SET"
+	Null        = "null"
 )
