@@ -25,7 +25,8 @@ const (
 
 //GetColumnSchema : Get Column Schema of given table
 func GetColumnSchema(tx *pg.Tx, tableName string) (columnSchema []model.ColSchema, err error) {
-	query := `SELECT col.column_name, col.column_default, col.data_type, 
+	query := `SELECT col.column_name, col.column_default, col.data_type,
+	col.ordinal_position as position,
 	col.udt_name, col.is_nullable, col.character_maximum_length 
 	, sq.sequence_name AS seq_name
 	, sq.data_type AS seq_data_type

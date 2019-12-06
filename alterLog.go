@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"sort"
 	"text/template"
 	"time"
 
@@ -18,7 +19,7 @@ import (
 type sLog struct {
 	StructName  string
 	TableName   string
-	Data        map[string]model.ColSchema
+	Data        []model.ColSchema
 	Date        string
 	importedPkg map[string]struct{}
 }
@@ -66,7 +67,7 @@ func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema) (err e
 	log := sLog{
 		StructName:  sNameWithTime,
 		TableName:   tName,
-		Data:        schema,
+		Data:        getLogData(schema),
 		Date:        sTime.Format("Mon _2 Jan 2006 15:04:05"),
 		importedPkg: make(map[string]struct{}),
 	}
@@ -192,6 +193,17 @@ func getTableName(schema map[string]model.ColSchema) (tName string) {
 //getFieldName will return field name in Camel Case
 func getFieldName(k string) (f string) {
 	f = strcase.ToCamel(k)
+	return
+}
+
+//getLogData will return data based on position of column in table
+func getLogData(schema map[string]model.ColSchema) (data []model.ColSchema) {
+	for _, v := range schema {
+		data = append(data, v)
+	}
+	sort.Slice(data, func(i, j int) bool {
+		return data[i].Position < data[j].Position
+	})
 	return
 }
 
