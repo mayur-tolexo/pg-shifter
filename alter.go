@@ -432,23 +432,55 @@ func isSameDefault(tSchema, sSchema model.ColSchema) (isSame bool) {
 
 		if strings.Contains(tDefault, "::") &&
 			strings.Contains(sDefault, "::") == false {
-			tDefault = strings.Split(tDefault, "::")[0]
+			dataType, exists := DataAlias[sSchema.DataType]
+			if exists == false {
+				dataType = sSchema.DataType
+			}
+			sDefault += "::" + dataType
+			// tDefault = strings.Split(tDefault, "::")[0]
 		}
-		tDefault = strings.ToLower(tDefault)
 
-		if tDefault == sDefault ||
-			addQuote(tDefault) == sDefault ||
-			tDefault == addQuote(sDefault) {
+		if hasQuote(sDefault) && hasQuote(tDefault) == false {
+			tDefault = addQuote(tDefault)
+		} else if hasQuote(tDefault) && hasQuote(sDefault) == false {
+			sDefault = addQuote(sDefault)
+		}
+
+		tDefault = strings.ToLower(tDefault)
+		// fmt.Println(tSchema.ColumnName, "T", tDefault, "S", sDefault)
+
+		if tDefault == sDefault {
 			isSame = true
 		}
 	}
-
 	return
 }
 
 //addQuote will add single quote
-func addQuote(data string) string {
-	return fmt.Sprintf("'%v'", data)
+func addQuote(a string) (qa string) {
+	prefix := ""
+	if strings.Contains(a, "::") {
+		data := strings.Split(a, "::")
+		if len(data) > 1 {
+			a = data[0]
+			prefix = "::" + strings.Join(data[1:], "")
+		}
+	}
+
+	qa = "'" + a + "'" + prefix
+	return
+}
+
+//hasQuote will check data have single quote
+func hasQuote(a string) (hasQuote bool) {
+	if strings.Contains(a, "::") {
+		a = strings.Split(a, "::")[0]
+	}
+	if strings.HasPrefix(a, "'") &&
+		strings.HasSuffix(a, "'") {
+		hasQuote = true
+	}
+	return
 }
 
 //getDropDefaultSQL will return drop default constraint sql
