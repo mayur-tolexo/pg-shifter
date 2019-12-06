@@ -14,7 +14,7 @@ import (
 
 //Alter Table
 func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPrompt bool) (err error) {
-	// initStructTableMap()
+
 	var (
 		columnSchema    []model.ColSchema
 		constraint      []model.ColSchema
