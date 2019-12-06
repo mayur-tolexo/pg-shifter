@@ -3,6 +3,7 @@ package shifter
 import (
 	"fmt"
 	"reflect"
+	"strings"
 
 	"github.com/go-pg/pg"
 	"github.com/mayur-tolexo/pg-shifter/model"
@@ -47,10 +48,15 @@ func (s *Shifter) checkUniqueKeyToAlter(tx *pg.Tx, tName string,
 	if len(uk) > 0 {
 		sql := ""
 		for ukName, ukFields := range uk {
-			sql += getUniqueKeyQuery(tName, ukName, ukFields)
+			//only for more than one fields
+			if strings.Contains(ukFields, ",") {
+				sql += getUniqueKeyQuery(tName, ukName, ukFields)
+			}
 		}
-		if _, err = execByChoice(tx, sql, true); err != nil {
-			err = getWrapError(tName, "composite unique key alter", sql, err)
+		if sql != "" {
+			if _, err = execByChoice(tx, sql, true); err != nil {
+				err = getWrapError(tName, "composite unique key alter", sql, err)
+			}
 		}
 	}
 	return
