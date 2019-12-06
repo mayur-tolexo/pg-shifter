@@ -30,14 +30,13 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPrompt bool) (err 
 
 				if s.hisExists, err = util.IsAfterUpdateTriggerExists(tx, tableName); err == nil {
 
-					defer func() { psql.LogMode(false) }()
-					if s.Verbrose {
-						psql.LogMode(true)
-					}
-
 					if err = s.compareSchema(tx, tSchema, sSchema, skipPrompt); err == nil {
 						if uniqueKeySchema, err = util.GetCompositeUniqueKey(tx, tableName); err == nil &&
 							len(uniqueKeySchema) > 0 {
+							defer func() { psql.LogMode(false) }()
+							if s.Verbrose {
+								psql.LogMode(true)
+							}
 							err = s.checkUniqueKeyToAlter(tx, tableName, uniqueKeySchema)
 						}
 					}
@@ -62,6 +61,11 @@ func (s *Shifter) compareSchema(tx *pg.Tx, tSchema, sSchema map[string]model.Col
 		removed bool
 		modify  bool
 	)
+
+	defer func() { psql.LogMode(false) }()
+	if s.Verbrose {
+		psql.LogMode(true)
+	}
 
 	//adding column exists in struct but missing in db table
 	if added, err = s.addRemoveCol(tx, sSchema, tSchema, Add, skipPrompt); err == nil {

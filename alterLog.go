@@ -14,31 +14,36 @@ import (
 	"github.com/mayur-tolexo/pg-shifter/model"
 )
 
-//SLog : structure log model
-type SLog struct {
-	StructName string
-	TableName  string
-	Data       map[string]model.ColSchema
-	Date       string
+//sLog : structure log model
+type sLog struct {
+	StructName  string
+	TableName   string
+	Data        map[string]model.ColSchema
+	Date        string
+	importedPkg map[string]struct{}
 }
 
 //pgToStructType to golang type mapping
 var pgToGoType = map[string]string{
-	"bigint":            "int",
-	"bigserial":         "int",
-	"varbit":            "[]bytes",
-	"boolean":           "bool",
-	"character":         "string",
-	"character varying": "string",
-	"double precision":  "float64",
-	"integer":           "int",
-	"numeric":           "float64",
-	"real":              "float64",
-	"smallint":          "int",
-	"smallserial":       "int",
-	"serial":            "int",
-	"text":              "string",
-	"citext":            "string",
+	"bigint":                      "int",
+	"bigserial":                   "int",
+	"varbit":                      "[]bytes",
+	"boolean":                     "bool",
+	"character":                   "string",
+	"character varying":           "string",
+	"double precision":            "float64",
+	"integer":                     "int",
+	"numeric":                     "float64",
+	"real":                        "float64",
+	"smallint":                    "int",
+	"smallserial":                 "int",
+	"serial":                      "int",
+	"text":                        "string",
+	"citext":                      "string",
+	"time without time zone":      timePkgTime,
+	"time with time zone":         timePkgTime,
+	"timestamp without time zone": timePkgTime,
+	"timestamp with time zone":    timePkgTime,
 }
 
 //createAlterStructLog will create alter struct log
@@ -58,11 +63,12 @@ func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema) (err e
 	sTime := time.Now().UTC()
 	sNameWithTime := fmt.Sprintf("%v%v", sName, sTime.Unix())
 
-	log := SLog{
-		StructName: sNameWithTime,
-		TableName:  tName,
-		Data:       schema,
-		Date:       sTime.Format("Mon _2 Jan 2006 15:04:05"),
+	log := sLog{
+		StructName:  sNameWithTime,
+		TableName:   tName,
+		Data:        schema,
+		Date:        sTime.Format("Mon _2 Jan 2006 15:04:05"),
+		importedPkg: make(map[string]struct{}),
 	}
 
 	if logStr, err = execLogTmpl(log); err == nil {
@@ -70,6 +76,11 @@ func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema) (err e
 			file := logDir + "/" + sNameWithTime + ".go"
 			if fp, err = os.Create(file); err == nil {
 				fp.WriteString("package " + sName + "\n")
+
+				if len(log.importedPkg) > 0 {
+					fp.WriteString("import (" + getImportPkg(log.importedPkg) + ")")
+				}
+
 				fp.WriteString(logStr)
 				err = exec.Command("gofmt", "-w", file).Run()
 			}
@@ -77,6 +88,14 @@ func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema) (err e
 	}
 	if err != nil {
 		err = errors.New("Log Creation Error: " + err.Error())
+	}
+	return
+}
+
+//getImportPkg will append all imported packeges
+func getImportPkg(pkg map[string]struct{}) (impPkg string) {
+	for k := range pkg {
+		impPkg += "\"" + k + "\"\n"
 	}
 	return
 }
@@ -97,7 +116,7 @@ func (s *Shifter) makeStructLogDir(structName string) (logDir string, err error)
 }
 
 //execLogTmpl will execute log template
-func execLogTmpl(log SLog) (logStr string, err error) {
+func execLogTmpl(log sLog) (logStr string, err error) {
 	var (
 		tmpl *template.Template
 		buf  bytes.Buffer
@@ -106,7 +125,7 @@ func execLogTmpl(log SLog) (logStr string, err error) {
 	if tmpl, err = template.New("template").
 		Funcs(getLogTmplFunc()).
 		Parse(tmplStr); err == nil {
-		if err = tmpl.Execute(&buf, log); err == nil {
+		if err = tmpl.Execute(&buf, &log); err == nil {
 			// fmt.Println(buf.String())
 			logStr = buf.String()
 		}
@@ -117,9 +136,8 @@ func execLogTmpl(log SLog) (logStr string, err error) {
 //getTmplFunc will return template functions
 func getLogTmplFunc() template.FuncMap {
 	return template.FuncMap{
-		"Title":              getFieldName,
-		"getStructFieldType": getStructFieldType,
-		"getSQLTag":          getSQLTag,
+		"Title":     getFieldName,
+		"getSQLTag": getSQLTag,
 	}
 }
 
@@ -138,11 +156,14 @@ func getTableNameFromStruct(model interface{}) string {
 	return reflect.TypeOf(model).Elem().Name()
 }
 
-//getStructFieldType will return struct field type from schema datatype
-func getStructFieldType(dataType string) (sType string) {
+//GetStructFieldType will return struct field type from schema datatype
+func (l *sLog) GetStructFieldType(dataType string) (sType string) {
 	var exists bool
 	if sType, exists = pgToGoType[dataType]; exists == false {
 		sType = "interface{}"
+	}
+	if sType == timePkgTime {
+		l.importedPkg[timePkg] = struct{}{}
 	}
 	return
 }
@@ -174,7 +195,7 @@ type {{ .StructName }} struct {
 	{{ else -}}
 		{{ $value.StructColumnName -}}
 	{{ end -}}
-	{{print " "}} {{ getStructFieldType $value.DataType }}` + " `sql:\"{{ .ColumnName }},type:{{ getSQLTag $value }}\"`" + `
+	{{print " "}} {{ $.GetStructFieldType $value.DataType }}` + " `sql:\"{{ .ColumnName }},type:{{ getSQLTag $value }}\"`" + `
 {{- end }}
 }`
 	return
