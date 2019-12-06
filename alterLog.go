@@ -37,6 +37,8 @@ var pgToGoType = map[string]string{
 	"smallint":          "int",
 	"smallserial":       "int",
 	"serial":            "int",
+	"text":              "string",
+	"citext":            "string",
 }
 
 //createAlterStructLog will create alter struct log
