@@ -9,9 +9,20 @@ Golang struct to postgres table shifter.
 ### Features
 - [Create table from struct](#recovery)
 - [Create enum](#recovery)
+- [Create history table with after update/delete triggers](#recovery)
 - [Alter table](#recovery)
-	- Alter datatype
-	- Alter data length
-	- Alter to user defined type
-	- Add/Remove constraint (Unique Kye, Foreign Key)
-	- Modify constraint (Foreign Key)
+	- [Add New Column](#add-new-column)
+	- [Remove existing column](#remove-existing-column)
+	- [Modify existing column](#modify-existing-column)
+		- [Modify datatype](#modify-datatype)
+		- Modify data length (e.g. varchar(255) to varchar(100))
+		- Add/Drop default value
+		- Add/Drop Not Null Constraint
+		- Add/Drop constraint (Unique/Foreign Key)
+		- [Modify constraint](#modify-constraint)
+			- Set constraint deferrable
+				- Initially deferred
+				- Initially immediate
+			- Set constraint not deferrable
+			- Add/Drop ON DELETE DEFAULT/NO ACTION/RESTRICT/CASCADE/SET NULL
+			
