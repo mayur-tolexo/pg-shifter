@@ -399,14 +399,11 @@ func getModifyColSQL(tName, cName, dType, udtType string) (sql string) {
 func (s *Shifter) modifyDefault(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 	skipPrompt bool) (isAlter bool, err error) {
 
-	// fmt.Println(tSchema.ColumnName, "T", tSchema.ColumnDefault, "S", sSchema.ColumnDefault)
-	tDefault := getTableDefault(tSchema, sSchema)
-	sDefault := sSchema.ColumnDefault
-	// fmt.Println(tSchema.ColumnName, "T", tDefault, "S", sDefault)
+	isSame := isSameDefault(tSchema, sSchema)
 
 	//for primary key default is series so should remove it
 	if tSchema.ConstraintType != PrimaryKey &&
-		tDefault != sDefault {
+		isSame == false {
 		sql := ""
 		if sSchema.ColumnDefault == "" {
 			sql = getDropDefaultSQL(sSchema.TableName, sSchema.ColumnName)
@@ -420,27 +417,38 @@ func (s *Shifter) modifyDefault(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 	return
 }
 
-//getTableDefault will return table default value based on null allowed
-func getTableDefault(tSchema, sSchema model.ColSchema) (tDefault string) {
-	tDefault = tSchema.ColumnDefault
+//isSameDefault will check table and struct default values are same or not
+func isSameDefault(tSchema, sSchema model.ColSchema) (isSame bool) {
+	tDefault := tSchema.ColumnDefault
+	sDefault := sSchema.ColumnDefault
 
 	if tDefault == "" {
-		if tSchema.IsNullable == Yes && sSchema.ColumnDefault != "" {
+		if tSchema.IsNullable == Yes && sDefault != "" {
 			tDefault = Null
 		}
-	} else if tSchema.ConstraintType != PrimaryKey &&
-		tSchema.SeqName == "" &&
-		strings.Contains(tDefault, "::") &&
-		strings.Contains(sSchema.ColumnDefault, "::") == false {
+		tDefault = strings.ToLower(tDefault)
+		isSame = (tDefault == sDefault)
+	} else if tSchema.ConstraintType != PrimaryKey && tSchema.SeqName == "" {
 
-		tDefault = strings.Split(tDefault, "::")[0]
-		if strings.HasPrefix(sSchema.ColumnDefault, "'") == false {
-			tDefault = strings.Trim(tDefault, "'")
+		if strings.Contains(tDefault, "::") &&
+			strings.Contains(sDefault, "::") == false {
+			tDefault = strings.Split(tDefault, "::")[0]
+		}
+		tDefault = strings.ToLower(tDefault)
+
+		if tDefault == sDefault ||
+			addQuote(tDefault) == sDefault ||
+			tDefault == addQuote(sDefault) {
+			isSame = true
 		}
 	}
-	tDefault = strings.ToLower(tDefault)
 
 	return
+}
+
+//addQuote will add single quote
+func addQuote(data string) string {
+	return fmt.Sprintf("'%v'", data)
 }
 
 //getDropDefaultSQL will return drop default constraint sql
