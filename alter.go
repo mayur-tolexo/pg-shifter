@@ -76,7 +76,7 @@ func (s *Shifter) compareSchema(tx *pg.Tx, tSchema, sSchema map[string]model.Col
 	if added, err = s.addRemoveCol(tx, sSchema, tSchema, Add, skipPrompt); err == nil {
 		//removing column exists in db table but missing in struct
 		if removed, err = s.addRemoveCol(tx, tSchema, sSchema, Drop, skipPrompt); err == nil {
-			//TODO: modify column
+			//modify column
 			modify, err = s.modifyCol(tx, tSchema, sSchema, skipPrompt)
 		}
 	}

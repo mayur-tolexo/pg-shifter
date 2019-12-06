@@ -68,13 +68,20 @@ func GetConstraint(tx *pg.Tx, tableName string) (constraint []model.ColSchema, e
 
 //GetCompositeUniqueKey : Get composite unique key name and columns
 func GetCompositeUniqueKey(tx *pg.Tx, tableName string) (ukSchema []model.UKSchema, err error) {
-	query := `select string_agg(c.column_name,',') as col, pgc.conname 
-	from pg_constraint as pgc join
-	information_schema.table_constraints tc on pgc.conname = tc.constraint_name, 
-	unnest(pgc.conkey::int[]) as colNo join information_schema.columns as c 
-	on c.ordinal_position = colNo and c.table_name = ? 
-	where array_length(pgc.conkey,1)>1 and pgc.contype='u'
-	and pgc.conrelid=c.table_name::regclass::oid group by pgc.conname;`
+	query := `
+	with comp as (
+		select  c.column_name, pgc.conname
+		, array_position(pgc.conkey::int[],c.ordinal_position::int) as position
+		from pg_constraint as pgc join
+		information_schema.table_constraints tc on pgc.conname = tc.constraint_name,
+		unnest(pgc.conkey::int[]) as colNo join information_schema.columns as c
+		on c.ordinal_position = colNo and c.table_name = ?
+		where array_length(pgc.conkey,1)>1 and pgc.contype='u'
+		and pgc.conrelid=c.table_name::regclass::oid
+		order by position
+	)
+	select string_agg(column_name,',') as col, conname
+	from comp group by conname;`
 	_, err = tx.Query(&ukSchema, query, tableName)
 	return
 }
