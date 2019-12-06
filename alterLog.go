@@ -75,6 +75,7 @@ func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema) (err e
 		if logDir, err = s.makeStructLogDir(sName); err == nil {
 			file := logDir + "/" + sNameWithTime + ".go"
 			if fp, err = os.Create(file); err == nil {
+				fp.WriteString(getWarning())
 				fp.WriteString("package " + sName + "\n")
 
 				if len(log.importedPkg) > 0 {
@@ -82,7 +83,7 @@ func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema) (err e
 				}
 
 				fp.WriteString(logStr)
-				err = exec.Command("gofmt", "-w", file).Run()
+				exec.Command("gofmt", "-w", file).Run()
 			}
 		}
 	}
@@ -199,4 +200,19 @@ type {{ .StructName }} struct {
 {{- end }}
 }`
 	return
+}
+
+//getWarning will return warning string
+func getWarning() string {
+	return `
+/*
+@uthor Mayur Das<mayur.das4@gmail.com>
+https://www.linkedin.com/in/mayurdaeron/
+
+This is a history of the table before altering it.
+We will use this to revert back to the previous state if needed.
+----- DO NOT EDIT THIS----
+*/
+
+`
 }
