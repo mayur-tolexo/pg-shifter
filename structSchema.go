@@ -197,13 +197,13 @@ func getConstraintFlagByKey(refCheck string, key string) (flag string) {
 //Get FK constraint falg
 func getConstraintFlag(key string) (flag string) {
 	switch key {
-	case "noaction":
+	case NoActionTag:
 		flag = "a"
-	case "restrict":
+	case RestrictTag:
 		flag = "r"
-	case "cascade":
+	case CascadeTag:
 		flag = "c"
-	case "setnull":
+	case SetNullTag:
 		flag = "n"
 	default:
 		flag = "d"
