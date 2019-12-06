@@ -110,3 +110,25 @@ func (s *Shifter) SetTableModels(tables []interface{}) (err error) {
 	}
 	return
 }
+
+//AlterAllTable will alter all tables
+func (s *Shifter) AlterAllTable(conn *pg.DB, skipPromt bool) (err error) {
+	for tableName := range s.table {
+		// psql.StartLogging = true
+		var tx *pg.Tx
+		if tx, err = conn.Begin(); err == nil {
+			if err = s.alterTable(tx, tableName, skipPromt); err == nil {
+				// err = s.CreateAllIndex(tx, tableName, true)
+			}
+			if err == nil {
+				tx.Commit()
+			} else {
+				tx.Rollback()
+			}
+		} else {
+			err = flaw.TxError(err)
+			break
+		}
+	}
+	return
+}
