@@ -371,6 +371,8 @@ func (s *Shifter) modifyDataType(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 	tDataType := getStructDataType(tSchema)
 	sDataType := getStructDataType(sSchema)
 
+	// fmt.Println("DType", tSchema.ColumnName, "T", tDataType, "S", sDataType)
+
 	if tDataType != sDataType {
 		//dropping default sql
 		sql := getDropDefaultSQL(sSchema.TableName, sSchema.ColumnName)
@@ -397,7 +399,7 @@ func (s *Shifter) modifyDataType(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 //getModifyColSQL will return modify column data type sql
 func getModifyColSQL(tName, cName, dType, udtType string) (sql string) {
 
-	sql = fmt.Sprintf("ALTER TABLE %v ALTER COLUMN %v TYPE %v USING (%v::%v);\n",
+	sql = fmt.Sprintf("ALTER TABLE %v ALTER COLUMN %v TYPE %v USING (%v::text::%v);\n",
 		tName, cName, dType, cName, udtType)
 	return
 }
