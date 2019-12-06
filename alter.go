@@ -118,6 +118,8 @@ func (s *Shifter) addCol(tx *pg.Tx, schema model.ColSchema,
 
 	if cSQL != "" {
 		sql += "," + cSQL
+	} else {
+		sql += ";\n"
 	}
 
 	//checking history table exists
@@ -397,8 +399,10 @@ func getModifyColSQL(tName, cName, dType, udtType string) (sql string) {
 func (s *Shifter) modifyDefault(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 	skipPrompt bool) (isAlter bool, err error) {
 
+	// fmt.Println(tSchema.ColumnName, "T", tSchema.ColumnDefault, "S", sSchema.ColumnDefault)
 	tDefault := getTableDefault(tSchema, sSchema)
 	sDefault := sSchema.ColumnDefault
+	// fmt.Println(tSchema.ColumnName, "T", tDefault, "S", sDefault)
 
 	//for primary key default is series so should remove it
 	if tSchema.ConstraintType != PrimaryKey &&
@@ -425,8 +429,14 @@ func getTableDefault(tSchema, sSchema model.ColSchema) (tDefault string) {
 			tDefault = Null
 		}
 	} else if tSchema.ConstraintType != PrimaryKey &&
-		tSchema.SeqName == "" && strings.Contains(tDefault, "::") {
+		tSchema.SeqName == "" &&
+		strings.Contains(tDefault, "::") &&
+		strings.Contains(sSchema.ColumnDefault, "::") == false {
+
 		tDefault = strings.Split(tDefault, "::")[0]
+		if strings.HasPrefix(sSchema.ColumnDefault, "'") == false {
+			tDefault = strings.Trim(tDefault, "'")
+		}
 	}
 	tDefault = strings.ToLower(tDefault)
 
