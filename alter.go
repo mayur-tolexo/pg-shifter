@@ -464,11 +464,7 @@ func (s *Shifter) modifyConstraint(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 
 		}
 	} else if tSchema.ConstraintType == ForeignKey {
-		if isAlter, err = modifyFkUniqueConstraint(tx, tSchema, sSchema, skipPrompt); err == nil {
-			var curAlter bool
-			curAlter, err = modifyFkConstraint(tx, tSchema, sSchema, skipPrompt)
-			isAlter = isAlter || curAlter
-		}
+		isAlter, err = modifyFkAllConstraint(tx, tSchema, sSchema, skipPrompt)
 	}
 
 	if err == nil && isAlter == false {
@@ -477,19 +473,28 @@ func (s *Shifter) modifyConstraint(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 	return
 }
 
+//modifyFkAllConstraint will modify foreign key all constraints
+func modifyFkAllConstraint(tx *pg.Tx, tSchema, sSchema model.ColSchema, skipPrompt bool) (
+	isAlter bool, err error) {
+	if isAlter, err = modifyFkUniqueConstraint(tx, tSchema, sSchema, skipPrompt); err == nil {
+		var curAlter bool
+		curAlter, err = modifyFkConstraint(tx, tSchema, sSchema, skipPrompt)
+		isAlter = isAlter || curAlter
+	}
+	return
+}
+
 //modifyFkConstraint will modify foreign key of column if changed
 func modifyFkConstraint(tx *pg.Tx, tSchema, sSchema model.ColSchema, skipPrompt bool) (
 	isAlter bool, err error) {
-
 	//if foreign table or column changed
 	if tSchema.ForeignTableName != sSchema.ForeignTableName ||
-		tSchema.ForeignColumnName != sSchema.ForeignColumnName {
-		isAlter, err = dropAndCreateConstraint(tx, tSchema, sSchema, skipPrompt)
-	} else if tSchema.UpdateType != sSchema.UpdateType ||
+		tSchema.ForeignColumnName != sSchema.ForeignColumnName ||
+		tSchema.UpdateType != sSchema.UpdateType ||
 		tSchema.DeleteType != sSchema.DeleteType {
-		//alter on delete or/and on update constraint of foreign key
-	}
 
+		isAlter, err = dropAndCreateConstraint(tx, tSchema, sSchema, skipPrompt)
+	}
 	return
 }
 
