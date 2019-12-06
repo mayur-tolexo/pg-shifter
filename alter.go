@@ -461,7 +461,7 @@ func (s *Shifter) modifyConstraint(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 		} else if tSchema.ConstraintType == "" {
 			isAlter, err = addColAllConstraints(tx, tSchema, sSchema, skipPrompt)
 		} else {
-
+			isAlter, err = dropAndCreateConstraint(tx, tSchema, sSchema, skipPrompt)
 		}
 	} else if tSchema.ConstraintType == ForeignKey {
 		isAlter, err = modifyFkAllConstraint(tx, tSchema, sSchema, skipPrompt)
@@ -537,7 +537,7 @@ func modifyFkUniqueConstraint(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 			//as its exists with foreign key
 			sSchema.ConstraintType = Unique
 			isAlter, err = addConstraint(tx, sSchema, skipPrompt)
-		} else {
+		} else if tSchema.IsFkUnique {
 			//droping unique constraint from table
 			//as its not exists with foreign key in struct anymore
 			tSchema.ConstraintName = tSchema.FkUniqueName
@@ -689,7 +689,7 @@ func MergeColumnConstraint(tName string, columnSchema,
 		if v, exists := constraintMap[curConstraint.ColumnName]; exists {
 			//if curent column is unique as foreign key as well
 			if v.ConstraintType == Unique && curConstraint.ConstraintType == ForeignKey {
-				v.FkUniqueName = v.ConstraintName
+				curConstraint.FkUniqueName = v.ConstraintName
 				v = curConstraint
 				v.IsFkUnique = true
 			} else if v.ConstraintType == ForeignKey && curConstraint.ConstraintType == Unique {
