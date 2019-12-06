@@ -197,10 +197,12 @@ func getStructConstraintSQL(schema model.ColSchema) (sql string) {
 //getDefferSQL will reutrn deferable and initiall deferred sql
 func getDefferSQL(schema model.ColSchema) (sql string) {
 	if schema.IsDeferrable == Yes {
-		sql = " DEFERRABLE"
-	}
-	if schema.InitiallyDeferred == Yes {
-		sql += " INITIALLY DEFERRED"
+		sql = " " + Deferrable
+		if schema.InitiallyDeferred == Yes {
+			sql += " " + InitiallyDeferred
+		} else {
+			sql += " " + InitiallyImmediate
+		}
 	}
 	return
 }
@@ -451,7 +453,7 @@ func getSetDefaultSQL(tName, cName, dVal string) (sql string) {
 func (s *Shifter) modifyConstraint(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 	skipPrompt bool) (isAlter bool, err error) {
 
-	fmt.Println(sSchema.ColumnName, "T", tSchema.IsFkUnique, tSchema.ConstraintType, "S", sSchema.IsFkUnique, sSchema.ConstraintType)
+	// fmt.Println(sSchema.ColumnName, "T", tSchema.IsFkUnique, tSchema.ConstraintType, "S", sSchema.IsFkUnique, sSchema.ConstraintType)
 	//if table and struct constraint doesn't match
 	if tSchema.ConstraintType != sSchema.ConstraintType {
 		if sSchema.ConstraintType == "" {
@@ -476,6 +478,9 @@ func (s *Shifter) modifyConstraint(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 		}
 	} else if tSchema.ConstraintType == ForeignKey {
 		isAlter, err = modifyFkUniqueConstraint(tx, tSchema, sSchema, skipPrompt)
+	}
+	if err == nil && isAlter == false {
+		isAlter, err = modifyDeferrable(tx, tSchema, sSchema, skipPrompt)
 	}
 
 	return
@@ -575,6 +580,41 @@ func getAddConstraintSQL(schema model.ColSchema) (sql string) {
 		fkName := getConstraintName(schema)
 		sql = fmt.Sprintf("ADD CONSTRAINT %v %v (%v) %v;\n",
 			fkName, schema.ConstraintType, schema.ColumnName, sql)
+	}
+	return
+}
+
+//modifyDeferrable will modify add/drop constraint deferrable
+func modifyDeferrable(tx *pg.Tx, tSchema, sSchema model.ColSchema, skipPrompt bool) (
+	isAlter bool, err error) {
+
+	if tSchema.IsDeferrable != sSchema.IsDeferrable ||
+		tSchema.InitiallyDeferred != sSchema.InitiallyDeferred {
+
+		sSchema.ConstraintName = tSchema.ConstraintName
+		sql := getDeferrableSQL(sSchema)
+		if isAlter, err = execByChoice(tx, sql, skipPrompt); err != nil {
+			err = getWrapError(tSchema.TableName, "modify deferrable", sql, err)
+		}
+	}
+	return
+}
+
+//getDeferrableSQL will return deferrable sql
+func getDeferrableSQL(schema model.ColSchema) (sql string) {
+
+	sql = fmt.Sprintf("ALTER TABLE %v ALTER CONSTRAINT %v ", schema.TableName, schema.ConstraintName)
+
+	//if deferrable then checking its initially deffered or initially immediate
+	if schema.IsDeferrable == Yes {
+		sql += Deferrable
+		if schema.InitiallyDeferred == Yes {
+			sql += " " + InitiallyDeferred
+		} else {
+			sql += " " + InitiallyImmediate
+		}
+	} else {
+		sql += NotDeferrable
 	}
 	return
 }
