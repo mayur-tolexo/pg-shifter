@@ -169,11 +169,11 @@ func getConstraintName(schema model.ColSchema) (keyName string) {
 	var tag string
 	switch schema.ConstraintType {
 	case PrimaryKey:
-		tag = "pkey"
+		tag = PrimaryKeySuffix
 	case Unique:
-		tag = "key"
+		tag = UniqueKeySuffix
 	case ForeignKey:
-		tag = "fkey"
+		tag = ForeignKeySuffix
 	}
 	keyName = fmt.Sprintf("%v_%v_%v", schema.TableName, schema.ColumnName, tag)
 	return

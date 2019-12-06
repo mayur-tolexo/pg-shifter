@@ -32,4 +32,7 @@ const (
 	Cascade            = "CASCADE"
 	SetNull            = "SET NULL"
 	SetDefault         = "SET DEFAULT"
+	PrimaryKeySuffix   = "pkey"
+	UniqueKeySuffix    = "key"
+	ForeignKeySuffix   = "fkey"
 )
