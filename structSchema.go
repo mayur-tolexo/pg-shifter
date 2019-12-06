@@ -131,13 +131,13 @@ func setColConstraint(schema *model.ColSchema, tag string) {
 		//in case of unique key reference table is itself
 		schema.ForeignTableName = schema.TableName
 	}
-	if strings.Contains(tag, references) {
+	if strings.Contains(tag, ReferencesTag) {
 		cSet = true
 		if schema.ConstraintType != "" {
 			schema.IsFkUnique = true
 		}
 		schema.ConstraintType = ForeignKey
-		referenceCheck := strings.Split(tag, references)
+		referenceCheck := strings.Split(tag, ReferencesTag)
 
 		//setting reference table and on cascade flags
 		if len(referenceCheck) > 1 {

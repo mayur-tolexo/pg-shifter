@@ -267,7 +267,7 @@ func getSerialType(seqDataType string) (dType string) {
 func getDefaultDTypeSQL(schema model.ColSchema) (str string) {
 
 	if schema.ColumnDefault != "" && schema.SeqName == "" {
-		str = " DEFAULT " + schema.ColumnDefault
+		str = fmt.Sprintf(" %v %v", Default, schema.ColumnDefault)
 	}
 	return
 }
@@ -276,9 +276,9 @@ func getDefaultDTypeSQL(schema model.ColSchema) (str string) {
 func getNullDTypeSQL(isNullable string) (str string) {
 	if isNullable != "" {
 		if isNullable == Yes {
-			str = " NULL"
+			str = " " + Null
 		} else {
-			str = " NOT NULL"
+			str = " " + NotNull
 		}
 	}
 	return
