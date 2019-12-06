@@ -13,12 +13,12 @@ import (
 )
 
 //Alter Table
-func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPromt bool) (err error) {
+func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPrompt bool) (err error) {
 	// initStructTableMap()
 	var (
-		columnSchema []model.ColSchema
-		constraint   []model.ColSchema
-		// uniqueKeySchema []model.UniqueKeySchema
+		columnSchema    []model.ColSchema
+		constraint      []model.ColSchema
+		uniqueKeySchema []model.UKSchema
 	)
 	_, isValid := s.table[tableName]
 
@@ -29,7 +29,12 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPromt bool) (err e
 				sSchema := s.GetStructSchema(tableName)
 
 				if s.hisExists, err = util.IsAfterUpdateTriggerExists(tx, tableName); err == nil {
-					err = s.compareSchema(tx, tSchema, sSchema, skipPromt)
+					if err = s.compareSchema(tx, tSchema, sSchema, skipPrompt); err == nil {
+						if uniqueKeySchema, err = util.GetCompositeUniqueKey(tx, tableName); err == nil &&
+							len(uniqueKeySchema) > 0 {
+							err = s.checkUniqueKeyToAlter(tx, tableName, uniqueKeySchema)
+						}
+					}
 				}
 				// printSchema(tSchema, sSchema)
 			}
@@ -44,7 +49,7 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPromt bool) (err e
 
 //compareSchema will compare then table and struct column scheam and change accordingly
 func (s *Shifter) compareSchema(tx *pg.Tx, tSchema, sSchema map[string]model.ColSchema,
-	skipPromt bool) (err error) {
+	skipPrompt bool) (err error) {
 
 	var (
 		added   bool
@@ -57,11 +62,11 @@ func (s *Shifter) compareSchema(tx *pg.Tx, tSchema, sSchema map[string]model.Col
 		psql.LogMode(true)
 	}
 	//adding column exists in struct but missing in db table
-	if added, err = s.addRemoveCol(tx, sSchema, tSchema, Add, skipPromt); err == nil {
+	if added, err = s.addRemoveCol(tx, sSchema, tSchema, Add, skipPrompt); err == nil {
 		//removing column exists in db table but missing in struct
-		if removed, err = s.addRemoveCol(tx, tSchema, sSchema, Drop, skipPromt); err == nil {
+		if removed, err = s.addRemoveCol(tx, tSchema, sSchema, Drop, skipPrompt); err == nil {
 			//TODO: modify column
-			modify, err = s.modifyCol(tx, tSchema, sSchema, skipPromt)
+			modify, err = s.modifyCol(tx, tSchema, sSchema, skipPrompt)
 		}
 	}
 	if err == nil && (added || removed || modify) {
@@ -599,7 +604,7 @@ func modifyFkUniqueConstraint(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 
 //dropConstraint will drop constraint from table
 func dropConstraint(tx *pg.Tx, tSchema model.ColSchema, skipPrompt bool) (isAlter bool, err error) {
-	sql := getDropConstraintSQL(tSchema)
+	sql := getDropConstraintSQL(tSchema.TableName, tSchema.ConstraintName)
 	if isAlter, err = execByChoice(tx, sql, skipPrompt); err != nil {
 		err = getWrapError(tSchema.TableName, "drop constraint", sql, err)
 	}
@@ -607,8 +612,8 @@ func dropConstraint(tx *pg.Tx, tSchema model.ColSchema, skipPrompt bool) (isAlte
 }
 
 //getDropConstraintSQL will return drop constraint sql
-func getDropConstraintSQL(tSchema model.ColSchema) (sql string) {
-	sql = fmt.Sprintf("ALTER TABLE %v DROP CONSTRAINT %v;\n", tSchema.TableName, tSchema.ConstraintName)
+func getDropConstraintSQL(tName, constraintName string) (sql string) {
+	sql = fmt.Sprintf("ALTER TABLE %v DROP CONSTRAINT %v;\n", tName, constraintName)
 	return
 }
 
