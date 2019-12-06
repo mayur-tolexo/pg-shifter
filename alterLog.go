@@ -232,6 +232,7 @@ type {{ .StructName }} struct {
 func ({{ .StructName }}) UniqueKey() []string {
 	uk := []string{
 		{{- range $key, $value := .Unique}}
+			//{{ $value.ConstraintName }}
 			"{{ $value.Columns }}",
 		{{- end }}
 	}
