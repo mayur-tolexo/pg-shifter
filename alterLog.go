@@ -148,7 +148,18 @@ func getSQLTag(schema model.ColSchema) (dType string) {
 	dType += getNullDTypeSQL(schema.IsNullable)
 	dType += getDefaultDTypeSQL(schema)
 	dType += getUniqueDTypeSQL(schema)
-	dType += getStructConstraintSQL(schema)
+	dType += getConstraintTagSQL(schema)
+	return
+}
+
+//getConstraintTagSQL will return sql tag constraint
+func getConstraintTagSQL(schema model.ColSchema) (sql string) {
+	switch schema.ConstraintType {
+	case PrimaryKey:
+		sql = " " + PrimaryKey
+	case ForeignKey:
+		sql = getStructConstraintSQL(schema)
+	}
 	return
 }
 
