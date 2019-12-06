@@ -24,5 +24,6 @@ Golang struct to postgres table shifter.
 				- Initially deferred
 				- Initially immediate
 			- Set constraint not deferrable
-			- Add/Drop ON DELETE DEFAULT/NO ACTION/RESTRICT/CASCADE/SET NULL
+			- Add/Drop **ON DELETE** DEFAULT/NO ACTION/RESTRICT/CASCADE/SET NULL
+			- Add/Drop **ON UPDATE** DEFAULT/NO ACTION/RESTRICT/CASCADE/SET NULL
 			
