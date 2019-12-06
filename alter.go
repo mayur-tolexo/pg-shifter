@@ -16,9 +16,10 @@ import (
 func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPrompt bool) (err error) {
 
 	var (
-		columnSchema    []model.ColSchema
-		constraint      []model.ColSchema
-		uniqueKeySchema []model.UKSchema
+		columnSchema      []model.ColSchema
+		constraint        []model.ColSchema
+		tUK               []model.UKSchema
+		colAlter, ukAlter bool
 	)
 	_, isValid := s.table[tableName]
 
@@ -30,15 +31,19 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPrompt bool) (err 
 
 				if s.hisExists, err = util.IsAfterUpdateTriggerExists(tx, tableName); err == nil {
 
-					if err = s.compareSchema(tx, tSchema, sSchema, skipPrompt); err == nil {
-						if uniqueKeySchema, err = util.GetCompositeUniqueKey(tx, tableName); err == nil &&
-							len(uniqueKeySchema) > 0 {
+					if colAlter, err = s.compareSchema(tx, tSchema, sSchema, skipPrompt); err == nil {
+						sUK := s.GetUniqueKey(tableName)
+						if tUK, err = util.GetCompositeUniqueKey(tx, tableName); err == nil &&
+							(len(tUK) > 0 || len(sUK) > 0) {
 							defer func() { psql.LogMode(false) }()
 							if s.Verbrose {
 								psql.LogMode(true)
 							}
-							err = s.checkUniqueKeyToAlter(tx, tableName, uniqueKeySchema)
+							ukAlter, err = s.checkUniqueKeyToAlter(tx, tableName, tUK, sUK)
 						}
+					}
+					if err == nil && (colAlter || ukAlter) {
+						err = s.createAlterStructLog(tSchema, tUK)
 					}
 				}
 				// printSchema(tSchema, sSchema)
@@ -54,7 +59,7 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPrompt bool) (err 
 
 //compareSchema will compare then table and struct column scheam and change accordingly
 func (s *Shifter) compareSchema(tx *pg.Tx, tSchema, sSchema map[string]model.ColSchema,
-	skipPrompt bool) (err error) {
+	skipPrompt bool) (isAlter bool, err error) {
 
 	var (
 		added   bool
@@ -75,15 +80,13 @@ func (s *Shifter) compareSchema(tx *pg.Tx, tSchema, sSchema map[string]model.Col
 			modify, err = s.modifyCol(tx, tSchema, sSchema, skipPrompt)
 		}
 	}
-	if err == nil && (added || removed || modify) {
-		if err = s.createAlterStructLog(tSchema); err == nil {
 
-			if added || removed {
-				tName := getTableName(sSchema)
-				err = s.createTrigger(tx, tName)
-			}
-		}
+	//recreating trigger only if added or removed column
+	if err == nil && (added || removed) {
+		tName := getTableName(sSchema)
+		err = s.createTrigger(tx, tName)
 	}
+	isAlter = (added || removed || modify)
 	return
 }
 

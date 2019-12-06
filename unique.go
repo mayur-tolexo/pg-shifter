@@ -19,8 +19,9 @@ func (s *Shifter) GetUniqueKey(tName string) (uk map[string]string) {
 		out := m.Call([]reflect.Value{})
 		if len(out) > 0 && out[0].Kind() == reflect.Slice {
 			val := out[0].Interface().([]string)
-			for i, ukFields := range val {
-				ukName := fmt.Sprintf("uk_%v_%d", tName, i+1)
+			for _, ukFields := range val {
+				fName := strings.Replace(ukFields, ",", "_", -1)
+				ukName := fmt.Sprintf("%v_%v_%v", tName, fName, UniqueKeySuffix)
 				uk[ukName] = ukFields
 			}
 		}
@@ -30,34 +31,63 @@ func (s *Shifter) GetUniqueKey(tName string) (uk map[string]string) {
 
 //Check unique key constraint to alter
 func (s *Shifter) checkUniqueKeyToAlter(tx *pg.Tx, tName string,
-	uniqueKeySchema []model.UKSchema) (err error) {
+	tUK []model.UKSchema, sUK map[string]string) (isAlter bool, err error) {
 
-	uk := s.GetUniqueKey(tName)
-	for _, curUK := range uniqueKeySchema {
-		if _, exists := uk[curUK.ConstraintName]; exists {
-			//TODO: check unique key diff
-			delete(uk, curUK.ConstraintName)
-		} else {
-			sql := getDropConstraintSQL(tName, curUK.ConstraintName)
-			if _, err = execByChoice(tx, sql, true); err != nil {
-				err = getWrapError(tName, "composite unique key drop", sql, err)
-				break
-			}
-		}
+	if isAlter, err = dropCompositeUK(tx, tName, tUK, sUK); err == nil {
+		var curAlter bool
+		curAlter, err = addCompositeUK(tx, tName, sUK)
+		isAlter = isAlter || curAlter
 	}
-	if len(uk) > 0 {
+
+	return
+}
+
+//addCompositeUK will add composite unique key which is not in table
+func addCompositeUK(tx *pg.Tx, tName string,
+	sUK map[string]string) (isAlter bool, err error) {
+
+	if len(sUK) > 0 {
 		sql := ""
-		for ukName, ukFields := range uk {
+		for ukName, ukFields := range sUK {
 			//only for more than one fields
-			if strings.Contains(ukFields, ",") {
+			if isCompositeUk(ukFields) {
 				sql += getUniqueKeyQuery(tName, ukName, ukFields)
 			}
 		}
 		if sql != "" {
-			if _, err = execByChoice(tx, sql, true); err != nil {
-				err = getWrapError(tName, "composite unique key alter", sql, err)
+			if isAlter, err = execByChoice(tx, sql, true); err != nil {
+				err = getWrapError(tName, "add composite unique key", sql, err)
 			}
 		}
+	}
+	return
+}
+
+//dropCompositeUK will drop composite unique key if not exists in struct
+func dropCompositeUK(tx *pg.Tx, tName string, tUK []model.UKSchema,
+	sUK map[string]string) (isAlter bool, err error) {
+
+	for _, curTableUK := range tUK {
+		var curAlter bool
+		if _, exists := sUK[curTableUK.ConstraintName]; exists {
+			//TODO: check unique key diff
+			delete(sUK, curTableUK.ConstraintName)
+		} else {
+			sql := getDropConstraintSQL(tName, curTableUK.ConstraintName)
+			if curAlter, err = execByChoice(tx, sql, true); err != nil {
+				err = getWrapError(tName, "drop composite unique key", sql, err)
+				break
+			}
+		}
+		isAlter = isAlter || curAlter
+	}
+	return
+}
+
+//isCompositeUk will check unique is composite or not
+func isCompositeUk(fields string) (isComposite bool) {
+	if strings.Contains(fields, ",") {
+		isComposite = true
 	}
 	return
 }

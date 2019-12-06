@@ -20,6 +20,7 @@ type sLog struct {
 	StructName  string
 	TableName   string
 	Data        []model.ColSchema
+	Unique      []model.UKSchema
 	Date        string
 	importedPkg map[string]struct{}
 }
@@ -48,7 +49,8 @@ var pgToGoType = map[string]string{
 }
 
 //createAlterStructLog will create alter struct log
-func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema) (err error) {
+func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema,
+	ukSchema []model.UKSchema) (err error) {
 
 	var (
 		fp     *os.File
@@ -68,6 +70,7 @@ func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema) (err e
 		StructName:  sNameWithTime,
 		TableName:   tName,
 		Data:        getLogData(schema),
+		Unique:      ukSchema,
 		Date:        sTime.Format("Mon _2 Jan 2006 15:04:05"),
 		importedPkg: make(map[string]struct{}),
 	}
@@ -207,6 +210,7 @@ func getLogData(schema map[string]model.ColSchema) (data []model.ColSchema) {
 	return
 }
 
+//getLogTmpl will return struct log template
 func getLogTmpl() (tmplStr string) {
 
 	tmplStr = `
@@ -221,7 +225,21 @@ type {{ .StructName }} struct {
 	{{ end -}}
 	{{print " "}} {{ $.GetStructFieldType $value.DataType }}` + " `sql:\"{{ .ColumnName }},type:{{ getSQLTag $value }}\"`" + `
 {{- end }}
-}`
+}
+
+{{ $length := len .Unique }} {{ if gt $length 0 }}
+//UniqueKey of the table. This is for composite unique keys
+func ({{ .StructName }}) UniqueKey() []string {
+	uk := []string{
+		{{- range $key, $value := .Unique}}
+			"{{ $value.Columns }}",
+		{{- end }}
+	}
+	return uk
+}
+{{ end }}
+
+`
 	return
 }
 

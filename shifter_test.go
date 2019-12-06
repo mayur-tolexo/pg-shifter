@@ -17,13 +17,21 @@ type TestAddress struct {
 	// Type string `json:"type" sql:"type,type:address_type NOT NULL DEFAULT 'billing'"`
 	// Landmark  string    `json:"landmark" sql:"landmark,type:varchar(255)"`
 	// Pincode string `json:"pincode" sql:"pincode,type:varchar(20) NOT NULL UNIQUE"`
-	City string `json:"city" sql:"city,type:varchar(255) UNIQUE"`
+	City string `json:"city" sql:"city,type:varchar(25) UNIQUE"`
 	// Status string `json:"status,omitempty" sql:"status,type:status_only_type DEFAULT 'enable'"`
 	Status    string    `json:"status,omitempty" sql:"status,type:varchar(200)"`
 	CreatedBy int       `json:"created_by" sql:"created_by,type:int NOT NULL UNIQUE REFERENCES test_address(address_id)"`
 	CreatedAt time.Time `json:"-" sql:"created_at,type:time NOT NULL DEFAULT NOW()"`
 	// UpdatedAt time.Time `json:"-" sql:"updated_at,type:timetz NOT NULL DEFAULT NOW()"`
 	// REFERENCES test_address(address_id) ON DELETE RESTRICT ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED
+}
+
+//UniqueKey of the table. This is for composite unique keys
+func (TestAddress) UniqueKey() []string {
+	uk := []string{
+		"address_id,status,city",
+	}
+	return uk
 }
 
 func TestCreateAllTable(t *testing.T) {
