@@ -662,6 +662,7 @@ func getAddConstraintSQL(schema model.ColSchema) (sql string) {
 func modifyDeferrable(tx *pg.Tx, tSchema, sSchema model.ColSchema, skipPrompt bool) (
 	isAlter bool, err error) {
 
+	// fmt.Println(tSchema.ColumnName, "T", tSchema.IsDeferrable, "S", sSchema.IsDeferrable)
 	if tSchema.IsDeferrable != sSchema.IsDeferrable ||
 		tSchema.InitiallyDeferred != sSchema.InitiallyDeferred {
 

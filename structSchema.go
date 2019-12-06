@@ -59,7 +59,7 @@ func (s *Shifter) GetStructSchema(tableName string) (sSchema map[string]model.Co
 			schema.ColumnDefault = getColDefault(tag)
 			schema.DataType, schema.CharMaxLen = getColType(tag)
 			schema.IsNullable = getColIsNullable(tag)
-			setColConstraint(&schema, tag)
+			s.setColConstraint(&schema, tag)
 			sSchema[schema.ColumnName] = schema
 		}
 	}
@@ -117,7 +117,7 @@ func getColMaxChar(cType string) (maxLen string) {
 
 //setColConstraint will set column constraints
 //here we are setting the pk,uk or fk and deferrable and initially defered constraings
-func setColConstraint(schema *model.ColSchema, tag string) {
+func (s *Shifter) setColConstraint(schema *model.ColSchema, tag string) {
 	cSet := false
 	if strings.Contains(tag, PrimaryKeyTag) {
 		cSet = true
@@ -146,6 +146,7 @@ func setColConstraint(schema *model.ColSchema, tag string) {
 			schema.UpdateType = getConstraintFlagByKey(referenceCheck[1], "update")
 		}
 	}
+
 	if cSet {
 		schema.IsDeferrable = No
 		if strings.Contains(tag, "deferrable") {
@@ -154,6 +155,30 @@ func setColConstraint(schema *model.ColSchema, tag string) {
 		schema.InitiallyDeferred = No
 		if strings.Contains(tag, "initially deferred") {
 			schema.InitiallyDeferred = Yes
+		}
+	}
+	s.addConstraintFromUkMap(schema)
+}
+
+//addConstraintFromUkMap will add constraint from unique key map defined on struct
+func (s *Shifter) addConstraintFromUkMap(schema *model.ColSchema) {
+	var colFound bool
+	if uk := s.GetUniqueKey(schema.TableName); len(uk) > 0 {
+		for _, fields := range uk {
+			if fields == schema.ColumnName {
+				colFound = true
+				break
+			}
+		}
+	}
+
+	if colFound {
+		if schema.ConstraintType == "" {
+			schema.ConstraintType = Unique
+			schema.IsDeferrable = No
+			schema.InitiallyDeferred = No
+		} else if schema.ConstraintType == ForeignKey {
+			schema.IsFkUnique = true
 		}
 	}
 }
