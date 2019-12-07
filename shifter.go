@@ -17,8 +17,13 @@ type Shifter struct {
 	table     map[string]interface{}
 	enumList  map[string][]string
 	hisExists bool
-	Verbrose  bool
+	logSQL    bool
+	Verbose   bool
 	LogPath   string
+}
+
+func (s *Shifter) logMode(enable bool) {
+	s.logSQL = enable
 }
 
 //NewShifter will return shifter model
@@ -113,6 +118,7 @@ func (s *Shifter) SetTableModels(tables []interface{}) (err error) {
 
 //AlterAllTable will alter all tables
 func (s *Shifter) AlterAllTable(conn *pg.DB, skipPromt bool) (err error) {
+	s.Debug(conn)
 	for tableName := range s.table {
 		// psql.StartLogging = true
 		var tx *pg.Tx

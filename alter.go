@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/fatih/structs"
 	"github.com/go-pg/pg"
-	"github.com/mayur-tolexo/contour/adapter/psql"
 	"github.com/mayur-tolexo/pg-shifter/model"
 	"github.com/mayur-tolexo/pg-shifter/util"
 )
@@ -24,6 +24,7 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPrompt bool) (err 
 	_, isValid := s.table[tableName]
 
 	if isValid == true {
+		s.logMode(false)
 		if columnSchema, err = util.GetColumnSchema(tx, tableName); err == nil {
 			if constraint, err = util.GetConstraint(tx, tableName); err == nil {
 				tSchema := MergeColumnConstraint(tableName, columnSchema, constraint)
@@ -35,10 +36,8 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPrompt bool) (err 
 						sUK := s.GetUniqueKey(tableName)
 						if tUK, err = util.GetCompositeUniqueKey(tx, tableName); err == nil &&
 							(len(tUK) > 0 || len(sUK) > 0) {
-							defer func() { psql.LogMode(false) }()
-							if s.Verbrose {
-								psql.LogMode(true)
-							}
+							defer func() { s.logMode(false) }()
+							s.logMode(s.Verbose)
 							ukAlter, err = s.checkUniqueKeyToAlter(tx, tableName, tUK, sUK)
 						}
 					}
@@ -67,10 +66,8 @@ func (s *Shifter) compareSchema(tx *pg.Tx, tSchema, sSchema map[string]model.Col
 		modify  bool
 	)
 
-	defer func() { psql.LogMode(false) }()
-	if s.Verbrose {
-		psql.LogMode(true)
-	}
+	defer func() { s.logMode(false) }()
+	s.logMode(s.Verbose)
 
 	//adding column exists in struct but missing in db table
 	if added, err = s.addRemoveCol(tx, sSchema, tSchema, Add, skipPrompt); err == nil {
@@ -786,4 +783,23 @@ func MergeColumnConstraint(tName string, columnSchema,
 		ColSchema[curColumnSchema.ColumnName] = curColumnSchema
 	}
 	return ColSchema
+}
+
+//Debug : Print postgresql query on terminal
+func (s *Shifter) Debug(conn *pg.DB) {
+	conn.OnQueryProcessed(func(event *pg.QueryProcessedEvent) {
+		if s.logSQL {
+			if query, err := event.FormattedQuery(); err == nil {
+				var queryError string
+				if event.Error != nil {
+					queryError = "\nQUERY ERROR: " + event.Error.Error()
+				}
+				fmt.Println("----DEBUGGER----")
+				fmt.Printf("\nFile: %v : %v\nFunction: %v\nQuery Execution Taken: %s\n%s%s\n\n",
+					event.File, event.Line, event.Func, time.Since(event.StartTime), query, queryError)
+			} else {
+				fmt.Println("Debugger Error: " + err.Error())
+			}
+		}
+	})
 }
