@@ -39,7 +39,7 @@ func TestCreateAllTable(t *testing.T) {
 func TestAlterTable(t *testing.T) {
 	if conn, err := psql.Conn(true); err == nil {
 		s := NewShifter()
-		s.Verbose = true
+		s.Verbose(true)
 		addAllTables(s)
 		assert := assert.New(t)
 		err = s.AlterAllTable(conn, true)

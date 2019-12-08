@@ -13,7 +13,8 @@ import (
 )
 
 //Alter Table
-func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPrompt bool) (err error) {
+func (s *Shifter) alterTable(tx *pg.Tx, tableName string,
+	skipPrompt bool) (err error) {
 
 	var (
 		tSchema           map[string]model.ColSchema
@@ -31,15 +32,9 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPrompt bool) (err 
 			if s.hisExists, err = util.IsAfterUpdateTriggerExists(tx, tableName); err == nil {
 
 				if colAlter, err = s.compareSchema(tx, tSchema, sSchema, skipPrompt); err == nil {
-					sUK := s.GetUniqueKey(tableName)
-					if tUK, err = util.GetCompositeUniqueKey(tx, tableName); err == nil &&
-						(len(tUK) > 0 || len(sUK) > 0) {
-						s.logMode(s.verbose)
-						ukAlter, err = s.checkUniqueKeyToAlter(tx, tableName, tUK, sUK)
-					}
+					ukAlter, err = s.modifyCompositeUniqueKey(tx, tableName)
 				}
 				if err == nil && (colAlter || ukAlter) {
-					s.logMode(false)
 					if idx, err = util.GetIndex(tx, tableName); err == nil {
 						err = s.createAlterStructLog(tSchema, tUK, idx, true)
 					}
@@ -47,9 +42,23 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPrompt bool) (err 
 			}
 		}
 	} else {
-		msg := "Invalid Table Name: " + tableName
-		fmt.Println(msg)
-		err = errors.New(msg)
+		err = errors.New("Invalid Table Name: " + tableName)
+	}
+	return
+}
+
+//modifyCompositeUniqueKey will modify composite unique key if changed in struct
+func (s *Shifter) modifyCompositeUniqueKey(tx *pg.Tx,
+	tableName string) (isAlter bool, err error) {
+
+	var tUK []model.UKSchema
+	defer func() { s.logMode(false) }()
+
+	sUK := s.GetUniqueKey(tableName)
+	if tUK, err = util.GetCompositeUniqueKey(tx, tableName); err == nil &&
+		(len(tUK) > 0 || len(sUK) > 0) {
+		s.logMode(s.verbose)
+		isAlter, err = s.checkUniqueKeyToAlter(tx, tableName, tUK, sUK)
 	}
 	return
 }
