@@ -12,6 +12,16 @@
 			"Rev": "a368813c5e648fee92e5f6c30e3944ff9d5e8895"
 		},
 		{
+			"ImportPath": "github.com/davecgh/go-spew/spew",
+			"Comment": "v1.1.0-12-g8991bc2",
+			"Rev": "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
+		},
+		{
+			"ImportPath": "github.com/fatih/color",
+			"Comment": "v1.7.0-2-g2d68451",
+			"Rev": "2d684516a8861da43017284349b7e303e809ac21"
+		},
+		{
 			"ImportPath": "github.com/fatih/structs",
 			"Comment": "v1.0-4-g7e5a8ee",
 			"Rev": "7e5a8eef611ee84dd359503f3969f80df4c50723"
@@ -94,6 +104,16 @@
 			"Rev": "7cafcd837844e784b526369c9bce262804aebc60"
 		},
 		{
+			"ImportPath": "github.com/mattn/go-colorable",
+			"Comment": "v0.0.9-6-gad5389d",
+			"Rev": "ad5389df28cdac544c99bd7b9161a0b5b6ca9d1b"
+		},
+		{
+			"ImportPath": "github.com/mattn/go-isatty",
+			"Comment": "v0.0.4-6-g3fb116b",
+			"Rev": "3fb116b820352b7f0c281308a4d6250c22d94e27"
+		},
+		{
 			"ImportPath": "github.com/mayur-tolexo/aero/conf",
 			"Rev": "f290fde29961d49cd70fa924db62dc8e7bcacf05"
 		},
@@ -104,6 +124,11 @@
 		{
 			"ImportPath": "github.com/mayur-tolexo/flaw",
 			"Rev": "0b1b55ffadda078c00d6936312d1fc430e1f7f83"
+		},
+		{
+			"ImportPath": "github.com/pmezard/go-difflib/difflib",
+			"Comment": "v1.0.0",
+			"Rev": "792786c7400a136282c1664665ae0a8db921c6c2"
 		},
 		{
 			"ImportPath": "github.com/serenize/snaker",
@@ -124,6 +149,11 @@
 			"Rev": "e57e3eeb33f795204c1ca35f56c44f83227c6e66"
 		},
 		{
+			"ImportPath": "github.com/stretchr/testify/assert",
+			"Comment": "v1.1.4-71-g890a5c3",
+			"Rev": "890a5c3458b43e6104ff5da8dfa139d013d77544"
+		},
+		{
 			"ImportPath": "github.com/tolexo/aero/conf",
 			"Rev": "a4598568b2e10be9c2cffb539ad8fa5218834096"
 		},
@@ -138,6 +168,10 @@
 		{
 			"ImportPath": "golang.org/x/crypto/pbkdf2",
 			"Rev": "505ab145d0a99da450461ae2c1a9f6cd10d1f447"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "07c182904dbd53199946ba614a412c61d3c548f5"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
