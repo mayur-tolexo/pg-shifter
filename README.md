@@ -29,10 +29,10 @@ Golang struct to postgres table shifter.
 			- Add/Drop **ON UPDATE** DEFAULT/NO ACTION/RESTRICT/CASCADE/SET NULL
 			
 ### Create go struct from postgresql table name
-CreateStruct(conn *pg.DB, tableName string,filePath string) (err error)
+CreateStruct(conn *pg.DB, tableName string, filePath string) (err error)
 ```
 if conn, err := psql.Conn(true); err == nil {
-	shifter.NewShifter().CreateStruct(conn, "address", "/tmp/")
+	shifter.NewShifter().CreateStruct(conn, "address", "")
 }
 ```
 #### OUTPUT
