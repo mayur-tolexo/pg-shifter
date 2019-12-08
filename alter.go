@@ -34,7 +34,7 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPrompt bool) (err 
 					sUK := s.GetUniqueKey(tableName)
 					if tUK, err = util.GetCompositeUniqueKey(tx, tableName); err == nil &&
 						(len(tUK) > 0 || len(sUK) > 0) {
-						s.logMode(s.Verbose)
+						s.logMode(s.verbose)
 						ukAlter, err = s.checkUniqueKeyToAlter(tx, tableName, tUK, sUK)
 					}
 				}
@@ -81,7 +81,7 @@ func (s *Shifter) compareSchema(tx *pg.Tx, tSchema, sSchema map[string]model.Col
 	)
 
 	defer func() { s.logMode(false) }()
-	s.logMode(s.Verbose)
+	s.logMode(s.verbose)
 
 	//adding column exists in struct but missing in db table
 	if added, err = s.addRemoveCol(tx, sSchema, tSchema, Add, skipPrompt); err == nil {

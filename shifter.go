@@ -24,7 +24,7 @@ type Shifter struct {
 	enumList  map[string][]string
 	hisExists bool
 	logSQL    bool
-	Verbose   bool
+	verbose   bool
 	LogPath   string
 }
 
@@ -43,6 +43,12 @@ func NewShifter(tables ...interface{}) *Shifter {
 			log.Fatalln(err)
 		}
 	}
+	return s
+}
+
+//Verbose will enable executed sql printing in console
+func (s *Shifter) Verbose(enable bool) *Shifter {
+	s.verbose = enable
 	return s
 }
 
@@ -201,7 +207,7 @@ func (s *Shifter) CreateStructFromStruct(conn *pg.DB, filePath string) (
 	for tName := range s.table {
 		if err = s.CreateStruct(conn, tName, filePath); err != nil {
 			break
-		} else if s.Verbose {
+		} else if s.verbose {
 			fmt.Print("Struct created: ")
 			d := color.New(color.FgBlue, color.Bold)
 			d.Println(tName)
