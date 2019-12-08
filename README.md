@@ -7,6 +7,7 @@
 Golang struct to postgres table shifter.
 
 ### Features
+- [Create go struct from postgresql table name](#create-go-struct-from-postgresql-table-name)
 - [Create table from struct](#recovery)
 - [Create enum](#recovery)
 - [Create history table with after update/delete triggers](#recovery)
@@ -27,3 +28,12 @@ Golang struct to postgres table shifter.
 			- Add/Drop **ON DELETE** DEFAULT/NO ACTION/RESTRICT/CASCADE/SET NULL
 			- Add/Drop **ON UPDATE** DEFAULT/NO ACTION/RESTRICT/CASCADE/SET NULL
 			
+### Create go struct from postgresql table name
+CreateStruct(conn *pg.DB, tableName string,filePath string) (err error)
+```
+if conn, err := psql.Conn(true); err == nil {
+	//filepath where struct need to create
+	filePath := "/tmp/"
+	shifter.NewShifter().CreateStruct(conn, "address", filePath)
+}
+```
