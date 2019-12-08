@@ -29,6 +29,7 @@ type sLog struct {
 
 //pgToStructType to golang type mapping
 var pgToGoType = map[string]string{
+	"USER-DEFINED":                "string",
 	"bigint":                      "int",
 	"bigserial":                   "int",
 	"varbit":                      "[]bytes",
