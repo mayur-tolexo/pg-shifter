@@ -43,10 +43,15 @@ var pgToGoType = map[string]string{
 	"serial":                      "int",
 	"text":                        "string",
 	"citext":                      "string",
-	"time without time zone":      timePkgTime,
-	"time with time zone":         timePkgTime,
-	"timestamp without time zone": timePkgTime,
-	"timestamp with time zone":    timePkgTime,
+	"time without time zone":      "time.Time",
+	"time with time zone":         "time.Time",
+	"timestamp without time zone": "time.Time",
+	"timestamp with time zone":    "time.Time",
+}
+
+//goPkg to import when using that type in struct
+var goPkg = map[string]string{
+	"time.Time": "time",
 }
 
 //createAlterStructLog will create alter struct log
@@ -195,8 +200,8 @@ func (l *sLog) GetStructFieldType(dataType string) (sType string) {
 	if sType, exists = pgToGoType[dataType]; exists == false {
 		sType = "interface{}"
 	}
-	if sType == timePkgTime {
-		l.importedPkg[timePkg] = struct{}{}
+	if pkg, exists := goPkg[sType]; exists {
+		l.importedPkg[pkg] = struct{}{}
 	}
 	return
 }

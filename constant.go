@@ -35,6 +35,4 @@ const (
 	PrimaryKeySuffix   = "pkey"
 	UniqueKeySuffix    = "key"
 	ForeignKeySuffix   = "fkey"
-	timePkgTime        = "time.Time"
-	timePkg            = "time"
 )
