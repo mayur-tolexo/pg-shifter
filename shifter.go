@@ -1,6 +1,7 @@
 package shifter
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/go-pg/pg"
@@ -178,6 +179,20 @@ func (s *Shifter) CreateStruct(conn *pg.DB, tableName string,
 			tx.Commit()
 		} else {
 			tx.Rollback()
+		}
+	}
+	return
+}
+
+//CreateStructFromStruct will create structure from shifter structures
+//which are set in shifter map
+func (s *Shifter) CreateStructFromStruct(conn *pg.DB, filePath string) (
+	err error) {
+	for tName := range s.table {
+		if err = s.CreateStruct(conn, tName, filePath); err != nil {
+			break
+		} else if s.Verbose {
+			fmt.Println("struct created:", tName)
 		}
 	}
 	return
