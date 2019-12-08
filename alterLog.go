@@ -17,12 +17,13 @@ import (
 
 //sLog : structure log model
 type sLog struct {
-	StructName  string
-	TableName   string
-	Data        []model.ColSchema
-	Unique      []model.UKSchema
-	Date        string
-	importedPkg map[string]struct{}
+	StructNameWT string
+	StructName   string
+	TableName    string
+	Data         []model.ColSchema
+	Unique       []model.UKSchema
+	Date         string
+	importedPkg  map[string]struct{}
 }
 
 //pgToStructType to golang type mapping
@@ -52,11 +53,42 @@ var pgToGoType = map[string]string{
 func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema,
 	ukSchema []model.UKSchema) (err error) {
 
+	var logStr string
+	log := s.getSLogModel(schema, ukSchema)
+	if logStr, err = execLogTmpl(log); err == nil {
+		err = s.logTableChange(logStr, log)
+	}
+	if err != nil {
+		err = errors.New("Log Creation Error: " + err.Error())
+	}
+	return
+}
+
+//logTableChange will log table change in file
+func (s *Shifter) logTableChange(logStr string, log sLog) (err error) {
 	var (
 		fp     *os.File
 		logDir string
-		logStr string
 	)
+	if logDir, err = s.makeStructLogDir(log.StructName); err == nil {
+
+		file := logDir + "/" + log.StructNameWT + ".go"
+		if fp, err = os.Create(file); err == nil {
+
+			fp.WriteString(getWarning())
+			fp.WriteString("package " + log.StructName + "\n")
+			fp.WriteString(getImportPkg(log.importedPkg))
+			fp.WriteString(logStr)
+			exec.Command("gofmt", "-w", file).Run()
+		}
+	}
+	return
+}
+
+//getSLogModel will return slog model
+func (s *Shifter) getSLogModel(schema map[string]model.ColSchema,
+	ukSchema []model.UKSchema) (log sLog) {
+
 	tName := getTableName(schema)
 	sName := tName
 	if model, exists := s.table[sName]; exists {
@@ -66,41 +98,26 @@ func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema,
 	sTime := time.Now().UTC()
 	sNameWithTime := fmt.Sprintf("%v%v", sName, sTime.Unix())
 
-	log := sLog{
-		StructName:  sNameWithTime,
-		TableName:   tName,
-		Data:        getLogData(schema),
-		Unique:      ukSchema,
-		Date:        sTime.Format("Mon _2 Jan 2006 15:04:05"),
-		importedPkg: make(map[string]struct{}),
-	}
-
-	if logStr, err = execLogTmpl(log); err == nil {
-		if logDir, err = s.makeStructLogDir(sName); err == nil {
-			file := logDir + "/" + sNameWithTime + ".go"
-			if fp, err = os.Create(file); err == nil {
-				fp.WriteString(getWarning())
-				fp.WriteString("package " + sName + "\n")
-
-				if len(log.importedPkg) > 0 {
-					fp.WriteString("import (" + getImportPkg(log.importedPkg) + ")")
-				}
-
-				fp.WriteString(logStr)
-				exec.Command("gofmt", "-w", file).Run()
-			}
-		}
-	}
-	if err != nil {
-		err = errors.New("Log Creation Error: " + err.Error())
+	log = sLog{
+		StructNameWT: sNameWithTime,
+		StructName:   sName,
+		TableName:    tName,
+		Data:         getLogData(schema),
+		Unique:       ukSchema,
+		Date:         sTime.Format("Mon _2 Jan 2006 15:04:05"),
+		importedPkg:  make(map[string]struct{}),
 	}
 	return
 }
 
 //getImportPkg will append all imported packeges
 func getImportPkg(pkg map[string]struct{}) (impPkg string) {
-	for k := range pkg {
-		impPkg += "\"" + k + "\"\n"
+	if len(pkg) > 0 {
+		impPkg += "import (\n"
+		for k := range pkg {
+			impPkg += "\"" + k + "\"\n"
+		}
+		impPkg += ")\n"
 	}
 	return
 }
@@ -214,8 +231,8 @@ func getLogData(schema map[string]model.ColSchema) (data []model.ColSchema) {
 func getLogTmpl() (tmplStr string) {
 
 	tmplStr = `
-//{{ .StructName }} : {{ .TableName }} table model [As on {{ .Date }} UTC]
-type {{ .StructName }} struct {
+//{{ .StructNameWT }} : {{ .TableName }} table model [As on {{ .Date }} UTC]
+type {{ .StructNameWT }} struct {
 	tableName struct{} ` + "`sql:\"{{ .TableName }}\"`" + `
 {{- range $key, $value := .Data}}
 	{{ if eq $value.StructColumnName "" -}}
@@ -229,7 +246,7 @@ type {{ .StructName }} struct {
 
 {{ $length := len .Unique }} {{ if gt $length 0 }}
 //UniqueKey of the table. This is for composite unique keys
-func ({{ .StructName }}) UniqueKey() []string {
+func ({{ .StructNameWT }}) UniqueKey() []string {
 	uk := []string{
 		{{- range $key, $value := .Unique}}
 			//{{ $value.ConstraintName }}

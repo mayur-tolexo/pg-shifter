@@ -8,17 +8,30 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func addAllTables(s *Shifter) {
+	s.SetTableModel(&db.TestAddress{})
+	s.SetTableModel(&db.TestAdminUser{})
+	s.SetTableModel(&db.TestUser{})
+}
+
 func TestCreateAllTable(t *testing.T) {
 
 	if conn, err := psql.Conn(true); err == nil {
 		s := NewShifter()
-
-		s.SetTableModel(&db.TestAddress{})
-		s.SetTableModel(&db.TestAdminUser{})
-		s.SetTableModel(&db.TestUser{})
-
+		addAllTables(s)
 		assert := assert.New(t)
 		err = s.CreateAllTable(conn)
+		assert.NoError(err)
+	}
+}
+
+func TestAlterTable(t *testing.T) {
+	if conn, err := psql.Conn(true); err == nil {
+		s := NewShifter()
+		s.Verbose = true
+		addAllTables(s)
+		assert := assert.New(t)
+		err = s.AlterAllTable(conn, true)
 		assert.NoError(err)
 	}
 }
