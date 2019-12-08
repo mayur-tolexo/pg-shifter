@@ -92,8 +92,8 @@ func (s *Shifter) DropTable(conn *pg.DB, tableName string, cascade bool) (err er
 	return
 }
 
-//GetModelTableName will return table name from model
-func (s *Shifter) GetModelTableName(table interface{}) (
+//GetStructTableName will return table name from table struct
+func (s *Shifter) GetStructTableName(table interface{}) (
 	tableName string, err error) {
 
 	refObj := reflect.ValueOf(table)
@@ -113,7 +113,7 @@ func (s *Shifter) GetModelTableName(table interface{}) (
 //SetTableModel will set table model
 func (s *Shifter) SetTableModel(table interface{}) (err error) {
 	var tableName string
-	if tableName, err = s.GetModelTableName(table); err == nil {
+	if tableName, err = s.GetStructTableName(table); err == nil {
 		s.table[tableName] = table
 	}
 	return
