@@ -62,7 +62,7 @@ func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema,
 	var logStr string
 	log := s.getSLogModel(schema, ukSchema, idx, wt)
 	if logStr, err = execLogTmpl(log); err == nil {
-		err = s.logTableChange(logStr, log)
+		err = s.logTableChange(logStr, log, wt)
 	}
 	if err != nil {
 		err = errors.New("Log Creation Error: " + err.Error())
@@ -71,7 +71,7 @@ func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema,
 }
 
 //logTableChange will log table change in file
-func (s *Shifter) logTableChange(logStr string, log sLog) (err error) {
+func (s *Shifter) logTableChange(logStr string, log sLog, wt bool) (err error) {
 	var (
 		fp     *os.File
 		logDir string
@@ -81,7 +81,7 @@ func (s *Shifter) logTableChange(logStr string, log sLog) (err error) {
 		file := logDir + "/" + log.StructNameWT + ".go"
 		if fp, err = os.Create(file); err == nil {
 
-			fp.WriteString(getWarning())
+			fp.WriteString(getWarning(wt))
 			fp.WriteString("package " + log.StructName + "\n")
 			fp.WriteString(getImportPkg(log.importedPkg))
 			fp.WriteString(logStr)
@@ -284,16 +284,21 @@ func ({{ .StructNameWT }}) Index() map[string]string {
 }
 
 //getWarning will return warning string
-func getWarning() string {
-	return `
+func getWarning(wt bool) (wrng string) {
+	wrng = `
 /*
 @uthor Mayur Das<mayur.das4@gmail.com>
-https://www.linkedin.com/in/mayurdaeron/
+https://www.linkedin.com/in/mayurdaeron/`
+	if wt {
+		wrng += `
 
 This is a history of the table before altering it.
 We will use this to revert back to the previous state if needed.
------ DO NOT EDIT THIS -----
+----- DO NOT EDIT THIS -----`
+	}
+	wrng += `
 */
 
 `
+	return
 }
