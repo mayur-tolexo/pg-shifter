@@ -285,3 +285,11 @@ func IsAfterUpdateTriggerExists(tx *pg.Tx, tName string) (exists bool, err error
 	}
 	return
 }
+
+//GetStrByLen will return string till given length
+func GetStrByLen(str string, n int) string {
+	if len(str) > n {
+		str = string(str[:n-1])
+	}
+	return str
+}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-pg/pg"
 	"github.com/mayur-tolexo/pg-shifter/model"
+	"github.com/mayur-tolexo/pg-shifter/util"
 )
 
 //GetUniqueKey will return unique key fields of struct
@@ -22,9 +23,7 @@ func (s *Shifter) GetUniqueKey(tName string) (uk map[string]string) {
 			for _, ukFields := range val {
 				fName := strings.Replace(ukFields, ",", "_", -1)
 				ukName := fmt.Sprintf("%v_%v_%v", tName, fName, UniqueKeySuffix)
-				if len(ukName) > 64 {
-					ukName = ukName[:63]
-				}
+				ukName = util.GetStrByLen(ukName, 64)
 				uk[ukName] = ukFields
 			}
 		}

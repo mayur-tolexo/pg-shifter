@@ -44,6 +44,7 @@ func getIndexQuery(tableName string, indexDS string, column string) (uniqueKeyQu
 	}
 
 	constraintName := fmt.Sprintf("idx_%v_%v", tableName, strings.Replace(strings.Replace(column, " ", "", -1), ",", "_", -1))
+	constraintName = util.GetStrByLen(constraintName, 64)
 	return fmt.Sprintf("CREATE INDEX IF NOT EXISTS %v ON %v USING %v (%v);\n",
 		constraintName, tableName, indexDS, column)
 }
