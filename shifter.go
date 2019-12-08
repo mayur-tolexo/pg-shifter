@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/go-pg/pg"
+	"github.com/mayur-tolexo/contour/adapter/psql"
 	"github.com/mayur-tolexo/flaw"
 )
 
@@ -118,13 +119,15 @@ func (s *Shifter) SetTableModels(tables []interface{}) (err error) {
 
 //AlterAllTable will alter all tables
 func (s *Shifter) AlterAllTable(conn *pg.DB, skipPromt bool) (err error) {
-	s.Debug(conn)
-	for tableName := range s.table {
-		// psql.StartLogging = true
+
+	if conn, err = psql.Conn(true); err == nil {
+		s.Debug(conn)
 		var tx *pg.Tx
 		if tx, err = conn.Begin(); err == nil {
-			if err = s.alterTable(tx, tableName, skipPromt); err == nil {
-				// err = s.CreateAllIndex(tx, tableName, true)
+			for tableName := range s.table {
+				if err = s.alterTable(tx, tableName, skipPromt); err != nil {
+					break
+				}
 			}
 			if err == nil {
 				tx.Commit()
@@ -133,7 +136,6 @@ func (s *Shifter) AlterAllTable(conn *pg.DB, skipPromt bool) (err error) {
 			}
 		} else {
 			err = flaw.TxError(err)
-			break
 		}
 	}
 	return
