@@ -92,19 +92,29 @@ func (s *Shifter) DropTable(conn *pg.DB, tableName string, cascade bool) (err er
 	return
 }
 
-//SetTableModel will set table model
-func (s *Shifter) SetTableModel(table interface{}) (err error) {
+//GetModelTableName will return table name from model
+func (s *Shifter) GetModelTableName(table interface{}) (
+	tableName string, err error) {
+
 	refObj := reflect.ValueOf(table)
 	if refObj.Kind() != reflect.Ptr || refObj.Elem().Kind() != reflect.Struct {
 		err = flaw.CustomError("Invalid struct pointer")
 	} else {
 		refObj = refObj.Elem()
 		if field, exists := refObj.Type().FieldByName("tableName"); exists {
-			tableName := field.Tag.Get("sql")
-			s.table[tableName] = table
+			tableName = field.Tag.Get("sql")
 		} else {
 			err = flaw.CustomError("tableName field not found")
 		}
+	}
+	return
+}
+
+//SetTableModel will set table model
+func (s *Shifter) SetTableModel(table interface{}) (err error) {
+	var tableName string
+	if tableName, err = s.GetModelTableName(table); err == nil {
+		s.table[tableName] = table
 	}
 	return
 }
