@@ -2,8 +2,10 @@ package shifter
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 
+	"github.com/fatih/color"
 	"github.com/go-pg/pg"
 	"github.com/mayur-tolexo/contour/adapter/psql"
 	"github.com/mayur-tolexo/flaw"
@@ -31,11 +33,17 @@ func (s *Shifter) logMode(enable bool) {
 }
 
 //NewShifter will return shifter model
-func NewShifter() *Shifter {
-	return &Shifter{
+func NewShifter(tables ...interface{}) *Shifter {
+	s := &Shifter{
 		table:    make(map[string]interface{}),
 		enumList: make(map[string][]string),
 	}
+	if len(tables) > 0 {
+		if err := s.SetTableModels(tables); err != nil {
+			log.Fatalln(err)
+		}
+	}
+	return s
 }
 
 //CreateTable will create table if not exists
@@ -99,13 +107,15 @@ func (s *Shifter) GetStructTableName(table interface{}) (
 
 	refObj := reflect.ValueOf(table)
 	if refObj.Kind() != reflect.Ptr || refObj.Elem().Kind() != reflect.Struct {
-		err = flaw.CustomError("Invalid struct pointer")
+		msg := fmt.Sprintf("Expected struct pointer but found ", refObj.Kind().String())
+		err = flaw.CustomError(msg)
 	} else {
 		refObj = refObj.Elem()
 		if field, exists := refObj.Type().FieldByName("tableName"); exists {
 			tableName = field.Tag.Get("sql")
 		} else {
-			err = flaw.CustomError("tableName field not found")
+			msg := "tableName struct{} field not found in given struct"
+			err = flaw.CustomError(msg)
 		}
 	}
 	return
@@ -192,7 +202,9 @@ func (s *Shifter) CreateStructFromStruct(conn *pg.DB, filePath string) (
 		if err = s.CreateStruct(conn, tName, filePath); err != nil {
 			break
 		} else if s.Verbose {
-			fmt.Println("struct created:", tName)
+			fmt.Print("Struct created: ")
+			d := color.New(color.FgBlue, color.Bold)
+			d.Println(tName)
 		}
 	}
 	return
