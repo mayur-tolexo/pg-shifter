@@ -14,6 +14,17 @@ func addAllTables(s *Shifter) {
 	s.SetTableModel(&db.TestUser{})
 }
 
+func TestCreateStruct(t *testing.T) {
+
+	if conn, err := psql.Conn(true); err == nil {
+		s := NewShifter()
+		filePath := ""
+		err = s.CreateStruct(conn, "test_address", filePath)
+		assert := assert.New(t)
+		assert.NoError(err)
+	}
+}
+
 func TestCreateAllTable(t *testing.T) {
 
 	if conn, err := psql.Conn(true); err == nil {

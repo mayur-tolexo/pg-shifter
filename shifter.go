@@ -6,6 +6,8 @@ import (
 	"github.com/go-pg/pg"
 	"github.com/mayur-tolexo/contour/adapter/psql"
 	"github.com/mayur-tolexo/flaw"
+	"github.com/mayur-tolexo/pg-shifter/model"
+	"github.com/mayur-tolexo/pg-shifter/util"
 )
 
 var (
@@ -136,6 +138,36 @@ func (s *Shifter) AlterAllTable(conn *pg.DB, skipPromt bool) (err error) {
 			}
 		} else {
 			err = flaw.TxError(err)
+		}
+	}
+	return
+}
+
+//CreateStruct will create golang structure from postgresql table
+func (s *Shifter) CreateStruct(conn *pg.DB, tableName string,
+	filePath string) (err error) {
+
+	var (
+		tx      *pg.Tx
+		tUK     []model.UKSchema
+		idx     []model.Index
+		tSchema map[string]model.ColSchema
+	)
+	if tx, err = conn.Begin(); err == nil {
+
+		if tSchema, err = s.getTableSchema(tx, tableName); err == nil {
+			if tUK, err = util.GetCompositeUniqueKey(tx, tableName); err == nil {
+				if idx, err = util.GetIndex(tx, tableName); err == nil {
+					s.LogPath = filePath
+					err = s.createAlterStructLog(tSchema, tUK, idx, false)
+				}
+			}
+		}
+
+		if err == nil {
+			tx.Commit()
+		} else {
+			tx.Rollback()
 		}
 	}
 	return

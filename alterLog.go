@@ -57,10 +57,10 @@ var goPkg = map[string]string{
 
 //createAlterStructLog will create alter struct log
 func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema,
-	ukSchema []model.UKSchema, idx []model.Index) (err error) {
+	ukSchema []model.UKSchema, idx []model.Index, wt bool) (err error) {
 
 	var logStr string
-	log := s.getSLogModel(schema, ukSchema, idx)
+	log := s.getSLogModel(schema, ukSchema, idx, wt)
 	if logStr, err = execLogTmpl(log); err == nil {
 		err = s.logTableChange(logStr, log)
 	}
@@ -93,16 +93,19 @@ func (s *Shifter) logTableChange(logStr string, log sLog) (err error) {
 
 //getSLogModel will return slog model
 func (s *Shifter) getSLogModel(schema map[string]model.ColSchema,
-	ukSchema []model.UKSchema, idx []model.Index) (log sLog) {
+	ukSchema []model.UKSchema, idx []model.Index, wt bool) (log sLog) {
 
+	sTime := time.Now().UTC()
 	tName := getTableName(schema)
-	sName := tName
-	if model, exists := s.table[sName]; exists {
+	sName := getFieldName(tName)
+	if model, exists := s.table[tName]; exists {
 		sName = getTableNameFromStruct(model)
 	}
 
-	sTime := time.Now().UTC()
-	sNameWithTime := fmt.Sprintf("%v%v", sName, sTime.Unix())
+	sNameWithTime := sName
+	if wt {
+		sNameWithTime = fmt.Sprintf("%v%v", sName, sTime.Unix())
+	}
 
 	log = sLog{
 		StructNameWT: sNameWithTime,

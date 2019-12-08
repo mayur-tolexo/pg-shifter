@@ -16,8 +16,7 @@ import (
 func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPrompt bool) (err error) {
 
 	var (
-		columnSchema      []model.ColSchema
-		constraint        []model.ColSchema
+		tSchema           map[string]model.ColSchema
 		tUK               []model.UKSchema
 		idx               []model.Index
 		colAlter, ukAlter bool
@@ -26,36 +25,47 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPrompt bool) (err 
 	defer func() { s.logMode(false) }()
 
 	if isValid == true {
-		s.logMode(false)
-		if columnSchema, err = util.GetColumnSchema(tx, tableName); err == nil {
-			if constraint, err = util.GetConstraint(tx, tableName); err == nil {
-				tSchema := MergeColumnConstraint(tableName, columnSchema, constraint)
-				sSchema := s.GetStructSchema(tableName)
+		if tSchema, err = s.getTableSchema(tx, tableName); err == nil {
+			sSchema := s.GetStructSchema(tableName)
 
-				if s.hisExists, err = util.IsAfterUpdateTriggerExists(tx, tableName); err == nil {
+			if s.hisExists, err = util.IsAfterUpdateTriggerExists(tx, tableName); err == nil {
 
-					if colAlter, err = s.compareSchema(tx, tSchema, sSchema, skipPrompt); err == nil {
-						sUK := s.GetUniqueKey(tableName)
-						if tUK, err = util.GetCompositeUniqueKey(tx, tableName); err == nil &&
-							(len(tUK) > 0 || len(sUK) > 0) {
-							s.logMode(s.Verbose)
-							ukAlter, err = s.checkUniqueKeyToAlter(tx, tableName, tUK, sUK)
-						}
-					}
-					if err == nil && (colAlter || ukAlter) {
-						s.logMode(false)
-						if idx, err = util.GetIndex(tx, tableName); err == nil {
-							err = s.createAlterStructLog(tSchema, tUK, idx)
-						}
+				if colAlter, err = s.compareSchema(tx, tSchema, sSchema, skipPrompt); err == nil {
+					sUK := s.GetUniqueKey(tableName)
+					if tUK, err = util.GetCompositeUniqueKey(tx, tableName); err == nil &&
+						(len(tUK) > 0 || len(sUK) > 0) {
+						s.logMode(s.Verbose)
+						ukAlter, err = s.checkUniqueKeyToAlter(tx, tableName, tUK, sUK)
 					}
 				}
-				// printSchema(tSchema, sSchema)
+				if err == nil && (colAlter || ukAlter) {
+					s.logMode(false)
+					if idx, err = util.GetIndex(tx, tableName); err == nil {
+						err = s.createAlterStructLog(tSchema, tUK, idx, true)
+					}
+				}
 			}
 		}
 	} else {
 		msg := "Invalid Table Name: " + tableName
 		fmt.Println(msg)
 		err = errors.New(msg)
+	}
+	return
+}
+
+//getTableSchema will return table schema
+func (s *Shifter) getTableSchema(tx *pg.Tx, tableName string) (
+	tSchema map[string]model.ColSchema, err error) {
+	var (
+		columnSchema []model.ColSchema
+		constraint   []model.ColSchema
+	)
+	s.logMode(false)
+	if columnSchema, err = util.GetColumnSchema(tx, tableName); err == nil {
+		if constraint, err = util.GetConstraint(tx, tableName); err == nil {
+			tSchema = MergeColumnConstraint(tableName, columnSchema, constraint)
+		}
 	}
 	return
 }
