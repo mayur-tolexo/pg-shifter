@@ -20,7 +20,7 @@ var (
 
 //const in histroy
 const (
-	HistoryTag = "_history"
+	historyTag = "_history"
 )
 
 //GetColumnSchema : Get Column Schema of given table
@@ -83,6 +83,39 @@ func GetCompositeUniqueKey(tx *pg.Tx, tableName string) (ukSchema []model.UKSche
 	select string_agg(column_name,',') as col, conname
 	from comp group by conname;`
 	_, err = tx.Query(&ukSchema, query, tableName)
+	return
+}
+
+//GetIndex : Get index of table
+func GetIndex(tx *pg.Tx, tableName string) (idx []model.Index, err error) {
+	query := `
+	with idx as (
+		select
+		--    t.relname as table_name
+		    i.relname as index_name
+		    , c.column_name
+		    , am.amname
+		    , array_position(ix.indkey::int[],c.ordinal_position::int) as position
+		from
+			pg_index ix
+			join pg_class t on  t.oid = ix.indrelid
+		    join pg_class i on i.oid = ix.indexrelid
+		    JOIN pg_am am ON am.oid = i.relam
+		    join unnest(ix.indkey::int[]) as colNo on true 
+		    join information_schema.columns as c 
+			on c.ordinal_position = colNo and c.table_name = t.relname
+		where
+		    t.relkind = 'r'
+		    and ix.indisunique = false
+		    and t.relname = ?
+		   order by i.relname, position
+	)
+	select index_name 
+	, string_agg(distinct amname,',') as itype
+	, string_agg(column_name,',') as col
+	from idx
+	group by index_name;`
+	_, err = tx.Query(&idx, query, tableName)
 	return
 }
 
@@ -214,7 +247,7 @@ func SkipTag(object interface{}) (flag bool) {
 
 //GetHistoryTableName will reutrn history table name
 func GetHistoryTableName(tableName string) string {
-	return tableName + HistoryTag
+	return tableName + historyTag
 }
 
 //GetBeforeInsertTriggerName will return before insert trigger name

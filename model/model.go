@@ -30,3 +30,10 @@ type UKSchema struct {
 	ConstraintName string `sql:"conname"`
 	Columns        string `sql:"col"`
 }
+
+//Index model
+type Index struct {
+	IdxName string `sql:"index_name"`
+	IType   string `sql:"itype"`
+	Columns string `sql:"col"`
+}

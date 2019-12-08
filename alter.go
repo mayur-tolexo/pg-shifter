@@ -19,9 +19,11 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPrompt bool) (err 
 		columnSchema      []model.ColSchema
 		constraint        []model.ColSchema
 		tUK               []model.UKSchema
+		idx               []model.Index
 		colAlter, ukAlter bool
 	)
 	_, isValid := s.table[tableName]
+	defer func() { s.logMode(false) }()
 
 	if isValid == true {
 		s.logMode(false)
@@ -36,13 +38,15 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string, skipPrompt bool) (err 
 						sUK := s.GetUniqueKey(tableName)
 						if tUK, err = util.GetCompositeUniqueKey(tx, tableName); err == nil &&
 							(len(tUK) > 0 || len(sUK) > 0) {
-							defer func() { s.logMode(false) }()
 							s.logMode(s.Verbose)
 							ukAlter, err = s.checkUniqueKeyToAlter(tx, tableName, tUK, sUK)
 						}
 					}
 					if err == nil && (colAlter || ukAlter) {
-						err = s.createAlterStructLog(tSchema, tUK)
+						s.logMode(false)
+						if idx, err = util.GetIndex(tx, tableName); err == nil {
+							err = s.createAlterStructLog(tSchema, tUK, idx)
+						}
 					}
 				}
 				// printSchema(tSchema, sSchema)

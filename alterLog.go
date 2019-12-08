@@ -22,6 +22,7 @@ type sLog struct {
 	TableName    string
 	Data         []model.ColSchema
 	Unique       []model.UKSchema
+	Index        []model.Index
 	Date         string
 	importedPkg  map[string]struct{}
 }
@@ -56,10 +57,10 @@ var goPkg = map[string]string{
 
 //createAlterStructLog will create alter struct log
 func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema,
-	ukSchema []model.UKSchema) (err error) {
+	ukSchema []model.UKSchema, idx []model.Index) (err error) {
 
 	var logStr string
-	log := s.getSLogModel(schema, ukSchema)
+	log := s.getSLogModel(schema, ukSchema, idx)
 	if logStr, err = execLogTmpl(log); err == nil {
 		err = s.logTableChange(logStr, log)
 	}
@@ -92,7 +93,7 @@ func (s *Shifter) logTableChange(logStr string, log sLog) (err error) {
 
 //getSLogModel will return slog model
 func (s *Shifter) getSLogModel(schema map[string]model.ColSchema,
-	ukSchema []model.UKSchema) (log sLog) {
+	ukSchema []model.UKSchema, idx []model.Index) (log sLog) {
 
 	tName := getTableName(schema)
 	sName := tName
@@ -109,6 +110,7 @@ func (s *Shifter) getSLogModel(schema map[string]model.ColSchema,
 		TableName:    tName,
 		Data:         getLogData(schema),
 		Unique:       ukSchema,
+		Index:        idx,
 		Date:         sTime.Format("Mon _2 Jan 2006 15:04:05"),
 		importedPkg:  make(map[string]struct{}),
 	}
@@ -254,11 +256,23 @@ type {{ .StructNameWT }} struct {
 func ({{ .StructNameWT }}) UniqueKey() []string {
 	uk := []string{
 		{{- range $key, $value := .Unique}}
-			//{{ $value.ConstraintName }}
-			"{{ $value.Columns }}",
+			"{{ $value.Columns }}", //{{ $value.ConstraintName }}
 		{{- end }}
 	}
 	return uk
+}
+{{ end }}
+
+{{ $length := len .Index }} {{ if gt $length 0 }}
+//Index of the table. For composite index use ,
+//Default index type is btree. For gin index use gin value
+func ({{ .StructNameWT }}) Index() map[string]string {
+	idx := map[string]string{
+		{{- range $key, $value := .Index}}
+			"{{ $value.Columns }}": "{{ $value.IType }}", //{{ $value.IdxName }}
+		{{- end }}
+	}
+	return idx
 }
 {{ end }}
 
