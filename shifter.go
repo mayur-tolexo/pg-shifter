@@ -51,18 +51,47 @@ func (s *Shifter) Verbose(enable bool) *Shifter {
 }
 
 //CreateTable will create table if not exists
+//before calling it you need to set the table model in shifter using SetTableModel()
 func (s *Shifter) CreateTable(tx *pg.Tx, tableName string) (err error) {
 	err = s.createTable(tx, tableName, 1)
 	return
 }
 
+//CreateTableAllIndex will create all indices of the given table struct model
+//structModel is a struct pointer of your table
+//if skipPrompt is disabled then before executing sql it will prompt for confirmation
+func (s *Shifter) CreateTableAllIndex(tx *pg.Tx, structModel interface{}, skipPrompt bool) (err error) {
+	if err = s.SetTableModel(structModel); err == nil {
+		var tName string
+		if tName, err = s.GetStructTableName(structModel); err == nil {
+			err = s.CreateAllIndex(tx, tName, skipPrompt)
+		}
+	}
+	return
+}
+
 //CreateAllIndex will create table all index if not exists
+//before calling it you need to set the table model in shifter using SetTableModel()
 func (s *Shifter) CreateAllIndex(tx *pg.Tx, tableName string, skipPrompt bool) (err error) {
 	err = s.createIndex(tx, tableName, skipPrompt)
 	return
 }
 
+//CreateTableAllUniqueKey will create all composite unique keys of the given table struct model
+//structModel is a struct pointer of your table
+//if skipPrompt is disabled then before executing sql it will prompt for confirmation
+func (s *Shifter) CreateTableAllUniqueKey(tx *pg.Tx, structModel interface{}) (err error) {
+	if err = s.SetTableModel(structModel); err == nil {
+		var tName string
+		if tName, err = s.GetStructTableName(structModel); err == nil {
+			err = s.CreateAllCompUniqueKey(tx, tName)
+		}
+	}
+	return
+}
+
 //CreateAllCompUniqueKey will create table all composite unique key
+//before calling it you need to set the table model in shifter using SetTableModel()
 func (s *Shifter) CreateAllCompUniqueKey(tx *pg.Tx, tableName string) (err error) {
 	uk := s.GetUniqueKey(tableName)
 	_, err = addCompositeUK(tx, tableName, uk)
@@ -70,9 +99,9 @@ func (s *Shifter) CreateAllCompUniqueKey(tx *pg.Tx, tableName string) (err error
 }
 
 //CreateAllTable will create all tables
+//before calling it you need to set the table model in shifter using SetTableModels()
 func (s *Shifter) CreateAllTable(conn *pg.DB) (err error) {
 	for tableName := range s.table {
-		// psql.StartLogging = true
 		var tx *pg.Tx
 		if tx, err = conn.Begin(); err == nil {
 			if err = s.CreateTable(tx, tableName); err == nil {
@@ -94,6 +123,7 @@ func (s *Shifter) CreateAllTable(conn *pg.DB) (err error) {
 }
 
 //CreateEnum will create enum by enum name
+//before calling it you need to set the table model in shifter using SetTableModel()
 func (s *Shifter) CreateEnum(conn *pg.DB, tableName, enumName string) (err error) {
 	var tx *pg.Tx
 	if tx, err = conn.Begin(); err == nil {
@@ -109,12 +139,14 @@ func (s *Shifter) CreateEnum(conn *pg.DB, tableName, enumName string) (err error
 }
 
 //DropTable will drop table if exists
+//before calling it you need to set the table model in shifter using SetTableModel()
 func (s *Shifter) DropTable(conn *pg.DB, tableName string, cascade bool) (err error) {
 	err = s.dropTable(conn, tableName, cascade)
 	return
 }
 
 //AlterAllTable will alter all tables
+//before calling it you need to set the table model in shifter using SetTableModels()
 func (s *Shifter) AlterAllTable(conn *pg.DB, skipPromt bool) (err error) {
 
 	s.Debug(conn)
@@ -137,6 +169,7 @@ func (s *Shifter) AlterAllTable(conn *pg.DB, skipPromt bool) (err error) {
 }
 
 //CreateStruct will create golang structure from postgresql table
+//before calling it you need to set the table model in shifter using SetTableModel()
 func (s *Shifter) CreateStruct(conn *pg.DB, tableName string,
 	filePath string) (err error) {
 
@@ -183,6 +216,7 @@ func (s *Shifter) CreateStructFromStruct(conn *pg.DB, filePath string) (
 }
 
 //CreateTrigger will create triggers mentioned on struct
+//before calling it you need to set the table model in shifter using SetTableModel()
 func (s *Shifter) CreateTrigger(conn *pg.DB, tableName string) (err error) {
 	var tx *pg.Tx
 	s.Debug(conn)
