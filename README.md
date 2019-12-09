@@ -7,8 +7,8 @@
 Golang struct to postgres table shifter.
 
 ### Features
+- [Create table](#create-table)
 - [Create go struct from postgresql table name](#create-go-struct-from-postgresql-table-name)
-- [Create table from struct](#create-table-from-struct)
 - [Create enum](#recovery)
 - [Create history table with after update/delete triggers](#recovery)
 - [Alter table](#recovery)
@@ -27,18 +27,9 @@ Golang struct to postgres table shifter.
 			- Set constraint not deferrable
 			- Add/Drop **ON DELETE** DEFAULT/NO ACTION/RESTRICT/CASCADE/SET NULL
 			- Add/Drop **ON UPDATE** DEFAULT/NO ACTION/RESTRICT/CASCADE/SET NULL
-			
-### Create go struct from postgresql table name
-CreateStruct(conn *pg.DB, tableName string, filePath string) (err error)
-```
-if conn, err := psql.Conn(true); err == nil {
-	shifter.NewShifter().CreateStruct(conn, "address", "")
-}
-```
-#### OUTPUT
-![Screenshot 2019-12-08 at 10 09 43 PM](https://user-images.githubusercontent.com/20511920/70392617-db073f80-1a07-11ea-856c-cf83247db3dd.png)
 
-### Create table from struct
+
+### Create table
 CreateTable(conn *pg.DB, model interface{}) (err error)
 ##### 1) Directly passing struct model
 ```
@@ -65,3 +56,14 @@ s := shifter.NewShifter()
 s.SetTableModel(&TestAddress{})
 err := s.CreateTable(conn, "test_address")
 ```
+
+
+### Create go struct from postgresql table name
+CreateStruct(conn *pg.DB, tableName string, filePath string) (err error)
+```
+if conn, err := psql.Conn(true); err == nil {
+	shifter.NewShifter().CreateStruct(conn, "address", "")
+}
+```
+#### OUTPUT
+![Screenshot 2019-12-08 at 10 09 43 PM](https://user-images.githubusercontent.com/20511920/70392617-db073f80-1a07-11ea-856c-cf83247db3dd.png)
