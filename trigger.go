@@ -235,7 +235,7 @@ func (s *Shifter) getHistoryFields(dbModel interface{}, dataTag, action string) 
 	fields string, values string, updateCondition string, updatedAt bool, err error) {
 
 	fieldMap := util.GetStructField(dbModel)
-	fCount := 0
+	fCount, uCount := 0, 0
 	for _, inputField := range fieldMap {
 		if tagValue, exists := inputField.Tag.Lookup("sql"); exists == true {
 
@@ -248,8 +248,9 @@ func (s *Shifter) getHistoryFields(dbModel interface{}, dataTag, action string) 
 				if curField[0] == "created_at" {
 					values += "NOW()," + getNewline(fCount)
 				} else {
+					uCount++
 					values += dataTag + "." + curField[0] + "," + getNewline(fCount)
-					updateCondition += " OLD." + curField[0] + " <> NEW." + curField[0] + " OR" + getNewline(fCount)
+					updateCondition += " OLD." + curField[0] + " <> NEW." + curField[0] + " OR" + getNewline(uCount)
 				}
 			} else if updatedAtExists == true {
 				updatedAt = true
@@ -261,7 +262,7 @@ func (s *Shifter) getHistoryFields(dbModel interface{}, dataTag, action string) 
 	}
 	fields += "action"
 	values += "'" + action + "'"
-	updateCondition = strings.TrimSuffix(updateCondition, "OR"+getNewline(fCount))
+	updateCondition = strings.TrimSuffix(updateCondition, "OR"+getNewline(uCount))
 	return
 }
 
