@@ -32,7 +32,7 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string,
 			if s.hisExists, err = util.IsAfterUpdateTriggerExists(tx, tableName); err == nil {
 
 				if colAlter, err = s.compareSchema(tx, tSchema, sSchema, skipPrompt); err == nil {
-					ukAlter, err = s.modifyCompositeUniqueKey(tx, tableName)
+					tUK, ukAlter, err = s.modifyCompositeUniqueKey(tx, tableName)
 				}
 				if err == nil && (colAlter || ukAlter) {
 					if idx, err = util.GetIndex(tx, tableName); err == nil {
@@ -49,11 +49,9 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string,
 
 //modifyCompositeUniqueKey will modify composite unique key if changed in struct
 func (s *Shifter) modifyCompositeUniqueKey(tx *pg.Tx,
-	tableName string) (isAlter bool, err error) {
+	tableName string) (tUK []model.UKSchema, isAlter bool, err error) {
 
-	var tUK []model.UKSchema
 	defer func() { s.logMode(false) }()
-
 	sUK := s.GetUniqueKey(tableName)
 	if tUK, err = util.GetCompositeUniqueKey(tx, tableName); err == nil &&
 		(len(tUK) > 0 || len(sUK) > 0) {
