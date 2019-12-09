@@ -204,11 +204,11 @@ func getDropColSQL(tName, cName string) (sql string) {
 func getConstraintName(schema model.ColSchema) (keyName string) {
 	var tag string
 	switch schema.ConstraintType {
-	case PrimaryKey:
+	case primaryKey:
 		tag = PrimaryKeySuffix
-	case Unique:
+	case uniqueKey:
 		tag = UniqueKeySuffix
-	case ForeignKey:
+	case foreignKey:
 		tag = ForeignKeySuffix
 	}
 	keyName = fmt.Sprintf("%v_%v_%v", schema.TableName, schema.ColumnName, tag)
@@ -218,9 +218,9 @@ func getConstraintName(schema model.ColSchema) (keyName string) {
 //getStructConstraintSQL will return constraint sql from scheam model
 func getStructConstraintSQL(schema model.ColSchema) (sql string) {
 	switch schema.ConstraintType {
-	case PrimaryKey:
-	case Unique:
-	case ForeignKey:
+	case primaryKey:
+	case uniqueKey:
+	case foreignKey:
 		deleteTag := getConstraintTagByFlag(schema.DeleteType)
 		updateTag := getConstraintTagByFlag(schema.UpdateType)
 		sql = fmt.Sprintf(" REFERENCES %v(%v) ON DELETE %v ON UPDATE %v",
@@ -322,8 +322,8 @@ func getNullDTypeSQL(isNullable string) (str string) {
 
 //getUniqueDTypeSQL will return unique constraint string if exists in column
 func getUniqueDTypeSQL(schema model.ColSchema) (str string) {
-	if schema.ConstraintType == Unique || schema.IsFkUnique {
-		str = " " + Unique
+	if schema.ConstraintType == uniqueKey || schema.IsFkUnique {
+		str = " " + uniqueKey
 	}
 	return
 }
@@ -438,7 +438,7 @@ func (s *Shifter) modifyDefault(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 	isSame := isSameDefault(tSchema, sSchema)
 
 	//for primary key default is series so should remove it
-	if tSchema.ConstraintType != PrimaryKey &&
+	if tSchema.ConstraintType != primaryKey &&
 		isSame == false {
 		sql := ""
 		if sSchema.ColumnDefault == "" {
@@ -464,7 +464,7 @@ func isSameDefault(tSchema, sSchema model.ColSchema) (isSame bool) {
 		}
 		tDefault = strings.ToLower(tDefault)
 		isSame = (tDefault == sDefault)
-	} else if tSchema.ConstraintType != PrimaryKey && tSchema.SeqName == "" {
+	} else if tSchema.ConstraintType != primaryKey && tSchema.SeqName == "" {
 
 		if strings.Contains(tDefault, "::") &&
 			strings.Contains(sDefault, "::") == false {
@@ -549,7 +549,7 @@ func (s *Shifter) modifyConstraint(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 		} else {
 			isAlter, err = dropAndCreateConstraint(tx, tSchema, sSchema, skipPrompt)
 		}
-	} else if tSchema.ConstraintType == ForeignKey {
+	} else if tSchema.ConstraintType == foreignKey {
 		isAlter, err = modifyFkAllConstraint(tx, tSchema, sSchema, skipPrompt)
 	}
 
@@ -621,7 +621,7 @@ func modifyFkUniqueConstraint(tx *pg.Tx, tSchema, sSchema model.ColSchema,
 		if sSchema.IsFkUnique {
 			//adding unique constraint in table
 			//as its exists with foreign key
-			sSchema.ConstraintType = Unique
+			sSchema.ConstraintType = uniqueKey
 			isAlter, err = addConstraint(tx, sSchema, skipPrompt)
 		} else if tSchema.IsFkUnique {
 			//droping unique constraint from table
@@ -657,7 +657,7 @@ func addColAllConstraints(tx *pg.Tx, tSchema, sSchema model.ColSchema, skipPromp
 		//with foreign key
 		if sSchema.IsFkUnique && tSchema.IsFkUnique == false {
 			var curAtler bool
-			sSchema.ConstraintType = Unique
+			sSchema.ConstraintType = uniqueKey
 			curAtler, err = addConstraint(tx, sSchema, skipPrompt)
 			isAlter = isAlter || curAtler
 		}
@@ -775,11 +775,11 @@ func MergeColumnConstraint(tName string, columnSchema,
 	for _, curConstraint := range constraint {
 		if v, exists := constraintMap[curConstraint.ColumnName]; exists {
 			//if curent column is unique as foreign key as well
-			if v.ConstraintType == Unique && curConstraint.ConstraintType == ForeignKey {
+			if v.ConstraintType == uniqueKey && curConstraint.ConstraintType == foreignKey {
 				curConstraint.FkUniqueName = v.ConstraintName
 				v = curConstraint
 				v.IsFkUnique = true
-			} else if v.ConstraintType == ForeignKey && curConstraint.ConstraintType == Unique {
+			} else if v.ConstraintType == foreignKey && curConstraint.ConstraintType == uniqueKey {
 				v.FkUniqueName = curConstraint.ConstraintName
 				v.IsFkUnique = true
 			}

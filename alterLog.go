@@ -183,9 +183,9 @@ func getSQLTag(schema model.ColSchema) (dType string) {
 //getConstraintTagSQL will return sql tag constraint
 func getConstraintTagSQL(schema model.ColSchema) (sql string) {
 	switch schema.ConstraintType {
-	case PrimaryKey:
-		sql = " " + PrimaryKey
-	case ForeignKey:
+	case primaryKey:
+		sql = " " + primaryKey
+	case foreignKey:
 		sql = getStructConstraintSQL(schema)
 	}
 	return

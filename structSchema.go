@@ -97,8 +97,8 @@ func getColType(tag string) (cType string, maxLen string) {
 //getColIsNullable will return col nullable allowed from struct tag
 func getColIsNullable(tag string) (nullable string) {
 	nullable = Yes
-	if strings.Contains(tag, NotNullTag) ||
-		strings.Contains(tag, PrimaryKeyTag) {
+	if strings.Contains(tag, notNullTag) ||
+		strings.Contains(tag, primaryKeyTag) {
 		nullable = No
 	}
 	return
@@ -119,31 +119,31 @@ func getColMaxChar(cType string) (maxLen string) {
 //here we are setting the pk,uk or fk and deferrable and initially defered constraings
 func (s *Shifter) setColConstraint(schema *model.ColSchema, tag string) {
 	cSet := false
-	if strings.Contains(tag, PrimaryKeyTag) {
+	if strings.Contains(tag, primaryKeyTag) {
 		cSet = true
-		schema.ConstraintType = PrimaryKey
+		schema.ConstraintType = primaryKey
 		//in case of primary key reference table is itself
 		schema.ForeignTableName = schema.TableName
 		schema.ForeignColumnName = schema.ColumnName
-	} else if strings.Contains(tag, "unique") {
+	} else if strings.Contains(tag, uniqueKeyTag) {
 		cSet = true
-		schema.ConstraintType = Unique
+		schema.ConstraintType = uniqueKey
 		//in case of unique key reference table is itself
 		schema.ForeignTableName = schema.TableName
 	}
-	if strings.Contains(tag, ReferencesTag) {
+	if strings.Contains(tag, referencesTag) {
 		cSet = true
 		if schema.ConstraintType != "" {
 			schema.IsFkUnique = true
 		}
-		schema.ConstraintType = ForeignKey
-		referenceCheck := strings.Split(tag, ReferencesTag)
+		schema.ConstraintType = foreignKey
+		referenceCheck := strings.Split(tag, referencesTag)
 
 		//setting reference table and on cascade flags
 		if len(referenceCheck) > 1 {
 			schema.ForeignTableName, schema.ForeignColumnName = getFkDetail(referenceCheck[1])
-			schema.DeleteType = getConstraintFlagByKey(referenceCheck[1], "delete")
-			schema.UpdateType = getConstraintFlagByKey(referenceCheck[1], "update")
+			schema.DeleteType = getConstraintFlagByKey(referenceCheck[1], deleteTag)
+			schema.UpdateType = getConstraintFlagByKey(referenceCheck[1], updateTag)
 		}
 	}
 
@@ -174,10 +174,10 @@ func (s *Shifter) addConstraintFromUkMap(schema *model.ColSchema) {
 
 	if colFound {
 		if schema.ConstraintType == "" {
-			schema.ConstraintType = Unique
+			schema.ConstraintType = uniqueKey
 			schema.IsDeferrable = No
 			schema.InitiallyDeferred = No
-		} else if schema.ConstraintType == ForeignKey {
+		} else if schema.ConstraintType == foreignKey {
 			schema.IsFkUnique = true
 		}
 	}
@@ -222,13 +222,13 @@ func getConstraintFlagByKey(refCheck string, key string) (flag string) {
 //Get FK constraint falg
 func getConstraintFlag(key string) (flag string) {
 	switch key {
-	case NoActionTag:
+	case noActionTag:
 		flag = "a"
-	case RestrictTag:
+	case restrictTag:
 		flag = "r"
-	case CascadeTag:
+	case cascadeTag:
 		flag = "c"
-	case SetNullTag:
+	case setNullTag:
 		flag = "n"
 	default:
 		flag = "d"
