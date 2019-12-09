@@ -16,7 +16,7 @@ const (
 	GinIndex    = "gin"
 	GistIndex   = "gist"
 	HashIndex   = "hash"
-	BrinINdex   = "brin"
+	BrinIndex   = "brin"
 	SPGistIndex = "sp-gist"
 )
 
@@ -41,16 +41,30 @@ func (s *Shifter) createIndex(tx *pg.Tx, tableName string, skipPrompt bool) (err
 
 //Get index query by tablename and table columns
 func getIndexQuery(tableName string, indexDS string, column string) (uniqueKeyQuery string) {
-	if strings.HasPrefix(indexDS, GinIndex) == true {
-		indexDS = GinIndex
-	} else {
-		indexDS = BtreeIndex
-	}
-
+	indexDS = getIndexType(indexDS)
 	constraintName := fmt.Sprintf("idx_%v_%v", tableName, strings.Replace(strings.Replace(column, " ", "", -1), ",", "_", -1))
 	constraintName = util.GetStrByLen(constraintName, 64)
 	return fmt.Sprintf("CREATE INDEX IF NOT EXISTS %v ON %v USING %v (%v);\n",
 		constraintName, tableName, indexDS, column)
+}
+
+//getIndexType will return index type to use
+func getIndexType(iType string) (idxType string) {
+	switch iType {
+	case GinIndex:
+		idxType = GinIndex
+	case GistIndex:
+		idxType = GistIndex
+	case HashIndex:
+		idxType = HashIndex
+	case BrinIndex:
+		idxType = BrinIndex
+	case SPGistIndex:
+		idxType = SPGistIndex
+	default:
+		idxType = BtreeIndex
+	}
+	return
 }
 
 //GetIndex will return index fields of struct
