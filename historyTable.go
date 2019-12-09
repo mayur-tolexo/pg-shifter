@@ -34,11 +34,8 @@ func (s *Shifter) dropHistory(tx *pg.Tx, tableName string, cascade bool) (err er
 
 //dropHistoryConstraint will drop history table constraints
 func (s *Shifter) dropHistoryConstraint(tx *pg.Tx, historyTable string) (err error) {
-	if _, err = tx.Exec(fmt.Sprintf(`
-	   	ALTER TABLE %v DROP COLUMN IF EXISTS updated_at;
-		ALTER TABLE %v ADD COLUMN id BIGSERIAL PRIMARY KEY;
-		ALTER TABLE %v ADD COLUMN action VARCHAR(20);`,
-		historyTable, historyTable, historyTable)); err != nil {
+	if _, err = tx.Exec(fmt.Sprintf(`ALTER TABLE %v DROP COLUMN IF EXISTS updated_at`,
+		historyTable)); err != nil {
 		msg := fmt.Sprintf("Table: %v", historyTable)
 		err = flaw.ExecError(err, msg)
 		fmt.Println("History Constraint Error:", msg, err)
@@ -48,8 +45,16 @@ func (s *Shifter) dropHistoryConstraint(tx *pg.Tx, historyTable string) (err err
 
 //execHistoryTable will execute history table creation
 func (s *Shifter) execHistoryTable(tx *pg.Tx, tableName, historyTable string) (err error) {
-	if _, err = tx.Exec(fmt.Sprintf("CREATE TABLE %v AS SELECT * FROM %v WHERE false",
-		historyTable, tableName)); err != nil {
+
+	sql := `
+	CREATE TABLE %v (
+		id BIGSERIAL PRIMARY key,
+		action VARCHAR(20),
+		LIKE %v
+	);
+	`
+	sql = fmt.Sprintf(sql, historyTable, tableName)
+	if _, err = tx.Exec(fmt.Sprintf(sql)); err != nil {
 		msg := fmt.Sprintf("Table: %v", tableName)
 		err = flaw.ExecError(err, msg)
 		fmt.Println("History Error:", msg, err)

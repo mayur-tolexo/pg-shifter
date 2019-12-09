@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"reflect"
 	"sort"
+	"strings"
 	"text/template"
 	"time"
 
@@ -29,7 +30,7 @@ type sLog struct {
 
 //pgToStructType to golang type mapping
 var pgToGoType = map[string]string{
-	"USER-DEFINED":                "string",
+	UserDefined:                   "string",
 	"bigint":                      "int",
 	"bigserial":                   "int",
 	"varbit":                      "[]bytes",
@@ -49,11 +50,6 @@ var pgToGoType = map[string]string{
 	"time with time zone":         "time.Time",
 	"timestamp without time zone": "time.Time",
 	"timestamp with time zone":    "time.Time",
-}
-
-//goPkg to import when using that type in struct
-var goPkg = map[string]string{
-	"time.Time": "time",
 }
 
 //createAlterStructLog will create alter struct log
@@ -206,7 +202,9 @@ func (l *sLog) GetStructFieldType(dataType string) (sType string) {
 	if sType, exists = pgToGoType[dataType]; exists == false {
 		sType = "interface{}"
 	}
-	if pkg, exists := goPkg[sType]; exists {
+	//if any package is used then adding that in import
+	if strings.Contains(sType, ".") {
+		pkg := strings.Split(sType, ".")[0]
 		l.importedPkg[pkg] = struct{}{}
 	}
 	return
