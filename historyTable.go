@@ -34,11 +34,15 @@ func (s *Shifter) dropHistory(tx *pg.Tx, tableName string, cascade bool) (err er
 
 //dropHistoryConstraint will drop history table constraints
 func (s *Shifter) dropHistoryConstraint(tx *pg.Tx, historyTable string) (err error) {
-	if _, err = tx.Exec(fmt.Sprintf(`ALTER TABLE %v DROP COLUMN IF EXISTS updated_at`,
-		historyTable)); err != nil {
-		msg := fmt.Sprintf("Table: %v", historyTable)
+	sql := `
+		ALTER TABLE %v DROP COLUMN IF EXISTS updated_at;
+		ALTER TABLE %v ADD COLUMN IF NOT EXISTS created_at timetz DEFAULT now();`
+	sql = fmt.Sprintf(sql, historyTable, historyTable)
+	if _, err = tx.Exec(sql); err != nil {
+		msg := `History Table Error: ` + historyTable + `
+		SQL:` + sql
 		err = flaw.ExecError(err, msg)
-		fmt.Println("History Constraint Error:", msg, err)
+		fmt.Println(msg, err)
 	}
 	return
 }
