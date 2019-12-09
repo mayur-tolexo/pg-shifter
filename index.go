@@ -12,8 +12,12 @@ import (
 
 //index type const
 const (
-	GinIndex   = "gin"
-	BtreeIndex = "btree"
+	BtreeIndex  = "btree"
+	GinIndex    = "gin"
+	GistIndex   = "gist"
+	HashIndex   = "hash"
+	BrinINdex   = "brin"
+	SPGistIndex = "sp-gist"
 )
 
 //Create index of given table
