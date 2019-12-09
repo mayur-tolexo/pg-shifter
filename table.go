@@ -10,13 +10,13 @@ import (
 )
 
 //Create Table in database
-func (s *Shifter) createTable(tx *pg.Tx, tableName string, withDependency int) (err error) {
+func (s *Shifter) createTable(tx *pg.Tx, tableName string, withDependency bool) (err error) {
 	tableModel := s.table[tableName]
 	if _, alreadyCreated := tableCreated[tableModel]; alreadyCreated == false {
 		tableCreated[tableModel] = true
 		err = s.upsertEnum(tx, tableName)
 		if err == nil {
-			if withDependency == 1 {
+			if withDependency {
 				err = s.createTableDependencies(tx, tableModel)
 			}
 			if err == nil {

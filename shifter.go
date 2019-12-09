@@ -51,9 +51,26 @@ func (s *Shifter) Verbose(enable bool) *Shifter {
 }
 
 //CreateTable will create table if not exists
-//before calling it you need to set the table model in shifter using SetTableModel()
-func (s *Shifter) CreateTable(tx *pg.Tx, tableName string) (err error) {
-	err = s.createTable(tx, tableName, 1)
+//structModel is a struct pointer of your table
+func (s *Shifter) CreateTable(conn *pg.DB, structModel interface{}) (err error) {
+	if err = s.SetTableModel(structModel); err == nil {
+		var (
+			tx    *pg.Tx
+			tName string
+		)
+		if tx, err = conn.Begin(); err == nil {
+			if tName, err = s.GetStructTableName(structModel); err == nil {
+				err = s.createTable(tx, tName, true)
+			}
+			if err == nil {
+				tx.Commit()
+			} else {
+				tx.Rollback()
+			}
+		} else {
+			err = flaw.TxError(err)
+		}
+	}
 	return
 }
 
@@ -104,7 +121,7 @@ func (s *Shifter) CreateAllTable(conn *pg.DB) (err error) {
 	for tableName := range s.table {
 		var tx *pg.Tx
 		if tx, err = conn.Begin(); err == nil {
-			if err = s.CreateTable(tx, tableName); err == nil {
+			if err = s.createTable(tx, tableName, true); err == nil {
 				if err = s.CreateAllIndex(tx, tableName, true); err == nil {
 					err = s.CreateAllCompUniqueKey(tx, tableName)
 				}

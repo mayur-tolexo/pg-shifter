@@ -25,6 +25,16 @@ func TestCreateStruct(t *testing.T) {
 	}
 }
 
+func TestCreateTable(t *testing.T) {
+
+	if conn, err := psql.Conn(true); err == nil {
+		s := NewShifter()
+		err := s.CreateTable(conn, &db.TestAddress{})
+		assert := assert.New(t)
+		assert.NoError(err)
+	}
+}
+
 func TestCreateAllTable(t *testing.T) {
 
 	if conn, err := psql.Conn(true); err == nil {
