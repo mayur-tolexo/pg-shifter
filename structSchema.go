@@ -7,8 +7,8 @@ import (
 	"gitlab.com/tolexo/plib/migrator/util"
 )
 
-//DataAlias alias to table value mapping
-var DataAlias = map[string]string{
+//pgAlias is postgresql alias to actual type
+var pgAlias = map[string]string{
 	"int8":        "bigint",
 	"serial8":     "bigserial",
 	"varbit":      "bit varying",
@@ -29,8 +29,8 @@ var DataAlias = map[string]string{
 	"timestamptz": "timestamp with time zone",
 }
 
-//rDataAlias is reverse data alias
-var rDataAlias = map[string]string{
+//rPGAlias is reverse postgresql alias
+var rPGAlias = map[string]string{
 	"bit varying":                 "varbit",
 	"boolean":                     "bool",
 	"character":                   "char",
@@ -87,8 +87,8 @@ func getColType(tag string) (cType string, maxLen string) {
 		cType = strings.Split(val[1], " ")[0]
 		maxLen = getColMaxChar(cType)
 		cType = strings.Split(cType, "(")[0]
-		if _, exists := DataAlias[cType]; exists {
-			cType = DataAlias[cType]
+		if _, exists := pgAlias[cType]; exists {
+			cType = pgAlias[cType]
 		}
 	}
 	return

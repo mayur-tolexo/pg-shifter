@@ -277,7 +277,7 @@ func getStructDataType(schema model.ColSchema) (dType string) {
 		dType = getSerialType(schema.SeqDataType)
 	} else if schema.DataType == userDefined {
 		dType = schema.UdtName
-	} else if dType, exists = rDataAlias[schema.DataType]; exists == false {
+	} else if dType, exists = rPGAlias[schema.DataType]; exists == false {
 		dType = schema.DataType
 	}
 	if schema.CharMaxLen != "" {
@@ -468,7 +468,7 @@ func isSameDefault(tSchema, sSchema model.ColSchema) (isSame bool) {
 
 		if strings.Contains(tDefault, "::") &&
 			strings.Contains(sDefault, "::") == false {
-			dataType, exists := DataAlias[sSchema.DataType]
+			dataType, exists := pgAlias[sSchema.DataType]
 			if exists == false {
 				dataType = sSchema.DataType
 			}
