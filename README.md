@@ -39,7 +39,7 @@ if conn, err := psql.Conn(true); err == nil {
 ![Screenshot 2019-12-08 at 10 09 43 PM](https://user-images.githubusercontent.com/20511920/70392617-db073f80-1a07-11ea-856c-cf83247db3dd.png)
 
 ### Create table from struct
-CreateTable(conn *pg.DB, structModel interface{}) (err error)
+CreateTable(conn *pg.DB, model interface{}) (err error)
 ##### 1) Directly passing struct model
 ```
 type TestAddress struct {
