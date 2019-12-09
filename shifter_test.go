@@ -46,3 +46,15 @@ func TestAlterTable(t *testing.T) {
 		assert.NoError(err)
 	}
 }
+
+func TestCreateTrigger(t *testing.T) {
+
+	if conn, err := psql.Conn(true); err == nil {
+		s := NewShifter()
+		s.Verbose(true)
+		addAllTables(s)
+		err = s.CreateTrigger(conn, "test_user")
+		assert := assert.New(t)
+		assert.NoError(err)
+	}
+}

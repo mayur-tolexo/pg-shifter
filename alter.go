@@ -23,7 +23,7 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string,
 		colAlter, ukAlter bool
 	)
 	_, isValid := s.table[tableName]
-	defer func() { s.logMode(false) }()
+	defer s.logMode(false)
 
 	if isValid == true {
 		if tSchema, err = s.getTableSchema(tx, tableName); err == nil {
@@ -89,7 +89,7 @@ func (s *Shifter) compareSchema(tx *pg.Tx, tSchema, sSchema map[string]model.Col
 		modify  bool
 	)
 
-	defer func() { s.logMode(false) }()
+	defer s.logMode(false)
 	s.logMode(s.verbose)
 
 	//adding column exists in struct but missing in db table

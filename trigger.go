@@ -13,8 +13,9 @@ import (
 //Create trigger
 func (s *Shifter) createTrigger(tx *pg.Tx, tableName string) (err error) {
 	if s.IsSkip(tableName) == false {
+		defer s.logMode(false)
 		trigger := s.GetTrigger(tableName)
-		// fmt.Println(trigger)
+		s.logMode(s.verbose)
 		if _, err = tx.Exec(trigger); err != nil {
 			msg := fmt.Sprintf("Table: %v", tableName)
 			err = flaw.ExecError(err, msg)
@@ -27,15 +28,29 @@ func (s *Shifter) createTrigger(tx *pg.Tx, tableName string) (err error) {
 //GetTrigger : Get triggers by table name
 func (s *Shifter) GetTrigger(tableName string) (trigger string) {
 	var (
-		aInsertTrigger string
+		// aInsertTrigger string
 		bUpdateTrigger string
 		aUpdateTrigger string
-		aDeleteTrigger string
+		// aDeleteTrigger string
 	)
 	// aInsertTrigger := getInsertTrigger(tableName)
 	bUpdateTrigger, aUpdateTrigger = s.getUpdateTrigger(tableName)
-	aDeleteTrigger = s.getDeleteTrigger(tableName)
-	trigger = aInsertTrigger + bUpdateTrigger + aUpdateTrigger + aDeleteTrigger
+	// aDeleteTrigger = s.getDeleteTrigger(tableName)
+
+	for _, curTag := range s.getTableTriggersTag(tableName) {
+		switch curTag {
+		case afterInsertTrigger:
+			trigger += s.getInsertTrigger(tableName)
+		case afterUpdateTrigger:
+			trigger += aUpdateTrigger
+		case afterDeleteTrigger:
+			trigger += s.getDeleteTrigger(tableName)
+		case beforeUpdateTrigger:
+			trigger += bUpdateTrigger
+		}
+	}
+
+	// trigger = aInsertTrigger + bUpdateTrigger + aUpdateTrigger + aDeleteTrigger
 	return
 }
 
@@ -57,26 +72,32 @@ func (s *Shifter) getAfterInsertTrigger(tableName, fields, values string) (
 
 	historyTable := util.GetHistoryTableName(tableName)
 	afterInsertTable := util.GetAfterInsertTriggerName(tableName)
-	fnQuery := fmt.Sprintf(`
-		CREATE OR REPLACE FUNCTION %v()
-		RETURNS trigger AS
-		$$
-	    	BEGIN
-	        	INSERT INTO %v (%v) 
-	        	VALUES(%v);
-	        	RETURN NEW;
-	    	END;
-		$$
-		LANGUAGE 'plpgsql';
+	delimiter := `
+	------------------------- AFTER INSERT TRIGGER -------------------------`
+
+	fnQuery := fmt.Sprintf(delimiter+`
+	CREATE OR REPLACE FUNCTION %v()
+	RETURNS trigger AS
+	$$
+    	BEGIN
+        	INSERT INTO %v (
+        		%v
+        	) VALUES (
+        		%v
+        	);
+        	RETURN NEW;
+    	END;
+	$$
+	LANGUAGE 'plpgsql';
 		`, afterInsertTable, historyTable, fields, values)
 	triggerQuery := fmt.Sprintf(`
-		DROP TRIGGER IF EXISTS %v ON %v;
-		CREATE TRIGGER %v
-		AFTER INSERT ON %v 
-		FOR EACH ROW
-		EXECUTE PROCEDURE %v();
-		`, afterInsertTable, tableName, afterInsertTable, tableName, afterInsertTable)
-	aInsertTrigger = fnQuery + triggerQuery
+	DROP TRIGGER IF EXISTS %v ON %v;
+	CREATE TRIGGER %v
+	AFTER INSERT ON %v 
+	FOR EACH ROW
+	EXECUTE PROCEDURE %v();`+delimiter,
+		afterInsertTable, tableName, afterInsertTable, tableName, afterInsertTable)
+	aInsertTrigger = fnQuery + triggerQuery + "\n"
 	return
 }
 
@@ -102,29 +123,35 @@ func (s *Shifter) getAfterUpdateTrigger(tableName, fields, values,
 
 	historyTable := util.GetHistoryTableName(tableName)
 	afterUpdateTable := util.GetAfterUpdateTriggerName(tableName)
+	delimiter := `
+	------------------------- AFTER UPDATE TRIGGER -------------------------`
 
-	fnQuery := fmt.Sprintf(`
-		CREATE OR REPLACE FUNCTION %v()
-		RETURNS trigger AS
-		$$
-	    	BEGIN
-	    		IF %v THEN
-		        	INSERT INTO %v (%v) 
-		        	VALUES(%v);
-	        	END IF;
-	        	RETURN NEW;
-	    	END;
-		$$
-		LANGUAGE 'plpgsql';
+	fnQuery := fmt.Sprintf(delimiter+`
+	CREATE OR REPLACE FUNCTION %v()
+	RETURNS trigger AS
+	$$
+		BEGIN
+			IF %v
+			THEN
+        	INSERT INTO %v (
+        		%v
+        	) VALUES(
+        		%v
+        	);
+	    	END IF;
+	    	RETURN NEW;
+		END;
+	$$
+	LANGUAGE 'plpgsql';
 		`, afterUpdateTable, updateCondition, historyTable, fields, values)
 	triggerQuery := fmt.Sprintf(`
-		DROP TRIGGER IF EXISTS %v ON %v;
-		CREATE TRIGGER %v
-		AFTER UPDATE ON %v 
-		FOR EACH ROW
-		EXECUTE PROCEDURE %v();
-		`, afterUpdateTable, tableName, afterUpdateTable, tableName, afterUpdateTable)
-	aUpdateTrigger = fnQuery + triggerQuery
+	DROP TRIGGER IF EXISTS %v ON %v;
+	CREATE TRIGGER %v
+	AFTER UPDATE ON %v 
+	FOR EACH ROW
+	EXECUTE PROCEDURE %v();`+delimiter,
+		afterUpdateTable, tableName, afterUpdateTable, tableName, afterUpdateTable)
+	aUpdateTrigger = fnQuery + triggerQuery + "\n"
 	return
 }
 
@@ -132,26 +159,28 @@ func (s *Shifter) getAfterUpdateTrigger(tableName, fields, values,
 func (s *Shifter) getBeforeUpdateTrigger(tableName string) (bUpdateTrigger string) {
 
 	beforeUpdateTable := util.GetBeforeInsertTriggerName(tableName)
+	delimiter := `
+	------------------------- BEFORE UPDATE TRIGGER -------------------------`
 
-	fnQuery := fmt.Sprintf(`
-		CREATE OR REPLACE FUNCTION %v()
-		RETURNS trigger AS
-		$$
-	    	BEGIN
-	        	NEW.updated_at = now();
-	        	RETURN NEW;
-	    	END;
-		$$
-		LANGUAGE 'plpgsql';
+	fnQuery := fmt.Sprintf(delimiter+`
+	CREATE OR REPLACE FUNCTION %v()
+	RETURNS trigger AS
+	$$
+    	BEGIN
+        	NEW.updated_at = now();
+        	RETURN NEW;
+    	END;
+	$$
+	LANGUAGE 'plpgsql';
 		`, beforeUpdateTable)
 	triggerQuery := fmt.Sprintf(`
-		DROP TRIGGER IF EXISTS %v ON %v;
-		CREATE TRIGGER %v
-		BEFORE UPDATE ON %v 
-		FOR EACH ROW
-		EXECUTE PROCEDURE %v();
-		`, beforeUpdateTable, tableName, beforeUpdateTable, tableName, beforeUpdateTable)
-	bUpdateTrigger = fnQuery + triggerQuery
+	DROP TRIGGER IF EXISTS %v ON %v;
+	CREATE TRIGGER %v
+	BEFORE UPDATE ON %v 
+	FOR EACH ROW
+	EXECUTE PROCEDURE %v();`+delimiter,
+		beforeUpdateTable, tableName, beforeUpdateTable, tableName, beforeUpdateTable)
+	bUpdateTrigger = fnQuery + triggerQuery + "\n"
 	return
 }
 
@@ -172,45 +201,55 @@ func (s *Shifter) getAfterDeleteTrigger(tableName, fields, values string) (aDele
 
 	historyTable := util.GetHistoryTableName(tableName)
 	afterDeleteTable := util.GetAfterDeleteTriggerName(tableName)
+	delimiter := `
+	------------------------- AFTER DELETE TRIGGER -------------------------`
 
-	fnQuery := fmt.Sprintf(`
-		CREATE OR REPLACE FUNCTION %v()
-		RETURNS trigger AS
-		$$
-	    	BEGIN
-	        	INSERT INTO %v (%v) 
-	        	VALUES(%v);
-	        	RETURN OLD;
-	    	END;
-		$$
-		LANGUAGE 'plpgsql';
+	fnQuery := fmt.Sprintf(delimiter+`
+	CREATE OR REPLACE FUNCTION %v()
+	RETURNS trigger AS
+	$$
+	BEGIN
+		INSERT INTO %v (
+			%v
+		) VALUES (
+			%v
+		);
+		RETURN OLD;
+	END;
+	$$
+	LANGUAGE 'plpgsql';
 		`, afterDeleteTable, historyTable, fields, values)
 	triggerQuery := fmt.Sprintf(`
-		DROP TRIGGER IF EXISTS %v ON %v;
-		CREATE TRIGGER %v
-		AFTER DELETE ON %v 
-		FOR EACH ROW
-		EXECUTE PROCEDURE %v();
-		`, afterDeleteTable, tableName, afterDeleteTable, tableName, afterDeleteTable)
-	aDeleteTrigger = fnQuery + triggerQuery
+	DROP TRIGGER IF EXISTS %v ON %v;
+	CREATE TRIGGER %v
+	AFTER DELETE ON %v 
+	FOR EACH ROW
+	EXECUTE PROCEDURE %v();`+delimiter,
+		afterDeleteTable, tableName, afterDeleteTable, tableName, afterDeleteTable)
+	aDeleteTrigger = fnQuery + triggerQuery + "\n"
 	return
 }
 
 //Get history table fields from struct model of database
 func (s *Shifter) getHistoryFields(dbModel interface{}, dataTag, action string) (
 	fields string, values string, updateCondition string, updatedAt bool, err error) {
+
 	fieldMap := util.GetStructField(dbModel)
+	fCount := 0
 	for _, inputField := range fieldMap {
 		if tagValue, exists := inputField.Tag.Lookup("sql"); exists == true {
+
 			curField := strings.Split(tagValue, ",")
 			updatedAtExists := strings.Contains(curField[0], "updated_at")
+
 			if len(curField) > 0 && updatedAtExists == false {
-				fields += curField[0] + ","
+				fCount++
+				fields += curField[0] + "," + getNewline(fCount)
 				if curField[0] == "created_at" {
-					values += "NOW(),"
+					values += "NOW()," + getNewline(fCount)
 				} else {
-					values += dataTag + "." + curField[0] + ","
-					updateCondition += " OLD." + curField[0] + " <> NEW." + curField[0] + " OR"
+					values += dataTag + "." + curField[0] + "," + getNewline(fCount)
+					updateCondition += " OLD." + curField[0] + " <> NEW." + curField[0] + " OR" + getNewline(fCount)
 				}
 			} else if updatedAtExists == true {
 				updatedAt = true
@@ -222,6 +261,13 @@ func (s *Shifter) getHistoryFields(dbModel interface{}, dataTag, action string) 
 	}
 	fields += "action"
 	values += "'" + action + "'"
-	updateCondition = strings.TrimSuffix(updateCondition, "OR")
+	updateCondition = strings.TrimSuffix(updateCondition, "OR"+getNewline(fCount))
+	return
+}
+
+func getNewline(count int) (sep string) {
+	if count%4 == 0 {
+		sep = "\n\t\t\t"
+	}
 	return
 }

@@ -3,11 +3,9 @@ package shifter
 import (
 	"fmt"
 	"log"
-	"reflect"
 
 	"github.com/fatih/color"
 	"github.com/go-pg/pg"
-	"github.com/mayur-tolexo/contour/adapter/psql"
 	"github.com/mayur-tolexo/flaw"
 	"github.com/mayur-tolexo/pg-shifter/model"
 	"github.com/mayur-tolexo/pg-shifter/util"
@@ -107,65 +105,24 @@ func (s *Shifter) DropTable(conn *pg.DB, tableName string, cascade bool) (err er
 	return
 }
 
-//GetStructTableName will return table name from table struct
-func (s *Shifter) GetStructTableName(table interface{}) (
-	tableName string, err error) {
-
-	refObj := reflect.ValueOf(table)
-	if refObj.Kind() != reflect.Ptr || refObj.Elem().Kind() != reflect.Struct {
-		msg := fmt.Sprintf("Expected struct pointer but found ", refObj.Kind().String())
-		err = flaw.CustomError(msg)
-	} else {
-		refObj = refObj.Elem()
-		if field, exists := refObj.Type().FieldByName("tableName"); exists {
-			tableName = field.Tag.Get("sql")
-		} else {
-			msg := "tableName struct{} field not found in given struct"
-			err = flaw.CustomError(msg)
-		}
-	}
-	return
-}
-
-//SetTableModel will set table model
-func (s *Shifter) SetTableModel(table interface{}) (err error) {
-	var tableName string
-	if tableName, err = s.GetStructTableName(table); err == nil {
-		s.table[tableName] = table
-	}
-	return
-}
-
-//SetTableModels will set table models
-func (s *Shifter) SetTableModels(tables []interface{}) (err error) {
-	for _, table := range tables {
-		if err = s.SetTableModel(table); err != nil {
-			break
-		}
-	}
-	return
-}
-
 //AlterAllTable will alter all tables
 func (s *Shifter) AlterAllTable(conn *pg.DB, skipPromt bool) (err error) {
 
-	if conn, err = psql.Conn(true); err == nil {
-		s.Debug(conn)
-		var tx *pg.Tx
-		if tx, err = conn.Begin(); err == nil {
-			for tableName := range s.table {
-				if err = s.alterTable(tx, tableName, skipPromt); err != nil {
-					break
-				}
+	s.Debug(conn)
+	var tx *pg.Tx
+	if tx, err = conn.Begin(); err == nil {
+		for tableName := range s.table {
+			if err = s.alterTable(tx, tableName, skipPromt); err != nil {
+				break
 			}
-			if err == nil {
-				tx.Commit()
-			} else {
-				tx.Rollback()
-			}
-		} else {
-			err = flaw.TxError(err)
 		}
+		if err == nil {
+			tx.Commit()
+		} else {
+			tx.Rollback()
+		}
+	} else {
+		err = flaw.TxError(err)
 	}
 	return
 }
@@ -211,6 +168,21 @@ func (s *Shifter) CreateStructFromStruct(conn *pg.DB, filePath string) (
 			fmt.Print("Struct created: ")
 			d := color.New(color.FgBlue, color.Bold)
 			d.Println(tName)
+		}
+	}
+	return
+}
+
+//CreateTrigger will create triggers mentioned on struct
+func (s *Shifter) CreateTrigger(conn *pg.DB, tableName string) (err error) {
+	var tx *pg.Tx
+	s.Debug(conn)
+	if tx, err = conn.Begin(); err == nil {
+		err = s.createTrigger(tx, tableName)
+		if err == nil {
+			tx.Commit()
+		} else {
+			tx.Rollback()
 		}
 	}
 	return
