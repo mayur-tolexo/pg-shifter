@@ -7,31 +7,34 @@
 Golang struct to postgres table shifter.
 
 ### Features
-- [Create table](#create-table)
-- [Create go struct from postgresql table name](#create-go-struct-from-postgresql-table-name)
-- [Create enum](#recovery)
-- [Create history table with after update/delete triggers](#recovery)
-- [Alter table](#recovery)
-	- [Add New Column](#add-new-column)
-	- [Remove existing column](#remove-existing-column)
-	- [Modify existing column](#modify-existing-column)
-		- [Modify datatype](#modify-datatype)
-		- Modify data length (e.g. varchar(255) to varchar(100))
-		- Add/Drop default value
-		- Add/Drop Not Null Constraint
-		- Add/Drop constraint (Unique/Foreign Key)
-		- [Modify constraint](#modify-constraint)
-			- Set constraint deferrable
-				- Initially deferred
-				- Initially immediate
-			- Set constraint not deferrable
-			- Add/Drop **ON DELETE** DEFAULT/NO ACTION/RESTRICT/CASCADE/SET NULL
-			- Add/Drop **ON UPDATE** DEFAULT/NO ACTION/RESTRICT/CASCADE/SET NULL
+1. [Create table](#create-table)
+2. [Create go struct from postgresql table name](#create-go-struct-from-postgresql-table-name)
+3. [Create enum](#recovery)
+4. [Create history table with after update/delete triggers](#recovery)
+5. [Alter table](#recovery)
+	1. [Add New Column](#add-new-column)
+	2. [Remove existing column](#remove-existing-column)
+	3. [Modify existing column](#modify-existing-column)
+		1. [Modify datatype](#modify-datatype)
+		2. Modify data length (e.g. varchar(255) to varchar(100))
+		3. Add/Drop default value
+		4. Add/Drop Not Null Constraint
+		5. Add/Drop constraint (Unique/Foreign Key)
+		6. [Modify constraint](#modify-constraint)
+			1. Set constraint deferrable
+				1. Initially deferred
+				1. Initially immediate
+			2. Set constraint not deferrable
+			3. Add/Drop **ON DELETE** DEFAULT/NO ACTION/RESTRICT/CASCADE/SET NULL
+			4. Add/Drop **ON UPDATE** DEFAULT/NO ACTION/RESTRICT/CASCADE/SET NULL
 
 
-### Create table
-CreateTable(conn *pg.DB, model interface{}) (err error)
-##### 1) Directly passing struct model
+### 1. Create table
+CreateTable(conn *pg.DB, model interface{}) (err error)  
+i) Directly passing struct model  
+ii) Passing table name after setting model  
+
+##### i) Directly passing struct model
 ```
 type TestAddress struct {
 	tableName struct{} `sql:"test_address"`
@@ -43,7 +46,7 @@ type TestAddress struct {
 s := shifter.NewShifter()
 err := s.CreateTable(conn, &TestAddress{})
 ```
-##### 2) Passing table name after setting model
+##### ii) Passing table name after setting model
 ```
 type TestAddress struct {
 	tableName struct{} `sql:"test_address"`
@@ -58,7 +61,7 @@ err := s.CreateTable(conn, "test_address")
 ```
 
 
-### Create go struct from postgresql table name
+### 2. Create go struct from postgresql table name
 CreateStruct(conn *pg.DB, tableName string, filePath string) (err error)
 ```
 if conn, err := psql.Conn(true); err == nil {
