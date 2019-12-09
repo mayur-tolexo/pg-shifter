@@ -7,7 +7,7 @@
 Golang struct to postgres table shifter.
 
 ### Features
-1. [Create table](#create-table)
+1. [Create table](#1.-create-table)
 2. [Create go struct from postgresql table name](#create-go-struct-from-postgresql-table-name)
 3. [Create enum](#recovery)
 4. [Create history table with after update/delete triggers](#recovery)
