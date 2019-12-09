@@ -205,11 +205,11 @@ func getConstraintName(schema model.ColSchema) (keyName string) {
 	var tag string
 	switch schema.ConstraintType {
 	case primaryKey:
-		tag = PrimaryKeySuffix
+		tag = primaryKeySuffix
 	case uniqueKey:
-		tag = UniqueKeySuffix
+		tag = uniqueKeySuffix
 	case foreignKey:
-		tag = ForeignKeySuffix
+		tag = foreignKeySuffix
 	}
 	keyName = fmt.Sprintf("%v_%v_%v", schema.TableName, schema.ColumnName, tag)
 	return
@@ -233,11 +233,11 @@ func getStructConstraintSQL(schema model.ColSchema) (sql string) {
 //getDefferSQL will reutrn deferable and initiall deferred sql
 func getDefferSQL(schema model.ColSchema) (sql string) {
 	if schema.IsDeferrable == Yes {
-		sql = " " + Deferrable
+		sql = " " + deferrable
 		if schema.InitiallyDeferred == Yes {
-			sql += " " + InitiallyDeferred
+			sql += " " + initiallyDeferred
 		} else {
-			sql += " " + InitiallyImmediate
+			sql += " " + initiallyImmediate
 		}
 	}
 	return
@@ -247,15 +247,15 @@ func getDefferSQL(schema model.ColSchema) (sql string) {
 func getConstraintTagByFlag(flag string) (tag string) {
 	switch flag {
 	case "a":
-		tag = NoAction
+		tag = noAction
 	case "r":
-		tag = Restrict
+		tag = restrict
 	case "c":
-		tag = Cascade
+		tag = cascade
 	case "n":
-		tag = SetNull
+		tag = setNull
 	default:
-		tag = SetDefault
+		tag = setDefault
 	}
 	return
 }
@@ -275,7 +275,7 @@ func getStructDataType(schema model.ColSchema) (dType string) {
 
 	if schema.SeqName != "" {
 		dType = getSerialType(schema.SeqDataType)
-	} else if schema.DataType == UserDefined {
+	} else if schema.DataType == userDefined {
 		dType = schema.UdtName
 	} else if dType, exists = rDataAlias[schema.DataType]; exists == false {
 		dType = schema.DataType
@@ -718,14 +718,14 @@ func getDeferrableSQL(schema model.ColSchema) (sql string) {
 
 	//if deferrable then checking its initially deffered or initially immediate
 	if schema.IsDeferrable == Yes {
-		sql += Deferrable
+		sql += deferrable
 		if schema.InitiallyDeferred == Yes {
-			sql += " " + InitiallyDeferred
+			sql += " " + initiallyDeferred
 		} else {
-			sql += " " + InitiallyImmediate
+			sql += " " + initiallyImmediate
 		}
 	} else {
-		sql += NotDeferrable
+		sql += notDeferrable
 	}
 	return
 }

@@ -1,17 +1,17 @@
 database:
     master:
         engine: "postgres"
-        username: "test"
-        password: "test"
-        host:     "localhost"
+        username: "tachyon"
+        password: "Bvd^412"
+        host:     "staging2"
         port:     "5432"
-        db:       "test"
+        db:       "tachyon"
     slaves:
         - database.slave1
     slave1:
         engine: "postgres"
-        username: "test"
-        password: "test"
-        host:     "localhost"
+        username: "tachyon"
+        password: "Bvd^412"
+        host:     "staging2"
         port:     "5432"
-        db:       "test"
+        db:       "tachyon"

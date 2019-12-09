@@ -22,7 +22,7 @@ func (s *Shifter) GetUniqueKey(tName string) (uk map[string]string) {
 			val := out[0].Interface().([]string)
 			for _, ukFields := range val {
 				fName := strings.Replace(ukFields, ",", "_", -1)
-				ukName := fmt.Sprintf("%v_%v_%v", tName, fName, UniqueKeySuffix)
+				ukName := fmt.Sprintf("%v_%v_%v", tName, fName, uniqueKeySuffix)
 				ukName = util.GetStrByLen(ukName, 64)
 				uk[ukName] = ukFields
 			}
