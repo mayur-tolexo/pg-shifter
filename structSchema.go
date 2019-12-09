@@ -201,7 +201,7 @@ func getFkDetail(refCheck string) (table, column string) {
 
 //Get FK constraint Flag by key i.e. delete/update
 func getConstraintFlagByKey(refCheck string, key string) (flag string) {
-	flag = "d"
+	flag = "a"
 	if strings.Contains(refCheck, key) == true {
 		keyCheck := strings.Split(refCheck, key)
 		if len(keyCheck) > 1 {
@@ -222,16 +222,16 @@ func getConstraintFlagByKey(refCheck string, key string) (flag string) {
 //Get FK constraint falg
 func getConstraintFlag(key string) (flag string) {
 	switch key {
-	case noActionTag:
-		flag = "a"
 	case restrictTag:
 		flag = "r"
 	case cascadeTag:
 		flag = "c"
 	case setNullTag:
 		flag = "n"
-	default:
+	case setDefault:
 		flag = "d"
+	default:
+		flag = "a"
 	}
 	return
 }

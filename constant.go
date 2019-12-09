@@ -9,6 +9,7 @@ const (
 	referencesTag       = "references"
 	deleteTag           = "delete"
 	updateTag           = "update"
+	setdefaultTag       = "setdefault"
 	noActionTag         = "noaction"
 	restrictTag         = "restrict"
 	cascadeTag          = "cascade"

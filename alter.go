@@ -244,16 +244,16 @@ func getDefferSQL(schema model.ColSchema) (sql string) {
 //Get Constraint Tag by Flag
 func getConstraintTagByFlag(flag string) (tag string) {
 	switch flag {
-	case "a":
-		tag = noAction
 	case "r":
 		tag = restrict
 	case "c":
 		tag = cascade
 	case "n":
 		tag = setNull
-	default:
+	case "d":
 		tag = setDefault
+	default:
+		tag = noAction
 	}
 	return
 }
