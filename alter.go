@@ -182,7 +182,7 @@ func (s *Shifter) dropCol(tx *pg.Tx, schema model.ColSchema,
 	//checking history table exists
 	if s.hisExists {
 		hName := util.GetHistoryTableName(schema.TableName)
-		sql += ";\n" + getDropColSQL(hName, schema.ColumnName)
+		sql += getDropColSQL(hName, schema.ColumnName)
 	}
 	//history alter sql end
 
@@ -194,7 +194,7 @@ func (s *Shifter) dropCol(tx *pg.Tx, schema model.ColSchema,
 
 //getAddColSQL will return add column sql
 func getDropColSQL(tName, cName string) (sql string) {
-	sql = fmt.Sprintf("ALTER TABLE %v DROP %v\n", tName, cName)
+	sql = fmt.Sprintf("ALTER TABLE %v DROP %v;\n", tName, cName)
 	return
 }
 
