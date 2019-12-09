@@ -62,6 +62,13 @@ func (s *Shifter) CreateAllIndex(tx *pg.Tx, tableName string, skipPrompt bool) (
 	return
 }
 
+//CreateAllCompUniqueKey will create table all composite unique key
+func (s *Shifter) CreateAllCompUniqueKey(tx *pg.Tx, tableName string) (err error) {
+	uk := s.GetUniqueKey(tableName)
+	_, err = addCompositeUK(tx, tableName, uk)
+	return
+}
+
 //CreateAllTable will create all tables
 func (s *Shifter) CreateAllTable(conn *pg.DB) (err error) {
 	for tableName := range s.table {
@@ -69,7 +76,9 @@ func (s *Shifter) CreateAllTable(conn *pg.DB) (err error) {
 		var tx *pg.Tx
 		if tx, err = conn.Begin(); err == nil {
 			if err = s.CreateTable(tx, tableName); err == nil {
-				err = s.CreateAllIndex(tx, tableName, true)
+				if err = s.CreateAllIndex(tx, tableName, true); err == nil {
+					err = s.CreateAllCompUniqueKey(tx, tableName)
+				}
 			}
 			if err == nil {
 				tx.Commit()
