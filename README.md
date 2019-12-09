@@ -8,7 +8,7 @@ Golang struct to postgres table shifter.
 
 ### Features
 - [Create go struct from postgresql table name](#create-go-struct-from-postgresql-table-name)
-- [Create table from struct](#recovery)
+- [Create table from struct](#create-table-from-struct)
 - [Create enum](#recovery)
 - [Create history table with after update/delete triggers](#recovery)
 - [Alter table](#recovery)
@@ -37,3 +37,17 @@ if conn, err := psql.Conn(true); err == nil {
 ```
 #### OUTPUT
 ![Screenshot 2019-12-08 at 10 09 43 PM](https://user-images.githubusercontent.com/20511920/70392617-db073f80-1a07-11ea-856c-cf83247db3dd.png)
+
+### Create table from struct
+CreateTable(conn *pg.DB, structModel interface{}) (err error)
+```
+type TestAddress struct {
+	tableName struct{} `sql:"test_address"`
+	AddressID int      `sql:"address_id,type:serial NOT NULL PRIMARY KEY"`
+	Address   string   `sql:"city,type:text"`
+	City      string   `sql:"city,type:varchar(25) NULL"`
+}
+
+s := NewShifter()
+err := s.CreateTable(conn, &TestAddress{})
+```
