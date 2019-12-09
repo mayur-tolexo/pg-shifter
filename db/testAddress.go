@@ -20,3 +20,13 @@ func (TestAddress) UniqueKey() []string {
 	}
 	return uk
 }
+
+//Index of the table. For composite index use ,
+//Default index type is btree. For gin index use gin
+func (TestAddress) Index() map[string]string {
+	idx := map[string]string{
+		"status":            "",
+		"address_id,status": "",
+	}
+	return idx
+}

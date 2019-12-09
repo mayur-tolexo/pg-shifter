@@ -169,7 +169,6 @@ func (s *Shifter) AlterAllTable(conn *pg.DB, skipPromt bool) (err error) {
 }
 
 //CreateStruct will create golang structure from postgresql table
-//before calling it you need to set the table model in shifter using SetTableModel()
 func (s *Shifter) CreateStruct(conn *pg.DB, tableName string,
 	filePath string) (err error) {
 
@@ -201,6 +200,7 @@ func (s *Shifter) CreateStruct(conn *pg.DB, tableName string,
 
 //CreateStructFromStruct will create structure from shifter structures
 //which are set in shifter map
+//before calling it you need to set all the table models in shifter using SetTableModels()
 func (s *Shifter) CreateStructFromStruct(conn *pg.DB, filePath string) (
 	err error) {
 	for tName := range s.table {
