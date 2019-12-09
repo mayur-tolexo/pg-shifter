@@ -72,3 +72,19 @@ func getStructTableNameField(model interface{}) (field reflect.StructField, exis
 	}
 	return
 }
+
+//getTableName will check model is struct of string
+//and return table name based on that
+func (s *Shifter) getTableName(model interface{}) (
+	tableName string, err error) {
+
+	if reflect.TypeOf(model).Kind() == reflect.String {
+		tableName = model.(string)
+	} else {
+		if err = s.SetTableModel(model); err == nil {
+			tableName, err = s.GetStructTableName(model)
+		}
+	}
+
+	return
+}

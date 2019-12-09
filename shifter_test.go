@@ -32,6 +32,10 @@ func TestCreateTable(t *testing.T) {
 		err := s.CreateTable(conn, &db.TestAddress{})
 		assert := assert.New(t)
 		assert.NoError(err)
+
+		s.SetTableModel(&db.TestUser{})
+		err = s.CreateTable(conn, "test_user")
+		assert.NoError(err)
 	}
 }
 

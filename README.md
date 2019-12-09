@@ -40,6 +40,7 @@ if conn, err := psql.Conn(true); err == nil {
 
 ### Create table from struct
 CreateTable(conn *pg.DB, structModel interface{}) (err error)
+##### 1) Directly passing struct model
 ```
 type TestAddress struct {
 	tableName struct{} `sql:"test_address"`
@@ -48,6 +49,19 @@ type TestAddress struct {
 	City      string   `sql:"city,type:varchar(25) NULL"`
 }
 
-s := NewShifter()
+s := shifter.NewShifter()
 err := s.CreateTable(conn, &TestAddress{})
+```
+##### 2) Passing table name after setting model
+```
+type TestAddress struct {
+	tableName struct{} `sql:"test_address"`
+	AddressID int      `sql:"address_id,type:serial NOT NULL PRIMARY KEY"`
+	Address   string   `sql:"city,type:text"`
+	City      string   `sql:"city,type:varchar(25) NULL"`
+}
+
+s := shifter.NewShifter()
+s.SetTableModel(&TestAddress{})
+err := s.CreateTable(conn, "test_address")
 ```

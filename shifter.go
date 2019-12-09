@@ -51,17 +51,18 @@ func (s *Shifter) Verbose(enable bool) *Shifter {
 }
 
 //CreateTable will create table if not exists
-//structModel is a struct pointer of your table
-func (s *Shifter) CreateTable(conn *pg.DB, structModel interface{}) (err error) {
-	if err = s.SetTableModel(structModel); err == nil {
-		var (
-			tx    *pg.Tx
-			tName string
-		)
+//parameters:
+// - conn: postgresql connection
+// - model: struct pointer or string (table name)
+// if model is table name then need to set shifter SetTableModel() before calling CreateTable()
+func (s *Shifter) CreateTable(conn *pg.DB, model interface{}) (err error) {
+	var (
+		tx        *pg.Tx
+		tableName string
+	)
+	if tableName, err = s.getTableName(model); err == nil {
 		if tx, err = conn.Begin(); err == nil {
-			if tName, err = s.GetStructTableName(structModel); err == nil {
-				err = s.createTable(tx, tName, true)
-			}
+			err = s.createTable(tx, tableName, true)
 			if err == nil {
 				tx.Commit()
 			} else {
