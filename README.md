@@ -9,8 +9,9 @@ Golang struct to postgres table shifter.
 ## Features
 1. [Create table](#create-table)
 2. [Create enum](#create-enum)
-2. [Create index](#create-index)
-3. [Create go struct from postgresql table name](#create-go-struct-from-postgresql-table-name)
+3. [Create index](#create-index)
+3. [Create unique key](#create-unique-key)
+3. [Create table struct](#create-table-struct)
 4. [Create history table with after update/delete triggers](#recovery)
 5. [Alter table](#recovery)
 	1. [Add New Column](#add-new-column)
@@ -239,7 +240,7 @@ s.SetTableModel(&db.TestAddress{})
 err = s.CreateAllIndex(conn, "test_address")
 ```
 
-## Create go struct from postgresql table name
+## Create table struct
 CreateStruct(conn *pg.DB, tableName string, filePath string) (err error)
 ```
 if conn, err := psql.Conn(true); err == nil {
