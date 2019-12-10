@@ -113,7 +113,7 @@ err = s.CreateAllEnum(conn, "test_address")
 ```
 
 
-CreateEnum(conn *pg.DB, model interface{}, enumName string) (err error)  
+__CreateEnum(conn *pg.DB, model interface{}, enumName string) (err error)
 i) Directly passing struct model   
 ii) Passing table name after setting model  
 
