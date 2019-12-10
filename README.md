@@ -41,7 +41,7 @@ ii) Passing table name after setting model
 type TestAddress struct {
 	tableName struct{} `sql:"test_address"`
 	AddressID int      `sql:"address_id,type:serial NOT NULL PRIMARY KEY"`
-	Address   string   `sql:"city,type:text"`
+	Address   string   `sql:"address,type:text"`
 	City      string   `sql:"city,type:varchar(25) NULL"`
 }
 
@@ -53,7 +53,7 @@ err := s.CreateTable(conn, &TestAddress{})
 type TestAddress struct {
 	tableName struct{} `sql:"test_address"`
 	AddressID int      `sql:"address_id,type:serial NOT NULL PRIMARY KEY"`
-	Address   string   `sql:"city,type:text"`
+	Address   string   `sql:"address,type:text"`
 	City      string   `sql:"city,type:varchar(25) NULL"`
 }
 
@@ -75,7 +75,7 @@ ii) Passing table name after setting model
 type TestAddress struct {
 	tableName struct{} `sql:"test_address"`
 	AddressID int      `sql:"address_id,type:serial NOT NULL PRIMARY KEY"`
-	Address   string   `sql:"city,type:text"`
+	Address   string   `sql:"address,type:text"`
 	City      string   `sql:"city,type:varchar(25) NULL"`
 	Status    string   `sql:"status,type:address_status"`
 }
@@ -96,7 +96,7 @@ err := s.CreateAllEnum(conn, &db.TestAddress{})
 type TestAddress struct {
 	tableName struct{} `sql:"test_address"`
 	AddressID int      `sql:"address_id,type:serial NOT NULL PRIMARY KEY"`
-	Address   string   `sql:"city,type:text"`
+	Address   string   `sql:"address,type:text"`
 	City      string   `sql:"city,type:varchar(25) NULL"`
 	Status    string   `sql:"status,type:address_status"`
 }
@@ -128,7 +128,7 @@ ii) Passing table name after setting model
 type TestAddress struct {
 	tableName struct{} `sql:"test_address"`
 	AddressID int      `sql:"address_id,type:serial NOT NULL PRIMARY KEY"`
-	Address   string   `sql:"city,type:text"`
+	Address   string   `sql:"address,type:text"`
 	City      string   `sql:"city,type:varchar(25) NULL"`
 	Status    string   `sql:"status,type:address_status"`
 }
@@ -149,7 +149,7 @@ err := s.CreateEnum(conn, &db.TestAddress{}, "address_status")
 type TestAddress struct {
 	tableName struct{} `sql:"test_address"`
 	AddressID int      `sql:"address_id,type:serial NOT NULL PRIMARY KEY"`
-	Address   string   `sql:"city,type:text"`
+	Address   string   `sql:"address,type:text"`
 	City      string   `sql:"city,type:varchar(25) NULL"`
 	Status    string   `sql:"status,type:address_status"`
 }
