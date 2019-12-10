@@ -63,7 +63,7 @@ err := s.CreateTable(conn, "test_address")
 
 ### Create enum
 ---------------
-CreateTable(conn *pg.DB, model interface{}) (err error)  
+CreateEnum(conn *pg.DB, model interface{}, enumName string) (err error)
 i) Directly passing struct model  
 ii) Passing table name after setting model  
 
