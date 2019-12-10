@@ -67,6 +67,7 @@ err := s.CreateTable(conn, "test_address")
 
 ## Create enum
 __CreateAllEnum(conn *pg.DB, model interface{}) (err error)__   
+
 This will create all the enum associated to the given table.  
 To define enum on table struct you need to create a method with following signature:  
 ```
@@ -126,6 +127,7 @@ err = s.CreateAllEnum(conn, "test_address")
 ---------------
 
 __CreateEnum(conn *pg.DB, model interface{}, enumName string) (err error)__  
+
 This will create given enum if associated to given table  
 ```
 i) Directly passing struct model   
@@ -179,6 +181,7 @@ err = s.CreateEnum(conn, "test_address", "address_status")
 
 ## Create index
 __CreateAllIndex(conn *pg.DB, model interface{}, skipPrompt ...bool) (err error)__   
+
 This will create all the index associated to the given table.  
 If __skipPrompt__ is enabled then it won't ask for confirmation before creating index. Default is disable.  
 To define index on table struct you need to create a method with following signature:  
@@ -244,6 +247,7 @@ err = s.CreateAllIndex(conn, "test_address")
 
 ## Create unique key
 __CreateAllUniqueKey(conn *pg.DB, model interface{}, skipPrompt ...bool) (err error)__   
+
 This will create all the composite unique key associated to the given table.  
 If __skipPrompt__ is enabled then it won't ask for confirmation before creating unique key. Default is disable.  
 To define composite unique key on table struct you need to create a method with following signature:  
