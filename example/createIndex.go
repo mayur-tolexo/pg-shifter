@@ -18,7 +18,8 @@ func main() {
 		logIfError(err)
 
 		//2. Create All Index by passing table name
-		s.SetTableModel(&TestAddress{})
+		err = s.SetTableModel(&TestAddress{})
+		logIfError(err)
 		err = s.CreateAllIndex(conn, "test_address")
 		logIfError(err)
 	}
@@ -35,14 +36,6 @@ type TestAddress struct {
 	UpdatedAt time.Time `json:"-" sql:"updated_at,type:timetz NOT NULL DEFAULT NOW()"`
 }
 
-//UniqueKey of the table. This is for composite unique keys
-func (TestAddress) UniqueKey() []string {
-	uk := []string{
-		"address_id,status,city",
-	}
-	return uk
-}
-
 //Index of the table. For composite index use ,
 //Default index type is btree. For gin index use gin
 func (TestAddress) Index() map[string]string {
@@ -51,14 +44,6 @@ func (TestAddress) Index() map[string]string {
 		"address_id,status": shifter.BtreeIndex,
 	}
 	return idx
-}
-
-//Enum of the table.
-func (TestAddress) Enum() map[string][]string {
-	enm := map[string][]string{
-		"address_status": {"enable", "disable"},
-	}
-	return enm
 }
 
 func logIfError(err error) {

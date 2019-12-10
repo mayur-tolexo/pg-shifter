@@ -1,12 +1,12 @@
 package shifter
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
 
 	"github.com/go-pg/pg"
-	"github.com/mayur-tolexo/flaw"
 )
 
 //GetStructTableName will return table name from table struct
@@ -15,14 +15,14 @@ func (s *Shifter) GetStructTableName(table interface{}) (
 
 	refObj := reflect.ValueOf(table)
 	if refObj.Kind() != reflect.Ptr || refObj.Elem().Kind() != reflect.Struct {
-		msg := fmt.Sprintf("Expected struct pointer but found ", refObj.Kind().String())
-		err = flaw.CustomError(msg)
+		msg := fmt.Sprintf("Expected struct pointer of struct but found %v", refObj.Kind().String())
+		err = errors.New(msg)
 	} else {
 		if field, exists := getStructTableNameField(table); exists {
 			tableName = field.Tag.Get("sql")
 		} else {
 			msg := "tableName struct{} field not found in given struct"
-			err = flaw.CustomError(msg)
+			err = errors.New(msg)
 		}
 	}
 	return
