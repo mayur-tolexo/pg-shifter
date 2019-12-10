@@ -8,8 +8,8 @@ Golang struct to postgres table shifter.
 
 ### Features
 1. [Create table](#create-table)
-2. [Create go struct from postgresql table name](#create-go-struct-from-postgresql-table-name)
-3. [Create enum](#recovery)
+2. [Create enum](#create-enum)
+3. [Create go struct from postgresql table name](#create-go-struct-from-postgresql-table-name)
 4. [Create history table with after update/delete triggers](#recovery)
 5. [Alter table](#recovery)
 	1. [Add New Column](#add-new-column)
@@ -59,6 +59,38 @@ type TestAddress struct {
 s := shifter.NewShifter()
 s.SetTableModel(&TestAddress{})
 err := s.CreateTable(conn, "test_address")
+```
+
+### Create enum
+---------------
+CreateTable(conn *pg.DB, model interface{}) (err error)  
+i) Directly passing struct model  
+ii) Passing table name after setting model  
+
+##### i) Directly passing struct model
+```
+type TestAddress struct {
+	tableName struct{} `sql:"test_address"`
+	AddressID int      `sql:"address_id,type:serial NOT NULL PRIMARY KEY"`
+	Address   string   `sql:"city,type:text"`
+	City      string   `sql:"city,type:varchar(25) NULL"`
+}
+
+s := shifter.NewShifter()
+err := s.CreateEnum(conn, &db.TestAddress{}, "status")
+```
+##### ii) Passing table name after setting model
+```
+type TestAddress struct {
+	tableName struct{} `sql:"test_address"`
+	AddressID int      `sql:"address_id,type:serial NOT NULL PRIMARY KEY"`
+	Address   string   `sql:"city,type:text"`
+	City      string   `sql:"city,type:varchar(25) NULL"`
+}
+
+s := shifter.NewShifter()
+s.SetTableModel(&db.TestAddress{})
+err = s.CreateEnum(conn, "test_address", "status")
 ```
 
 

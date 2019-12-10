@@ -2,6 +2,7 @@ package shifter
 
 import (
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/go-pg/pg"
@@ -26,18 +27,18 @@ func (s *Shifter) upsertEnum(tx *pg.Tx, tableName string) (err error) {
 
 //Create Enum in database
 func (s *Shifter) createEnumByName(tx *pg.Tx, tableName, enumName string) (err error) {
-	if _, created := enumCreated[enumName]; created == false {
-		if enumValue, exists := s.enumList[enumName]; exists {
+
+	if enumValue, exists := s.getEnum(tableName, enumName); exists {
+		if _, created := enumCreated[enumName]; created == false {
 			if enumSQL, enumExists := getEnumQuery(tx, enumName, enumValue); enumExists == false {
 				err = s.createEnum(tx, tableName, enumName, enumSQL)
 			} else {
 				err = s.updateEnum(tx, tableName, enumName)
 			}
-		} else {
-			msg := fmt.Sprintf("Table: %v Enum: %v not found", tableName, enumName)
-			err = flaw.CustomError(msg)
-			fmt.Println("Enum Error:", msg)
 		}
+	} else {
+		msg := fmt.Sprintf("Table: %v Enum: %v not found", tableName, enumName)
+		err = flaw.CustomError(msg)
 	}
 	return
 }
@@ -109,6 +110,38 @@ func getEnumQuery(tx *pg.Tx, enumName string, enumValue []string) (
 	if enumExists = util.EnumExists(tx, enumName); enumExists == false {
 		query += fmt.Sprintf("CREATE type %v AS ENUM('%v'); ",
 			enumName, strings.Join(enumValue, "','"))
+	}
+	return
+}
+
+//getEnum will return enum values from enum name
+func (s *Shifter) getEnum(tableName, enumName string) (enumValue []string, exists bool) {
+	enum := s.getEnumFromMethod(tableName)
+	//checking table local enum list
+	if enumValue, exists = enum[enumName]; exists == false {
+		//checking global enum list
+		enumValue, exists = s.enumList[enumName]
+	}
+	return
+}
+
+//getEnumFromMethod will return table enum from Enum() method associted to table structure
+func (s *Shifter) getEnumFromMethod(tableName string) (enum map[string][]string) {
+
+	enum = make(map[string][]string)
+
+	if dbModel, exists := s.table[tableName]; exists {
+		refObj := reflect.ValueOf(dbModel)
+		m := refObj.MethodByName("Enum")
+
+		if m.IsValid() {
+			out := m.Call([]reflect.Value{})
+			if len(out) > 0 && out[0].Kind() == reflect.Map {
+				if ev, ok := out[0].Interface().(map[string][]string); ok {
+					enum = ev
+				}
+			}
+		}
 	}
 	return
 }

@@ -39,6 +39,20 @@ func TestCreateTable(t *testing.T) {
 	}
 }
 
+func TestCreateEnum(t *testing.T) {
+
+	if conn, err := psql.Conn(true); err == nil {
+		s := NewShifter()
+		err := s.CreateEnum(conn, &db.TestAddress{}, "status")
+		assert := assert.New(t)
+		assert.NoError(err)
+
+		s.SetTableModel(&db.TestUser{})
+		err = s.CreateEnum(conn, "test_user", "yesno_type")
+		assert.NoError(err)
+	}
+}
+
 func TestCreateAllTable(t *testing.T) {
 
 	if conn, err := psql.Conn(true); err == nil {
