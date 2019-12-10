@@ -305,6 +305,7 @@ err = s.CreateAllUniqueKey(conn, "test_address")
 
 ## Upsert unique key
 __UpsertAllUniqueKey(conn *pg.DB, model interface{}, skipPrompt ...bool) (err error)__   
+
 This will create all the composite unique key associated to the given table.  
 Modify composite unique key which are not matching with table and struct.  
 Drop composite unique key which exists in table but not in struct.  
