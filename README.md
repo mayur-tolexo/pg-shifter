@@ -74,6 +74,15 @@ type TestAddress struct {
 	AddressID int      `sql:"address_id,type:serial NOT NULL PRIMARY KEY"`
 	Address   string   `sql:"city,type:text"`
 	City      string   `sql:"city,type:varchar(25) NULL"`
+	Status    string   `sql:"status,type:status"`
+}
+
+//Enum of the table.
+func (TestAddress) Enum() map[string][]string {
+	enm := map[string][]string{
+		"status": {"enable", "disable"},
+	}
+	return enm
 }
 
 s := shifter.NewShifter()
@@ -86,6 +95,15 @@ type TestAddress struct {
 	AddressID int      `sql:"address_id,type:serial NOT NULL PRIMARY KEY"`
 	Address   string   `sql:"city,type:text"`
 	City      string   `sql:"city,type:varchar(25) NULL"`
+	Status    string   `sql:"status,type:status"`
+}
+
+//Enum of the table.
+func (TestAddress) Enum() map[string][]string {
+	enm := map[string][]string{
+		"status": {"enable", "disable"},
+	}
+	return enm
 }
 
 s := shifter.NewShifter()
