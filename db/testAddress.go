@@ -30,3 +30,11 @@ func (TestAddress) Index() map[string]string {
 	}
 	return idx
 }
+
+//Enum of the table.
+func (TestAddress) Enum() map[string][]string {
+	enm := map[string][]string{
+		"status": {"enable", "disable"},
+	}
+	return enm
+}

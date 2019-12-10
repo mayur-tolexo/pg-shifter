@@ -48,3 +48,12 @@ func (TestUser) UniqueKey() []string {
 	}
 	return uk
 }
+
+//Enum of the table.
+func (TestUser) Enum() map[string][]string {
+	enm := map[string][]string{
+		"user_status_type": {"enable", "disable", "notverified"},
+		"yesno_type":       {"yes", "no"},
+	}
+	return enm
+}

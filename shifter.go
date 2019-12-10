@@ -11,6 +11,9 @@ import (
 	"github.com/mayur-tolexo/pg-shifter/util"
 )
 
+//IndexCol is then return type expected from Index() method of table struct
+type IndexCol map[string]string
+
 var (
 	tableCreated = make(map[interface{}]bool)
 	enumCreated  = make(map[interface{}]struct{})
@@ -141,17 +144,26 @@ func (s *Shifter) CreateAllTable(conn *pg.DB) (err error) {
 }
 
 //CreateEnum will create enum by enum name
-//before calling it you need to set the table model in shifter using SetTableModel()
-func (s *Shifter) CreateEnum(conn *pg.DB, tableName, enumName string) (err error) {
-	var tx *pg.Tx
-	if tx, err = conn.Begin(); err == nil {
-		if err = s.createEnumByName(tx, tableName, enumName); err == nil {
-			tx.Commit()
+//parameters:
+// - conn: postgresql connection
+// - model: struct pointer or string (table name)
+// - enumName: enum which you want to create
+// if model is table name then need to set shifter SetTableModel() before calling CreateTable()
+func (s *Shifter) CreateEnum(conn *pg.DB, model interface{}, enumName string) (err error) {
+	var (
+		tx        *pg.Tx
+		tableName string
+	)
+	if tableName, err = s.getTableName(model); err == nil {
+		if tx, err = conn.Begin(); err == nil {
+			if err = s.createEnumByName(tx, tableName, enumName); err == nil {
+				tx.Commit()
+			} else {
+				tx.Rollback()
+			}
 		} else {
-			tx.Rollback()
+			err = flaw.TxError(err)
 		}
-	} else {
-		err = flaw.TxError(err)
 	}
 	return
 }
