@@ -30,7 +30,6 @@ Golang struct to postgres table shifter.
 
 
 ## Create table
----------------
 __CreateTable(conn *pg.DB, model interface{}) (err error)__&  
 i) Directly passing struct model  
 ii) Passing table name after setting model  
