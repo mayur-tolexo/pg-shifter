@@ -13,12 +13,12 @@ func main() {
 		s := shifter.NewShifter()
 
 		//1.
-		err := s.CreateEnum(conn, &db.TestAddress{}, "status")
+		err := s.CreateEnum(conn, &db.TestAddress{}, "address_status")
 		logIfError(err)
 
 		//2.
 		s.SetTableModel(&db.TestAddress{})
-		err = s.CreateEnum(conn, "test_address", "status")
+		err = s.CreateEnum(conn, "test_address", "address_status")
 		logIfError(err)
 	}
 }

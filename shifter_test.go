@@ -43,7 +43,7 @@ func TestCreateEnum(t *testing.T) {
 
 	if conn, err := psql.Conn(true); err == nil {
 		s := NewShifter()
-		err := s.CreateEnum(conn, &db.TestAddress{}, "status")
+		err := s.CreateEnum(conn, &db.TestAddress{}, "address_status")
 		assert := assert.New(t)
 		assert.NoError(err)
 

@@ -74,19 +74,19 @@ type TestAddress struct {
 	AddressID int      `sql:"address_id,type:serial NOT NULL PRIMARY KEY"`
 	Address   string   `sql:"city,type:text"`
 	City      string   `sql:"city,type:varchar(25) NULL"`
-	Status    string   `sql:"status,type:status"`
+	Status    string   `sql:"status,type:address_status"`
 }
 
 //Enum of the table.
 func (TestAddress) Enum() map[string][]string {
 	enm := map[string][]string{
-		"status": {"enable", "disable"},
+		"address_status": {"enable", "disable"},
 	}
 	return enm
 }
 
 s := shifter.NewShifter()
-err := s.CreateEnum(conn, &db.TestAddress{}, "status")
+err := s.CreateEnum(conn, &db.TestAddress{}, "address_status")
 ```
 ##### ii) Passing table name after setting model
 ```
@@ -95,20 +95,20 @@ type TestAddress struct {
 	AddressID int      `sql:"address_id,type:serial NOT NULL PRIMARY KEY"`
 	Address   string   `sql:"city,type:text"`
 	City      string   `sql:"city,type:varchar(25) NULL"`
-	Status    string   `sql:"status,type:status"`
+	Status    string   `sql:"status,type:address_status"`
 }
 
 //Enum of the table.
 func (TestAddress) Enum() map[string][]string {
 	enm := map[string][]string{
-		"status": {"enable", "disable"},
+		"address_status": {"enable", "disable"},
 	}
 	return enm
 }
 
 s := shifter.NewShifter()
 s.SetTableModel(&db.TestAddress{})
-err = s.CreateEnum(conn, "test_address", "status")
+err = s.CreateEnum(conn, "test_address", "address_status")
 ```
 
 
