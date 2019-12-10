@@ -9,6 +9,7 @@ Golang struct to postgres table shifter.
 ## Features
 1. [Create table](#create-table)
 2. [Create enum](#create-enum)
+2. [Create index](#create-index)
 3. [Create go struct from postgresql table name](#create-go-struct-from-postgresql-table-name)
 4. [Create history table with after update/delete triggers](#recovery)
 5. [Alter table](#recovery)
@@ -168,7 +169,66 @@ err = s.CreateEnum(conn, "test_address", "address_status")
 ```
 
 
-## 2. Create go struct from postgresql table name
+## Create index
+__CreateAllIndex(conn *pg.DB, model interface{}, skipPrompt ...bool) (err error)__   
+This will create all the index associated to the given table  
+If skipPrompt is enabled then it won't ask for confirmation before creating index. Default its disabled.
+```
+i) Directly passing struct model   
+ii) Passing table name after setting model  
+```
+
+##### i) Directly passing struct model
+```
+type TestAddress struct {
+	tableName struct{}    `sql:"test_address"`
+	AddressID int         `json:"address_id,omitempty" sql:"address_id,type:serial PRIMARY KEY"`
+	City      string      `json:"city" sql:"city,type:varchar(25) UNIQUE"`
+	Status    string      `json:"status,omitempty" sql:"status,type:address_status"`
+	Info      interface{} `sql:"info,type:jsonb"`
+}
+
+//Index of the table. For composite index use ,
+//Default index type is btree. For gin index use gin
+func (TestAddress) Index() map[string]string {
+	idx := map[string]string{
+		"status":            shifter.BtreeIndex,
+		"info":              shifter.GinIndex,
+		"address_id,status": shifter.BtreeIndex,
+	}
+	return idx
+}
+
+s := shifter.NewShifter()
+err := s.CreateAllIndex(conn, &db.TestAddress{})
+```
+##### ii) Passing table name after setting model
+```
+type TestAddress struct {
+	tableName struct{}    `sql:"test_address"`
+	AddressID int         `json:"address_id,omitempty" sql:"address_id,type:serial PRIMARY KEY"`
+	City      string      `json:"city" sql:"city,type:varchar(25) UNIQUE"`
+	Status    string      `json:"status,omitempty" sql:"status,type:address_status"`
+	Info      interface{} `sql:"info,type:jsonb"`
+}
+
+//Index of the table. For composite index use ,
+//Default index type is btree. For gin index use gin
+func (TestAddress) Index() map[string]string {
+	idx := map[string]string{
+		"status":            shifter.BtreeIndex,
+		"info":              shifter.GinIndex,
+		"address_id,status": shifter.BtreeIndex,
+	}
+	return idx
+}
+
+s := shifter.NewShifter()
+s.SetTableModel(&db.TestAddress{})
+err = s.CreateAllIndex(conn, "test_address")
+```
+
+## Create go struct from postgresql table name
 CreateStruct(conn *pg.DB, tableName string, filePath string) (err error)
 ```
 if conn, err := psql.Conn(true); err == nil {
