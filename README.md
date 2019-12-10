@@ -31,7 +31,7 @@ Golang struct to postgres table shifter.
 
 ### Create table
 ---------------
-CreateTable(conn *pg.DB, model interface{}) (err error)  
+__CreateTable(conn *pg.DB, model interface{}) (err error)__&  
 i) Directly passing struct model  
 ii) Passing table name after setting model  
 
@@ -63,7 +63,7 @@ err := s.CreateTable(conn, "test_address")
 
 ### Create enum
 ---------------
-&#x1F539; __CreateAllEnum(conn *pg.DB, model interface{}) (err error)__  
+__CreateAllEnum(conn *pg.DB, model interface{}) (err error)__   
 This will create all then enum associated to given table model  
 i) Directly passing struct model   
 ii) Passing table name after setting model  
@@ -113,7 +113,7 @@ err = s.CreateAllEnum(conn, "test_address")
 ```
 
 
-&#x1F539; __CreateEnum(conn *pg.DB, model interface{}, enumName string) (err error)__  
+__CreateEnum(conn *pg.DB, model interface{}, enumName string) (err error)__   
 i) Directly passing struct model   
 ii) Passing table name after setting model  
 
