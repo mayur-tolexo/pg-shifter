@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/go-pg/pg"
 	"github.com/mayur-tolexo/flaw"
 )
 
@@ -87,4 +88,21 @@ func (s *Shifter) getTableName(model interface{}) (
 	}
 
 	return
+}
+
+//getSP will return skip prompt value
+func getSP(val []bool) (skipPrompt bool) {
+	if len(val) > 0 {
+		skipPrompt = val[0]
+	}
+	return
+}
+
+//commitIfNil will commit transation if error is nil
+func commitIfNil(tx *pg.Tx, err error) {
+	if err == nil {
+		tx.Commit()
+	} else {
+		tx.Rollback()
+	}
 }

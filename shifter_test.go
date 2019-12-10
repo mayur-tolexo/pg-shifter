@@ -67,6 +67,20 @@ func TestCreateAllEnum(t *testing.T) {
 	}
 }
 
+func TestCreateAllIndex(t *testing.T) {
+
+	if conn, err := psql.Conn(true); err == nil {
+		s := NewShifter()
+		err := s.CreateAllIndex(conn, &db.TestAddress{}, true)
+		assert := assert.New(t)
+		assert.NoError(err)
+
+		s.SetTableModel(&db.TestUser{})
+		err = s.CreateAllIndex(conn, "test_user", true)
+		assert.NoError(err)
+	}
+}
+
 func TestCreateAllTable(t *testing.T) {
 
 	if conn, err := psql.Conn(true); err == nil {

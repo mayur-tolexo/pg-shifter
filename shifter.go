@@ -66,11 +66,7 @@ func (s *Shifter) CreateTable(conn *pg.DB, model interface{}) (err error) {
 	if tableName, err = s.getTableName(model); err == nil {
 		if tx, err = conn.Begin(); err == nil {
 			err = s.createTable(tx, tableName, true)
-			if err == nil {
-				tx.Commit()
-			} else {
-				tx.Rollback()
-			}
+			commitIfNil(tx, err)
 		} else {
 			err = flaw.TxError(err)
 		}
@@ -91,11 +87,8 @@ func (s *Shifter) CreateEnum(conn *pg.DB, model interface{}, enumName string) (e
 	)
 	if tableName, err = s.getTableName(model); err == nil {
 		if tx, err = conn.Begin(); err == nil {
-			if err = s.createEnumByName(tx, tableName, enumName); err == nil {
-				tx.Commit()
-			} else {
-				tx.Rollback()
-			}
+			err = s.createEnumByName(tx, tableName, enumName)
+			commitIfNil(tx, err)
 		} else {
 			err = flaw.TxError(err)
 		}
@@ -103,7 +96,7 @@ func (s *Shifter) CreateEnum(conn *pg.DB, model interface{}, enumName string) (e
 	return
 }
 
-//CreateAllEnum will create all enums of given table.
+//CreateAllEnum will create all enums of the given table.
 //parameters:
 // - conn: postgresql connection
 // - model: struct pointer or string (table name)
@@ -120,11 +113,7 @@ func (s *Shifter) CreateAllEnum(conn *pg.DB, model interface{}) (err error) {
 					break
 				}
 			}
-			if err == nil {
-				tx.Commit()
-			} else {
-				tx.Rollback()
-			}
+			commitIfNil(tx, err)
 		} else {
 			err = flaw.TxError(err)
 		}
@@ -132,23 +121,25 @@ func (s *Shifter) CreateAllEnum(conn *pg.DB, model interface{}) (err error) {
 	return
 }
 
-//CreateTableAllIndex will create all indices of the given table struct model
-//structModel is a struct pointer of your table
-//if skipPrompt is disabled then before executing sql it will prompt for confirmation
-func (s *Shifter) CreateTableAllIndex(tx *pg.Tx, structModel interface{}, skipPrompt bool) (err error) {
-	if err = s.SetTableModel(structModel); err == nil {
-		var tName string
-		if tName, err = s.GetStructTableName(structModel); err == nil {
-			err = s.CreateAllIndex(tx, tName, skipPrompt)
+//CreateAllIndex will create all index of the given table.
+//parameters:
+// - conn: postgresql connection
+// - model: struct pointer or string (table name)
+// - skipPrompt: bool (default false | if false then before execution sql it will prompt for confirmation)
+// if model is table name then need to set shifter SetTableModel() before calling CreateTable()
+func (s *Shifter) CreateAllIndex(conn *pg.DB, model interface{}, skipPrompt ...bool) (err error) {
+	var (
+		tx        *pg.Tx
+		tableName string
+	)
+	if tableName, err = s.getTableName(model); err == nil {
+		if tx, err = conn.Begin(); err == nil {
+			err = s.createIndex(tx, tableName, getSP(skipPrompt))
+			commitIfNil(tx, err)
+		} else {
+			err = flaw.TxError(err)
 		}
 	}
-	return
-}
-
-//CreateAllIndex will create table all index if not exists
-//before calling it you need to set the table model in shifter using SetTableModel()
-func (s *Shifter) CreateAllIndex(tx *pg.Tx, tableName string, skipPrompt bool) (err error) {
-	err = s.createIndex(tx, tableName, skipPrompt)
 	return
 }
 
@@ -180,7 +171,7 @@ func (s *Shifter) CreateAllTable(conn *pg.DB) (err error) {
 		var tx *pg.Tx
 		if tx, err = conn.Begin(); err == nil {
 			if err = s.createTable(tx, tableName, true); err == nil {
-				if err = s.CreateAllIndex(tx, tableName, true); err == nil {
+				if err = s.createIndex(tx, tableName, true); err == nil {
 					err = s.CreateAllCompUniqueKey(tx, tableName)
 				}
 			}
