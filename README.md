@@ -65,7 +65,13 @@ err := s.CreateTable(conn, "test_address")
 
 ## Create enum
 __CreateAllEnum(conn *pg.DB, model interface{}) (err error)__   
-This will create all the enum associated to the given table  
+This will create all the enum associated to the given table.  
+To define enum on table struct you need to create a method with following signature:  
+```
+func (tableStruct) Enum() map[string][]string
+```
+Here returned map's key is enum name and value is slice of enum values.  
+If enum already exist in database then it will update the enum value which are missing in the database.
 ```
 i) Directly passing struct model   
 ii) Passing table name after setting model  
@@ -171,14 +177,13 @@ err = s.CreateEnum(conn, "test_address", "address_status")
 
 ## Create index
 __CreateAllIndex(conn *pg.DB, model interface{}, skipPrompt ...bool) (err error)__   
-This will create all the index associated to the given table  
+This will create all the index associated to the given table.  
 If __skipPrompt__ is enabled then it won't ask for confirmation before creating index. Default is disable.  
-To create index on table struct you need to create a method with following signature:  
+To define index on table struct you need to create a method with following signature:  
 ```
 func (tableStruct) Index() map[string]string  
 ```
-Here returned map's key is column which need to index and value is the type of datastruct you want to use to index. Default is btree.  
-For composite index you can add column comma seperated.
+Here returned map's key is column which need to index and value is the type of data structure to user for indexing. Default is btree. For composite index you can add column comma seperated.
 ```
 i) Directly passing struct model   
 ii) Passing table name after setting model  
