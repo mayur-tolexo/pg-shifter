@@ -6,7 +6,7 @@
 # pg-shifter
 Golang struct to postgres table shifter.
 
-### Features
+## Features
 1. [Create table](#create-table)
 2. [Create enum](#create-enum)
 3. [Create go struct from postgresql table name](#create-go-struct-from-postgresql-table-name)
@@ -29,7 +29,7 @@ Golang struct to postgres table shifter.
 			4. Add/Drop **ON UPDATE** DEFAULT/NO ACTION/RESTRICT/CASCADE/SET NULL
 
 
-### Create table
+## Create table
 ---------------
 __CreateTable(conn *pg.DB, model interface{}) (err error)__&  
 i) Directly passing struct model  
@@ -61,7 +61,7 @@ s.SetTableModel(&TestAddress{})
 err := s.CreateTable(conn, "test_address")
 ```
 
-### Create enum
+## Create enum
 ---------------
 __CreateAllEnum(conn *pg.DB, model interface{}) (err error)__   
 This will create all the enum associated to the given table  
@@ -114,6 +114,7 @@ s.SetTableModel(&db.TestAddress{})
 err = s.CreateAllEnum(conn, "test_address")
 ```
 
+---------------
 
 __CreateEnum(conn *pg.DB, model interface{}, enumName string) (err error)__  
 This will create given enum if associated to given table  
@@ -167,7 +168,7 @@ err = s.CreateEnum(conn, "test_address", "address_status")
 ```
 
 
-### 2. Create go struct from postgresql table name
+## 2. Create go struct from postgresql table name
 CreateStruct(conn *pg.DB, tableName string, filePath string) (err error)
 ```
 if conn, err := psql.Conn(true); err == nil {
