@@ -7,12 +7,12 @@
 Golang struct to postgres table shifter.
 
 ## Features
-1. [Create table](#create-table)
-2. [Create enum](#create-enum)
-3. [Create index](#create-index)
-3. [Create unique key](#create-unique-key)
-3. [Upsert unique key](#upsert-unique-key)
-3. [Create table struct](#create-table-struct)
+1. [Create Table](#create-table)
+2. [Create Enum](#create-enum)
+3. [Create Index](#create-index)
+3. [Create Unique Key](#create-unique-key)
+3. [Upsert Unique Key](#upsert-unique-key)
+3. [Create Table Struct](#create-table-struct)
 4. Create history table with after update/delete triggers
 5. Alter table
 	1. Add New Column
@@ -32,7 +32,7 @@ Golang struct to postgres table shifter.
 			4. Add/Drop **ON UPDATE** DEFAULT/NO ACTION/RESTRICT/CASCADE/SET NULL
 
 
-## Create table
+## Create Table
 __CreateTable(conn *pg.DB, model interface{}) (err error)__  
 ```
 i) Directly passing struct model  
@@ -65,7 +65,7 @@ s.SetTableModel(&TestAddress{})
 err := s.CreateTable(conn, "test_address")
 ```
 
-## Create enum
+## Create Enum
 __CreateAllEnum(conn *pg.DB, model interface{}) (err error)__   
 
 This will create all the enum associated to the given table.  
@@ -179,7 +179,7 @@ err = s.CreateEnum(conn, "test_address", "address_status")
 ```
 
 
-## Create index
+## Create Index
 __CreateAllIndex(conn *pg.DB, model interface{}, skipPrompt ...bool) (err error)__   
 
 This will create all the index associated to the given table.  
@@ -245,7 +245,7 @@ err = s.CreateAllIndex(conn, "test_address")
 ```
 
 
-## Create unique key
+## Create Unique Key
 __CreateAllUniqueKey(conn *pg.DB, model interface{}, skipPrompt ...bool) (err error)__   
 
 This will create all the composite unique key associated to the given table.  
@@ -303,7 +303,7 @@ s.SetTableModel(&TestAddress{})
 err = s.CreateAllUniqueKey(conn, "test_address")
 ```
 
-## Upsert unique key
+## Upsert Unique Key
 __UpsertAllUniqueKey(conn *pg.DB, model interface{}, skipPrompt ...bool) (err error)__   
 
 This will create all the composite unique key associated to the given table.  
@@ -363,7 +363,7 @@ s.SetTableModel(&TestAddress{})
 err = s.UpsertAllUniqueKey(conn, "test_address")
 ```
 
-## Create table struct
+## Create Table Struct
 CreateStruct(conn *pg.DB, tableName string, filePath string) (err error)
 ```
 if conn, err := psql.Conn(true); err == nil {
