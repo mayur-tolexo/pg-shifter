@@ -103,6 +103,35 @@ func (s *Shifter) CreateEnum(conn *pg.DB, model interface{}, enumName string) (e
 	return
 }
 
+//CreateAllEnum will create all enums of given table.
+//parameters:
+// - conn: postgresql connection
+// - model: struct pointer or string (table name)
+// if model is table name then need to set shifter SetTableModel() before calling CreateTable()
+func (s *Shifter) CreateAllEnum(conn *pg.DB, model interface{}) (err error) {
+	var (
+		tx        *pg.Tx
+		tableName string
+	)
+	if tableName, err = s.getTableName(model); err == nil {
+		if tx, err = conn.Begin(); err == nil {
+			for enumName := range s.getEnumFromMethod(tableName) {
+				if err = s.createEnumByName(tx, tableName, enumName); err != nil {
+					break
+				}
+			}
+			if err == nil {
+				tx.Commit()
+			} else {
+				tx.Rollback()
+			}
+		} else {
+			err = flaw.TxError(err)
+		}
+	}
+	return
+}
+
 //CreateTableAllIndex will create all indices of the given table struct model
 //structModel is a struct pointer of your table
 //if skipPrompt is disabled then before executing sql it will prompt for confirmation
