@@ -7,7 +7,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/go-pg/pg"
 	"github.com/mayur-tolexo/flaw"
-	"github.com/mayur-tolexo/pg-shifter/model"
+	m "github.com/mayur-tolexo/pg-shifter/model"
 	"github.com/mayur-tolexo/pg-shifter/util"
 )
 
@@ -166,6 +166,41 @@ func (s *Shifter) CreateAllUniqueKey(conn *pg.DB, model interface{}, skipPrompt 
 	return
 }
 
+//UpsertAllUniqueKey will create/alter/drop composite unique keys of table.
+//parameters:
+// - conn: postgresql connection
+// - model: struct pointer or string (table name)
+// - skipPrompt: bool (default false | if false then before execution sql it will prompt for confirmation)
+// If model is table name then need to set shifter SetTableModel() before calling CreateAllUniqueKey().
+// If composite unique key is modified then also it will update.
+// If composite unique key exists in table but doesn't exists in struct UniqueKey method
+// then that will be dropped.
+func (s *Shifter) UpsertAllUniqueKey(conn *pg.DB, model interface{}, skipPrompt ...bool) (err error) {
+	var (
+		tx        *pg.Tx
+		tUK       []m.UKSchema
+		tableName string
+	)
+	if tableName, err = s.getTableName(model); err == nil {
+		if tx, err = conn.Begin(); err == nil {
+
+			if tUK, err = util.GetCompositeUniqueKey(tx, tableName); err == nil {
+				sUK := s.GetUniqueKey(tableName)
+				if len(tUK) > 0 || len(sUK) > 0 {
+					if _, err = dropCompositeUK(tx, tableName, tUK, sUK, getSP(skipPrompt)); err == nil {
+						_, err = addCompositeUK(tx, tableName, sUK, getSP(skipPrompt))
+					}
+				}
+			}
+
+			commitIfNil(tx, err)
+		} else {
+			err = flaw.TxError(err)
+		}
+	}
+	return
+}
+
 //CreateAllTable will create all tables
 //before calling it you need to set the table model in shifter using SetTableModels()
 func (s *Shifter) CreateAllTable(conn *pg.DB) (err error) {
@@ -227,9 +262,9 @@ func (s *Shifter) CreateStruct(conn *pg.DB, tableName string,
 
 	var (
 		tx      *pg.Tx
-		tUK     []model.UKSchema
-		idx     []model.Index
-		tSchema map[string]model.ColSchema
+		tUK     []m.UKSchema
+		idx     []m.Index
+		tSchema map[string]m.ColSchema
 	)
 	if tx, err = conn.Begin(); err == nil {
 

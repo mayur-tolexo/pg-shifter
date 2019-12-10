@@ -35,7 +35,7 @@ func (s *Shifter) GetUniqueKey(tName string) (uk map[string]string) {
 func (s *Shifter) checkUniqueKeyToAlter(tx *pg.Tx, tName string,
 	tUK []model.UKSchema, sUK map[string]string) (isAlter bool, err error) {
 
-	if isAlter, err = dropCompositeUK(tx, tName, tUK, sUK); err == nil {
+	if isAlter, err = dropCompositeUK(tx, tName, tUK, sUK, true); err == nil {
 		var curAlter bool
 		curAlter, err = addCompositeUK(tx, tName, sUK, true)
 		isAlter = isAlter || curAlter
@@ -67,7 +67,7 @@ func addCompositeUK(tx *pg.Tx, tName string, sUK map[string]string, skipPrompt b
 
 //dropCompositeUK will drop composite unique key if not exists in struct
 func dropCompositeUK(tx *pg.Tx, tName string, tUK []model.UKSchema,
-	sUK map[string]string) (isAlter bool, err error) {
+	sUK map[string]string, skipPrompt bool) (isAlter bool, err error) {
 
 	for _, curTableUK := range tUK {
 		var curAlter bool
@@ -76,7 +76,7 @@ func dropCompositeUK(tx *pg.Tx, tName string, tUK []model.UKSchema,
 			delete(sUK, curTableUK.ConstraintName)
 		} else {
 			sql := getDropConstraintSQL(tName, curTableUK.ConstraintName)
-			if curAlter, err = execByChoice(tx, sql, true); err != nil {
+			if curAlter, err = execByChoice(tx, sql, skipPrompt); err != nil {
 				err = getWrapError(tName, "drop composite unique key", sql, err)
 				break
 			}

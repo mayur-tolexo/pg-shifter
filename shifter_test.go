@@ -100,6 +100,21 @@ func TestCreateAllUniqueKey(t *testing.T) {
 	}
 }
 
+func TestUpsertAllUniqueKey(t *testing.T) {
+
+	if conn, err := psql.Conn(true); err == nil {
+		s := NewShifter()
+		err := s.UpsertAllUniqueKey(conn, &db.TestAddress{}, true)
+		assert := assert.New(t)
+		assert.NoError(err)
+
+		err = s.SetTableModel(&db.TestUser{})
+		assert.NoError(err)
+		err = s.UpsertAllUniqueKey(conn, "test_user", true)
+		assert.NoError(err)
+	}
+}
+
 func TestCreateAllTable(t *testing.T) {
 
 	if conn, err := psql.Conn(true); err == nil {

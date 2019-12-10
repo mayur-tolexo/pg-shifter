@@ -11,6 +11,7 @@ Golang struct to postgres table shifter.
 2. [Create enum](#create-enum)
 3. [Create index](#create-index)
 3. [Create unique key](#create-unique-key)
+3. [Upsert unique key](#upsert-unique-key)
 3. [Create table struct](#create-table-struct)
 4. Create history table with after update/delete triggers
 5. Alter table
@@ -296,6 +297,65 @@ func (TestAddress) UniqueKey() []string {
 s := shifter.NewShifter()
 s.SetTableModel(&TestAddress{})
 err = s.CreateAllUniqueKey(conn, "test_address")
+```
+
+## Upsert unique key
+__UpsertAllUniqueKey(conn *pg.DB, model interface{}, skipPrompt ...bool) (err error)__   
+This will create all the composite unique key associated to the given table.  
+Modify composite unique key which are not matching with table and struct.  
+Drop composite unique key which exists in table but not in struct.  
+If __skipPrompt__ is enabled then it won't ask for confirmation before upserting unique key. Default is disable.  
+To define composite unique key on table struct you need to create a method with following signature:  
+```
+func (tableStruct) UniqueKey() []string
+```
+Here returned slice is the columns comma seperated.  
+If single column need to create unique key then use UNIQUE sql tag for column.  
+```
+i) Directly passing struct model   
+ii) Passing table name after setting model  
+```
+
+##### i) Directly passing struct model
+```
+type TestAddress struct {
+	tableName struct{}  `sql:"test_address"`
+	AddressID int       `json:"address_id,omitempty" sql:"address_id,type:serial PRIMARY KEY"`
+	City      string    `json:"city" sql:"city,type:varchar(25) UNIQUE"`
+	Status    string    `json:"status,omitempty"
+}
+
+//UniqueKey of the table. This is for composite unique keys
+func (TestAddress) UniqueKey() []string {
+	uk := []string{
+		"address_id,status,city",
+	}
+	return uk
+}
+
+s := shifter.NewShifter()
+err := s.UpsertAllUniqueKey(conn, &TestAddress{})
+```
+##### ii) Passing table name after setting model
+```
+type TestAddress struct {
+	tableName struct{}  `sql:"test_address"`
+	AddressID int       `json:"address_id,omitempty" sql:"address_id,type:serial PRIMARY KEY"`
+	City      string    `json:"city" sql:"city,type:varchar(25) UNIQUE"`
+	Status    string    `json:"status,omitempty"
+}
+
+//UniqueKey of the table. This is for composite unique keys
+func (TestAddress) UniqueKey() []string {
+	uk := []string{
+		"address_id,status,city",
+	}
+	return uk
+}
+
+s := shifter.NewShifter()
+s.SetTableModel(&TestAddress{})
+err = s.UpsertAllUniqueKey(conn, "test_address")
 ```
 
 ## Create table struct
