@@ -79,7 +79,7 @@ func (s *Shifter) CreateTable(conn *pg.DB, model interface{}) (err error) {
 // - conn: postgresql connection
 // - model: struct pointer or string (table name)
 // - enumName: enum which you want to create
-// if model is table name then need to set shifter SetTableModel() before calling CreateTable()
+// if model is table name then need to set shifter SetTableModel() before calling CreateEnum()
 func (s *Shifter) CreateEnum(conn *pg.DB, model interface{}, enumName string) (err error) {
 	var (
 		tx        *pg.Tx
@@ -100,7 +100,7 @@ func (s *Shifter) CreateEnum(conn *pg.DB, model interface{}, enumName string) (e
 //parameters:
 // - conn: postgresql connection
 // - model: struct pointer or string (table name)
-// if model is table name then need to set shifter SetTableModel() before calling CreateTable()
+// if model is table name then need to set shifter SetTableModel() before calling CreateAllEnum()
 func (s *Shifter) CreateAllEnum(conn *pg.DB, model interface{}) (err error) {
 	var (
 		tx        *pg.Tx
@@ -126,7 +126,7 @@ func (s *Shifter) CreateAllEnum(conn *pg.DB, model interface{}) (err error) {
 // - conn: postgresql connection
 // - model: struct pointer or string (table name)
 // - skipPrompt: bool (default false | if false then before execution sql it will prompt for confirmation)
-// if model is table name then need to set shifter SetTableModel() before calling CreateTable()
+// if model is table name then need to set shifter SetTableModel() before calling CreateAllIndex()
 func (s *Shifter) CreateAllIndex(conn *pg.DB, model interface{}, skipPrompt ...bool) (err error) {
 	var (
 		tx        *pg.Tx
@@ -143,24 +143,26 @@ func (s *Shifter) CreateAllIndex(conn *pg.DB, model interface{}, skipPrompt ...b
 	return
 }
 
-//CreateTableAllUniqueKey will create all composite unique keys of the given table struct model
-//structModel is a struct pointer of your table
-//if skipPrompt is disabled then before executing sql it will prompt for confirmation
-func (s *Shifter) CreateTableAllUniqueKey(tx *pg.Tx, structModel interface{}) (err error) {
-	if err = s.SetTableModel(structModel); err == nil {
-		var tName string
-		if tName, err = s.GetStructTableName(structModel); err == nil {
-			err = s.CreateAllCompUniqueKey(tx, tName)
+//CreateAllUniqueKey will create table all composite unique key.
+//parameters:
+// - conn: postgresql connection
+// - model: struct pointer or string (table name)
+// - skipPrompt: bool (default false | if false then before execution sql it will prompt for confirmation)
+// if model is table name then need to set shifter SetTableModel() before calling CreateAllUniqueKey()
+func (s *Shifter) CreateAllUniqueKey(conn *pg.DB, model interface{}, skipPrompt ...bool) (err error) {
+	var (
+		tx        *pg.Tx
+		tableName string
+	)
+	if tableName, err = s.getTableName(model); err == nil {
+		if tx, err = conn.Begin(); err == nil {
+			uk := s.GetUniqueKey(tableName)
+			_, err = addCompositeUK(tx, tableName, uk, getSP(skipPrompt))
+			commitIfNil(tx, err)
+		} else {
+			err = flaw.TxError(err)
 		}
 	}
-	return
-}
-
-//CreateAllCompUniqueKey will create table all composite unique key
-//before calling it you need to set the table model in shifter using SetTableModel()
-func (s *Shifter) CreateAllCompUniqueKey(tx *pg.Tx, tableName string) (err error) {
-	uk := s.GetUniqueKey(tableName)
-	_, err = addCompositeUK(tx, tableName, uk)
 	return
 }
 
@@ -172,7 +174,8 @@ func (s *Shifter) CreateAllTable(conn *pg.DB) (err error) {
 		if tx, err = conn.Begin(); err == nil {
 			if err = s.createTable(tx, tableName, true); err == nil {
 				if err = s.createIndex(tx, tableName, true); err == nil {
-					err = s.CreateAllCompUniqueKey(tx, tableName)
+					uk := s.GetUniqueKey(tableName)
+					_, err = addCompositeUK(tx, tableName, uk, true)
 				}
 			}
 			if err == nil {

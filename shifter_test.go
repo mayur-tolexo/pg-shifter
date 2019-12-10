@@ -33,7 +33,8 @@ func TestCreateTable(t *testing.T) {
 		assert := assert.New(t)
 		assert.NoError(err)
 
-		s.SetTableModel(&db.TestUser{})
+		err = s.SetTableModel(&db.TestUser{})
+		assert.NoError(err)
 		err = s.CreateTable(conn, "test_user")
 		assert.NoError(err)
 	}
@@ -47,7 +48,8 @@ func TestCreateEnum(t *testing.T) {
 		assert := assert.New(t)
 		assert.NoError(err)
 
-		s.SetTableModel(&db.TestUser{})
+		err = s.SetTableModel(&db.TestUser{})
+		assert.NoError(err)
 		err = s.CreateEnum(conn, "test_user", "yesno_type")
 		assert.NoError(err)
 	}
@@ -61,7 +63,8 @@ func TestCreateAllEnum(t *testing.T) {
 		assert := assert.New(t)
 		assert.NoError(err)
 
-		s.SetTableModel(&db.TestUser{})
+		err = s.SetTableModel(&db.TestUser{})
+		assert.NoError(err)
 		err = s.CreateAllEnum(conn, "test_user")
 		assert.NoError(err)
 	}
@@ -75,8 +78,24 @@ func TestCreateAllIndex(t *testing.T) {
 		assert := assert.New(t)
 		assert.NoError(err)
 
-		s.SetTableModel(&db.TestUser{})
+		err = s.SetTableModel(&db.TestUser{})
+		assert.NoError(err)
 		err = s.CreateAllIndex(conn, "test_user", true)
+		assert.NoError(err)
+	}
+}
+
+func TestCreateAllUniqueKey(t *testing.T) {
+
+	if conn, err := psql.Conn(true); err == nil {
+		s := NewShifter()
+		err := s.CreateAllUniqueKey(conn, &db.TestAddress{}, true)
+		assert := assert.New(t)
+		assert.NoError(err)
+
+		err = s.SetTableModel(&db.TestUser{})
+		assert.NoError(err)
+		err = s.CreateAllUniqueKey(conn, "test_user", true)
 		assert.NoError(err)
 	}
 }

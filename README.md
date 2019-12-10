@@ -10,7 +10,7 @@ Golang struct to postgres table shifter.
 1. [Create table](#create-table)
 2. [Create enum](#create-enum)
 3. [Create index](#create-index)
-3. [Create/Alter/Drop unique key](#create-unique-key)
+3. [Create unique key](#create-unique-key)
 3. [Create table struct](#create-table-struct)
 4. Create history table with after update/delete triggers
 5. Alter table
@@ -97,7 +97,7 @@ func (TestAddress) Enum() map[string][]string {
 }
 
 s := shifter.NewShifter()
-err := s.CreateAllEnum(conn, &db.TestAddress{})
+err := s.CreateAllEnum(conn, &TestAddress{})
 ```
 ##### ii) Passing table name after setting model
 ```
@@ -118,7 +118,7 @@ func (TestAddress) Enum() map[string][]string {
 }
 
 s := shifter.NewShifter()
-s.SetTableModel(&db.TestAddress{})
+s.SetTableModel(&TestAddress{})
 err = s.CreateAllEnum(conn, "test_address")
 ```
 
@@ -150,7 +150,7 @@ func (TestAddress) Enum() map[string][]string {
 }
 
 s := shifter.NewShifter()
-err := s.CreateEnum(conn, &db.TestAddress{}, "address_status")
+err := s.CreateEnum(conn, &TestAddress{}, "address_status")
 ```
 ##### ii) Passing table name after setting model
 ```
@@ -171,7 +171,7 @@ func (TestAddress) Enum() map[string][]string {
 }
 
 s := shifter.NewShifter()
-s.SetTableModel(&db.TestAddress{})
+s.SetTableModel(&TestAddress{})
 err = s.CreateEnum(conn, "test_address", "address_status")
 ```
 
@@ -212,7 +212,7 @@ func (TestAddress) Index() map[string]string {
 }
 
 s := shifter.NewShifter()
-err := s.CreateAllIndex(conn, &db.TestAddress{})
+err := s.CreateAllIndex(conn, &TestAddress{})
 ```
 ##### ii) Passing table name after setting model
 ```
@@ -236,8 +236,66 @@ func (TestAddress) Index() map[string]string {
 }
 
 s := shifter.NewShifter()
-s.SetTableModel(&db.TestAddress{})
+s.SetTableModel(&TestAddress{})
 err = s.CreateAllIndex(conn, "test_address")
+```
+
+
+## Create unique key
+__CreateAllUniqueKey(conn *pg.DB, model interface{}, skipPrompt ...bool) (err error)__   
+This will create all the composite unique key associated to the given table.  
+If __skipPrompt__ is enabled then it won't ask for confirmation before creating unique key. Default is disable.  
+To define composite unique key on table struct you need to create a method with following signature:  
+```
+func (tableStruct) UniqueKey() []string
+```
+Here returned slice is the columns comma seperated.  
+If single column need to create unique key then use UNIQUE sql tag for column.  
+```
+i) Directly passing struct model   
+ii) Passing table name after setting model  
+```
+
+##### i) Directly passing struct model
+```
+type TestAddress struct {
+	tableName struct{}  `sql:"test_address"`
+	AddressID int       `json:"address_id,omitempty" sql:"address_id,type:serial PRIMARY KEY"`
+	City      string    `json:"city" sql:"city,type:varchar(25) UNIQUE"`
+	Status    string    `json:"status,omitempty"
+}
+
+//UniqueKey of the table. This is for composite unique keys
+func (TestAddress) UniqueKey() []string {
+	uk := []string{
+		"address_id,status,city",
+	}
+	return uk
+}
+
+s := shifter.NewShifter()
+err := s.CreateAllUniqueKey(conn, &TestAddress{})
+```
+##### ii) Passing table name after setting model
+```
+type TestAddress struct {
+	tableName struct{}  `sql:"test_address"`
+	AddressID int       `json:"address_id,omitempty" sql:"address_id,type:serial PRIMARY KEY"`
+	City      string    `json:"city" sql:"city,type:varchar(25) UNIQUE"`
+	Status    string    `json:"status,omitempty"
+}
+
+//UniqueKey of the table. This is for composite unique keys
+func (TestAddress) UniqueKey() []string {
+	uk := []string{
+		"address_id,status,city",
+	}
+	return uk
+}
+
+s := shifter.NewShifter()
+s.SetTableModel(&TestAddress{})
+err = s.CreateAllUniqueKey(conn, "test_address")
 ```
 
 ## Create table struct

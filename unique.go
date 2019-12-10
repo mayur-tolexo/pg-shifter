@@ -37,7 +37,7 @@ func (s *Shifter) checkUniqueKeyToAlter(tx *pg.Tx, tName string,
 
 	if isAlter, err = dropCompositeUK(tx, tName, tUK, sUK); err == nil {
 		var curAlter bool
-		curAlter, err = addCompositeUK(tx, tName, sUK)
+		curAlter, err = addCompositeUK(tx, tName, sUK, true)
 		isAlter = isAlter || curAlter
 	}
 
@@ -45,8 +45,8 @@ func (s *Shifter) checkUniqueKeyToAlter(tx *pg.Tx, tName string,
 }
 
 //addCompositeUK will add composite unique key which is not in table
-func addCompositeUK(tx *pg.Tx, tName string,
-	sUK map[string]string) (isAlter bool, err error) {
+func addCompositeUK(tx *pg.Tx, tName string, sUK map[string]string, skipPrompt bool) (
+	isAlter bool, err error) {
 
 	if len(sUK) > 0 {
 		sql := ""
@@ -57,7 +57,7 @@ func addCompositeUK(tx *pg.Tx, tName string,
 			}
 		}
 		if sql != "" {
-			if isAlter, err = execByChoice(tx, sql, true); err != nil {
+			if isAlter, err = execByChoice(tx, sql, skipPrompt); err != nil {
 				err = getWrapError(tName, "add composite unique key", sql, err)
 			}
 		}
