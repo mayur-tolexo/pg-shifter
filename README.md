@@ -63,6 +63,56 @@ err := s.CreateTable(conn, "test_address")
 
 ### Create enum
 ---------------
+CreateAllEnum(conn *pg.DB, model interface{}) (err error)  
+This will create all then enum associated to given table model  
+i) Directly passing struct model   
+ii) Passing table name after setting model  
+
+##### i) Directly passing struct model
+```
+type TestAddress struct {
+	tableName struct{} `sql:"test_address"`
+	AddressID int      `sql:"address_id,type:serial NOT NULL PRIMARY KEY"`
+	Address   string   `sql:"city,type:text"`
+	City      string   `sql:"city,type:varchar(25) NULL"`
+	Status    string   `sql:"status,type:address_status"`
+}
+
+//Enum of the table.
+func (TestAddress) Enum() map[string][]string {
+	enm := map[string][]string{
+		"address_status": {"enable", "disable"},
+	}
+	return enm
+}
+
+s := shifter.NewShifter()
+err := s.CreateAllEnum(conn, &db.TestAddress{})
+```
+##### ii) Passing table name after setting model
+```
+type TestAddress struct {
+	tableName struct{} `sql:"test_address"`
+	AddressID int      `sql:"address_id,type:serial NOT NULL PRIMARY KEY"`
+	Address   string   `sql:"city,type:text"`
+	City      string   `sql:"city,type:varchar(25) NULL"`
+	Status    string   `sql:"status,type:address_status"`
+}
+
+//Enum of the table.
+func (TestAddress) Enum() map[string][]string {
+	enm := map[string][]string{
+		"address_status": {"enable", "disable"},
+	}
+	return enm
+}
+
+s := shifter.NewShifter()
+s.SetTableModel(&db.TestAddress{})
+err = s.CreateAllEnum(conn, "test_address")
+```
+
+
 CreateEnum(conn *pg.DB, model interface{}, enumName string) (err error)  
 i) Directly passing struct model   
 ii) Passing table name after setting model  
