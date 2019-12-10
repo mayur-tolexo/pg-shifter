@@ -62,7 +62,6 @@ err := s.CreateTable(conn, "test_address")
 ```
 
 ## Create enum
----------------
 __CreateAllEnum(conn *pg.DB, model interface{}) (err error)__   
 This will create all the enum associated to the given table  
 ```
