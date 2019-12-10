@@ -64,7 +64,7 @@ err := s.CreateTable(conn, "test_address")
 ### Create enum
 ---------------
 __CreateAllEnum(conn *pg.DB, model interface{}) (err error)__   
-This will create all then enum associated to given table model  
+_This will create all the enum associated to the given table_  
 i) Directly passing struct model   
 ii) Passing table name after setting model  
 
@@ -114,6 +114,7 @@ err = s.CreateAllEnum(conn, "test_address")
 
 
 __CreateEnum(conn *pg.DB, model interface{}, enumName string) (err error)__   
+_This will create given enum if associated to given table_
 i) Directly passing struct model   
 ii) Passing table name after setting model  
 
