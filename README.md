@@ -12,17 +12,17 @@ Golang struct to postgres table shifter.
 3. [Create index](#create-index)
 3. [Create unique key](#create-unique-key)
 3. [Create table struct](#create-table-struct)
-4. [Create history table with after update/delete triggers](#recovery)
-5. [Alter table](#recovery)
-	1. [Add New Column](#add-new-column)
-	2. [Remove existing column](#remove-existing-column)
-	3. [Modify existing column](#modify-existing-column)
-		1. [Modify datatype](#modify-datatype)
+4. Create history table with after update/delete triggers
+5. Alter table
+	1. Add New Column
+	2. Remove existing column
+	3. Modify existing column
+		1. Modify datatype
 		2. Modify data length (e.g. varchar(255) to varchar(100))
 		3. Add/Drop default value
 		4. Add/Drop Not Null Constraint
 		5. Add/Drop constraint (Unique/Foreign Key)
-		6. [Modify constraint](#modify-constraint)
+		6. Modify constraint
 			1. Set constraint deferrable
 				1. Initially deferred
 				1. Initially immediate
