@@ -75,7 +75,7 @@ To define enum on table struct you need to create a method with following signat
 func (tableStruct) Enum() map[string][]string
 ```
 Here returned map's key is enum name and value is slice of enum values.  
-If enum already exist in database then it will update the enum value which are missing in the database.
+If enum already exist in database then it will not create enum again.
 ```
 i) Directly passing struct model   
 ii) Passing table name after setting model  
@@ -152,6 +152,13 @@ err = s.CreateEnum(conn, "test_address", "address_status")
 __UpsertAllEnum(conn *pg.DB, model interface{}) (err error)__   
 
 This will create/update all the enum associated to the given table.
+To define enum on table struct you need to create a method with following signature:  
+```
+func (tableStruct) Enum() map[string][]string
+```
+Here returned map's key is enum name and value is slice of enum values.  
+If enum already exist in database then it will update the enum value which are missing in the database.
+
 ```
 i) Directly passing struct model   
 ii) Passing table name after setting model  
