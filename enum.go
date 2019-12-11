@@ -1,6 +1,7 @@
 package shifter
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -10,14 +11,16 @@ import (
 	"github.com/mayur-tolexo/pg-shifter/util"
 )
 
-//upsertEnum Enum in database
-func (s *Shifter) upsertEnum(tx *pg.Tx, tableName string) (err error) {
+//upsertAllEnum will create/update all enum of the given table
+func (s *Shifter) upsertAllEnum(tx *pg.Tx, tableName string) (err error) {
+
 	tableModel := s.table[tableName]
 	fields := util.GetStructField(tableModel)
+
 	for _, refFeild := range fields {
 		fType := util.FieldType(refFeild)
-		if _, exists := s.enumList[fType]; exists {
-			if err = s.createEnumByName(tx, tableName, fType); err != nil {
+		if s.isEnum(tableName, fType) {
+			if err = s.upsertEnum(tx, tableName, fType); err != nil {
 				break
 			}
 		}
@@ -25,10 +28,12 @@ func (s *Shifter) upsertEnum(tx *pg.Tx, tableName string) (err error) {
 	return
 }
 
-//Create Enum in database
-func (s *Shifter) createEnumByName(tx *pg.Tx, tableName, enumName string) (err error) {
+//upsertEnum will create/update enum of the given table
+func (s *Shifter) upsertEnum(tx *pg.Tx, tableName string,
+	enumName string) (err error) {
 
-	if enumValue, exists := s.getEnum(tableName, enumName); exists {
+	var enumValue []string
+	if enumValue, err = s.getEnum(tableName, enumName); err == nil {
 		if _, created := enumCreated[enumName]; created == false {
 			if enumSQL, enumExists := getEnumQuery(tx, enumName, enumValue); enumExists == false {
 				err = s.createEnum(tx, tableName, enumName, enumSQL)
@@ -36,9 +41,20 @@ func (s *Shifter) createEnumByName(tx *pg.Tx, tableName, enumName string) (err e
 				err = s.updateEnum(tx, tableName, enumName)
 			}
 		}
-	} else {
-		msg := fmt.Sprintf("Table: %v Enum: %v not found", tableName, enumName)
-		err = flaw.CustomError(msg)
+	}
+	return
+}
+
+//Create Enum in database only if not exists
+func (s *Shifter) createEnumByName(tx *pg.Tx, tableName, enumName string) (err error) {
+
+	var enumValue []string
+	if enumValue, err = s.getEnum(tableName, enumName); err == nil {
+		if _, created := enumCreated[enumName]; created == false {
+			if enumSQL, enumExists := getEnumQuery(tx, enumName, enumValue); enumExists == false {
+				err = s.createEnum(tx, tableName, enumName, enumSQL)
+			}
+		}
 	}
 	return
 }
@@ -115,12 +131,36 @@ func getEnumQuery(tx *pg.Tx, enumName string, enumValue []string) (
 }
 
 //getEnum will return enum values from enum name
-func (s *Shifter) getEnum(tableName, enumName string) (enumValue []string, exists bool) {
+func (s *Shifter) getEnum(tableName, enumName string) (
+	enumValue []string, err error) {
+
+	var exists bool
 	enum := s.getEnumFromMethod(tableName)
+
 	//checking table local enum list
 	if enumValue, exists = enum[enumName]; exists == false {
 		//checking global enum list
 		enumValue, exists = s.enumList[enumName]
+	} else {
+		enum[enumName] = enumValue
+	}
+
+	if exists == false {
+		msg := fmt.Sprintf("Table: %v Enum: %v not found", tableName, enumName)
+		err = errors.New(msg)
+	}
+	return
+}
+
+//isEnum will check given type is enum or not
+func (s *Shifter) isEnum(tableName, fType string) (flag bool) {
+
+	var exists bool
+	enum := s.getEnumFromMethod(tableName)
+	//checking table local enum list
+	if _, flag = enum[fType]; exists == false {
+		//checking global enum list
+		_, flag = s.enumList[fType]
 	}
 	return
 }

@@ -14,7 +14,7 @@ func (s *Shifter) createTable(tx *pg.Tx, tableName string, withDependency bool) 
 	tableModel := s.table[tableName]
 	if _, alreadyCreated := tableCreated[tableModel]; alreadyCreated == false {
 		tableCreated[tableModel] = true
-		err = s.upsertEnum(tx, tableName)
+		err = s.upsertAllEnum(tx, tableName)
 		if err == nil {
 			if withDependency {
 				err = s.createTableDependencies(tx, tableModel)
@@ -39,7 +39,7 @@ func (s *Shifter) createTableDependencies(tx *pg.Tx, tableModel interface{}) (er
 					//creating ref table dep tables
 					tableCreated[refTableModel] = true
 					//create/update enum
-					if err = s.upsertEnum(tx, refTable); err == nil {
+					if err = s.upsertAllEnum(tx, refTable); err == nil {
 						//creating dependent table
 						if err = s.createTableDependencies(tx, refTableModel); err == nil {
 							//executin table creatin sql

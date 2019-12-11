@@ -121,6 +121,49 @@ func (s *Shifter) CreateAllEnum(conn *pg.DB, model interface{}) (err error) {
 	return
 }
 
+//UpsertEnum will create/update enum by enum name.
+//parameters:
+// - conn: postgresql connection
+// - model: struct pointer or string (table name)
+// - enumName: enum which you want to upsert
+// if model is table name then need to set shifter SetTableModel() before calling UpsertEnum()
+func (s *Shifter) UpsertEnum(conn *pg.DB, model interface{}, enumName string) (err error) {
+	var (
+		tx        *pg.Tx
+		tableName string
+	)
+	if tableName, err = s.getTableName(model); err == nil {
+		if tx, err = conn.Begin(); err == nil {
+			err = s.updateEnum(tx, tableName, enumName)
+			commitIfNil(tx, err)
+		} else {
+			err = flaw.TxError(err)
+		}
+	}
+	return
+}
+
+//UpsertAllEnum will create/update all enums of the given table.
+//parameters:
+// - conn: postgresql connection
+// - model: struct pointer or string (table name)
+// if model is table name then need to set shifter SetTableModel() before calling UpsertAllEnum()
+func (s *Shifter) UpsertAllEnum(conn *pg.DB, model interface{}) (err error) {
+	var (
+		tx        *pg.Tx
+		tableName string
+	)
+	if tableName, err = s.getTableName(model); err == nil {
+		if tx, err = conn.Begin(); err == nil {
+			err = s.upsertAllEnum(tx, tableName)
+			commitIfNil(tx, err)
+		} else {
+			err = flaw.TxError(err)
+		}
+	}
+	return
+}
+
 //CreateAllIndex will create all index of the given table.
 //parameters:
 // - conn: postgresql connection

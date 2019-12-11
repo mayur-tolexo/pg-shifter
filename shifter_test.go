@@ -70,6 +70,35 @@ func TestCreateAllEnum(t *testing.T) {
 	}
 }
 
+func TestUpsertEnum(t *testing.T) {
+
+	if conn, err := psql.Conn(true); err == nil {
+		s := NewShifter()
+		err := s.UpsertEnum(conn, &db.TestAddress{}, "address_status")
+		assert := assert.New(t)
+		assert.NoError(err)
+
+		err = s.SetTableModel(&db.TestUser{})
+		assert.NoError(err)
+		err = s.UpsertEnum(conn, "test_user", "yesno_type")
+		assert.NoError(err)
+	}
+}
+
+func TestUpsertAllEnum(t *testing.T) {
+
+	if conn, err := psql.Conn(true); err == nil {
+		s := NewShifter()
+		err := s.UpsertAllEnum(conn, &db.TestAddress{})
+		assert := assert.New(t)
+		assert.NoError(err)
+
+		err = s.SetTableModel(&db.TestUser{})
+		assert.NoError(err)
+		err = s.UpsertAllEnum(conn, "test_user")
+		assert.NoError(err)
+	}
+}
 func TestCreateAllIndex(t *testing.T) {
 
 	if conn, err := psql.Conn(true); err == nil {
