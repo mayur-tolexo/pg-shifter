@@ -123,7 +123,8 @@ func getImportPkg(pkg map[string]struct{}) (impPkg string) {
 	if len(pkg) > 0 {
 		impPkg += "import (\n"
 		for k := range pkg {
-			impPkg += "\"" + k + "\"\n"
+			// impPkg += "\"" + k + "\"\n"
+			impPkg += k + "\n"
 		}
 		impPkg += ")\n"
 	}
@@ -206,7 +207,27 @@ func (l *sLog) GetStructFieldType(dataType string) (sType string) {
 	//if any package is used then adding that in import
 	if strings.Contains(sType, ".") {
 		pkg := strings.Split(sType, ".")[0]
-		l.importedPkg[pkg] = struct{}{}
+		l.importedPkg["\""+pkg+"\""] = struct{}{}
+	}
+	return
+}
+
+//GetIndexType will return index type for template
+func (l *sLog) GetIndexType(iType string) (sType string) {
+	l.importedPkg[curPkg] = struct{}{}
+	switch iType {
+	case BtreeIndex:
+		sType = "shifter.BtreeIndex"
+	case GinIndex:
+		sType = "shifter.GinIndex"
+	case GistIndex:
+		sType = "shifter.GistIndex"
+	case HashIndex:
+		sType = "shifter.HashIndex"
+	case BrinIndex:
+		sType = "shifter.BrinIndex"
+	case SPGistIndex:
+		sType = "shifter.SPGistIndex"
 	}
 	return
 }
@@ -272,7 +293,7 @@ func ({{ .StructNameWT }}) UniqueKey() []string {
 func ({{ .StructNameWT }}) Index() map[string]string {
 	idx := map[string]string{
 		{{- range $key, $value := .Index}}
-			"{{ $value.Columns }}": "{{ $value.IType }}", //{{ $value.IdxName }}
+			"{{ $value.Columns }}": {{ $.GetIndexType $value.IType }}, //{{ $value.IdxName }}
 		{{- end }}
 	}
 	return idx

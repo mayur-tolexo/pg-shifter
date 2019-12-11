@@ -45,4 +45,5 @@ const (
 	afterUpdateTrigger  = "au"
 	afterDeleteTrigger  = "ad"
 	beforeUpdateTrigger = "bu"
+	curPkg              = "shifter \"github.com/mayur-tolexo/pg-shifter\""
 )
