@@ -9,6 +9,7 @@ Golang struct to postgres table shifter.
 ## Features
 1. [Create Table](#create-table)
 2. [Create Enum](#create-enum)
+3. [Upsert Enum](#upsert-enum)
 3. [Create Index](#create-index)
 3. [Create Unique Key](#create-unique-key)
 3. [Upsert Unique Key](#upsert-unique-key)
@@ -103,22 +104,6 @@ err := s.CreateAllEnum(conn, &TestAddress{})
 ```
 ##### ii) Passing table name after setting model
 ```
-type TestAddress struct {
-	tableName struct{} `sql:"test_address"`
-	AddressID int      `sql:"address_id,type:serial NOT NULL PRIMARY KEY"`
-	Address   string   `sql:"address,type:text"`
-	City      string   `sql:"city,type:varchar(25) NULL"`
-	Status    string   `sql:"status,type:address_status"`
-}
-
-//Enum of the table.
-func (TestAddress) Enum() map[string][]string {
-	enm := map[string][]string{
-		"address_status": {"enable", "disable"},
-	}
-	return enm
-}
-
 s := shifter.NewShifter()
 s.SetTableModel(&TestAddress{})
 err = s.CreateAllEnum(conn, "test_address")
@@ -157,6 +142,23 @@ err := s.CreateEnum(conn, &TestAddress{}, "address_status")
 ```
 ##### ii) Passing table name after setting model
 ```
+s := shifter.NewShifter()
+s.SetTableModel(&TestAddress{})
+err = s.CreateEnum(conn, "test_address", "address_status")
+```
+
+
+## Upsert Enum
+__UpsertAllEnum(conn *pg.DB, model interface{}) (err error)__   
+
+This will create/update all the enum associated to the given table.
+```
+i) Directly passing struct model   
+ii) Passing table name after setting model  
+```
+
+##### i) Directly passing struct model
+```
 type TestAddress struct {
 	tableName struct{} `sql:"test_address"`
 	AddressID int      `sql:"address_id,type:serial NOT NULL PRIMARY KEY"`
@@ -174,8 +176,51 @@ func (TestAddress) Enum() map[string][]string {
 }
 
 s := shifter.NewShifter()
+err := s.UpsertAllEnum(conn, &TestAddress{})
+```
+##### ii) Passing table name after setting model
+```
+s := shifter.NewShifter()
 s.SetTableModel(&TestAddress{})
-err = s.CreateEnum(conn, "test_address", "address_status")
+err = s.UpsertAllEnum(conn, "test_address")
+```
+
+---------------
+
+__CreateEnum(conn *pg.DB, model interface{}, enumName string) (err error)__  
+
+This will create given enum if associated to given table  
+```
+i) Directly passing struct model   
+ii) Passing table name after setting model  
+```
+
+##### i) Directly passing struct model
+```
+type TestAddress struct {
+	tableName struct{} `sql:"test_address"`
+	AddressID int      `sql:"address_id,type:serial NOT NULL PRIMARY KEY"`
+	Address   string   `sql:"address,type:text"`
+	City      string   `sql:"city,type:varchar(25) NULL"`
+	Status    string   `sql:"status,type:address_status"`
+}
+
+//Enum of the table.
+func (TestAddress) Enum() map[string][]string {
+	enm := map[string][]string{
+		"address_status": {"enable", "disable"},
+	}
+	return enm
+}
+
+s := shifter.NewShifter()
+err := s.UpsertEnum(conn, &TestAddress{}, "address_status")
+```
+##### ii) Passing table name after setting model
+```
+s := shifter.NewShifter()
+s.SetTableModel(&TestAddress{})
+err = s.UpsertEnum(conn, "test_address", "address_status")
 ```
 
 
@@ -220,25 +265,6 @@ err := s.CreateAllIndex(conn, &TestAddress{})
 ```
 ##### ii) Passing table name after setting model
 ```
-type TestAddress struct {
-	tableName struct{}    `sql:"test_address"`
-	AddressID int         `json:"address_id,omitempty" sql:"address_id,type:serial PRIMARY KEY"`
-	City      string      `json:"city" sql:"city,type:varchar(25) UNIQUE"`
-	Status    string      `json:"status,omitempty" sql:"status,type:address_status"`
-	Info      interface{} `sql:"info,type:jsonb"`
-}
-
-//Index of the table. For composite index use ,
-//Default index type is btree. For gin index use gin
-func (TestAddress) Index() map[string]string {
-	idx := map[string]string{
-		"status":            shifter.BtreeIndex,
-		"info":              shifter.GinIndex,
-		"address_id,status": shifter.BtreeIndex,
-	}
-	return idx
-}
-
 s := shifter.NewShifter()
 s.SetTableModel(&TestAddress{})
 err = s.CreateAllIndex(conn, "test_address")
@@ -283,21 +309,6 @@ err := s.CreateAllUniqueKey(conn, &TestAddress{})
 ```
 ##### ii) Passing table name after setting model
 ```
-type TestAddress struct {
-	tableName struct{}  `sql:"test_address"`
-	AddressID int       `json:"address_id,omitempty" sql:"address_id,type:serial PRIMARY KEY"`
-	City      string    `json:"city" sql:"city,type:varchar(25) UNIQUE"`
-	Status    string    `json:"status,omitempty"
-}
-
-//UniqueKey of the table. This is for composite unique keys
-func (TestAddress) UniqueKey() []string {
-	uk := []string{
-		"address_id,status,city",
-	}
-	return uk
-}
-
 s := shifter.NewShifter()
 s.SetTableModel(&TestAddress{})
 err = s.CreateAllUniqueKey(conn, "test_address")
@@ -343,21 +354,6 @@ err := s.UpsertAllUniqueKey(conn, &TestAddress{})
 ```
 ##### ii) Passing table name after setting model
 ```
-type TestAddress struct {
-	tableName struct{}  `sql:"test_address"`
-	AddressID int       `json:"address_id,omitempty" sql:"address_id,type:serial PRIMARY KEY"`
-	City      string    `json:"city" sql:"city,type:varchar(25) UNIQUE"`
-	Status    string    `json:"status,omitempty"
-}
-
-//UniqueKey of the table. This is for composite unique keys
-func (TestAddress) UniqueKey() []string {
-	uk := []string{
-		"address_id,status,city",
-	}
-	return uk
-}
-
 s := shifter.NewShifter()
 s.SetTableModel(&TestAddress{})
 err = s.UpsertAllUniqueKey(conn, "test_address")
