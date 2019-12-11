@@ -4,7 +4,7 @@ import (
 	"strings"
 
 	"github.com/mayur-tolexo/pg-shifter/model"
-	"gitlab.com/tolexo/plib/migrator/util"
+	"github.com/mayur-tolexo/pg-shifter/util"
 )
 
 //pgAlias is postgresql alias to actual type

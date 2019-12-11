@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"go/format"
 	"os"
 	"os/exec"
 	"reflect"
@@ -77,11 +78,11 @@ func (s *Shifter) logTableChange(logStr string, log sLog, wt bool) (err error) {
 
 		file := logDir + "/" + log.StructNameWT + ".go"
 		if fp, err = os.Create(file); err == nil {
-
+			fData, _ := format.Source([]byte(logStr))
 			fp.WriteString(getWarning(wt))
 			fp.WriteString("package " + log.StructName + "\n")
 			fp.WriteString(getImportPkg(log.importedPkg))
-			fp.WriteString(logStr)
+			fp.Write(fData)
 			exec.Command("gofmt", "-w", file).Run()
 		}
 	}

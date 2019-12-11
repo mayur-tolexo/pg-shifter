@@ -154,18 +154,6 @@
 			"Rev": "890a5c3458b43e6104ff5da8dfa139d013d77544"
 		},
 		{
-			"ImportPath": "github.com/tolexo/aero/conf",
-			"Rev": "a4598568b2e10be9c2cffb539ad8fa5218834096"
-		},
-		{
-			"ImportPath": "gitlab.com/tolexo/plib/migrator/model",
-			"Rev": "3474ba2ed3dfa289b8deea9f94737d1bf0350285"
-		},
-		{
-			"ImportPath": "gitlab.com/tolexo/plib/migrator/util",
-			"Rev": "3474ba2ed3dfa289b8deea9f94737d1bf0350285"
-		},
-		{
 			"ImportPath": "golang.org/x/crypto/pbkdf2",
 			"Rev": "505ab145d0a99da450461ae2c1a9f6cd10d1f447"
 		},
