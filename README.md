@@ -368,7 +368,7 @@ s := shifter.NewShifter()
 err := s.DropTable(conn, "test_address", true)
 ```
 
-## Drop All Table
+## Drop All Tables
 __DropAllTable(conn *pg.DB, cascade bool) (err error)__  
 
 This will drop all the table from database if exists which are set in shifter. So, before calling it you need to SetTableModels() on shifter.
