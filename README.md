@@ -9,6 +9,7 @@ Golang struct to postgres table shifter. go1.9+ required.
 ## Install
 1. go get github.com/mayur-tolexo/pg-shifter
 1. go get github.com/tools/godep
+1. cd $GOPATH/src/github.com/mayur-tolexo/pg-shifter/
 1. godep restore -v
 
 ## Features
