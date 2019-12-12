@@ -10,13 +10,13 @@ Golang struct to postgres table shifter.
 1. [Create Table](#create-table)
 2. [Create Enum](#create-enum)
 3. [Upsert Enum](#upsert-enum)
-3. [Create Index](#create-index)
-3. [Create Unique Key](#create-unique-key)
-3. [Upsert Unique Key](#upsert-unique-key)
-3. [Create All Tables](#create-all-tables)
-3. [Create Table Struct](#create-table-struct)
-4. Create history table with after update/delete triggers
-5. Alter table
+4. [Create Index](#create-index)
+5. [Create Unique Key](#create-unique-key)
+6. [Upsert Unique Key](#upsert-unique-key)
+7. [Create All Tables](#create-all-tables)
+8. [Create Table Struct](#create-table-struct)
+8. Create history table with after update/delete triggers
+8. Alter table
 	1. Add New Column
 	2. Remove existing column
 	3. Modify existing column
