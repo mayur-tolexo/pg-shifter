@@ -14,27 +14,13 @@ Golang struct to postgres table shifter.
 5. [Create Unique Key](#create-unique-key)
 6. [Upsert Unique Key](#upsert-unique-key)
 7. [Create All Tables](#create-all-tables)
+6. [Alter Table](#alter-table)
+6. [Alter All Tables](#alter-all-tables)
 6. [Drop Table](#drop-table)
 6. [Drop All Tables](#drop-all-tables)
 8. [Create Table Struct](#create-table-struct)
 8. Create history table
 8. Add trigger
-8. Alter table
-	1. Add New Column
-	2. Remove existing column
-	3. Modify existing column
-		1. Modify datatype
-		2. Modify data length (e.g. varchar(255) to varchar(100))
-		3. Add/Drop default value
-		4. Add/Drop Not Null Constraint
-		5. Add/Drop constraint (Unique/Foreign Key)
-		6. Modify constraint
-			1. Set constraint deferrable
-				1. Initially deferred
-				1. Initially immediate
-			2. Set constraint not deferrable
-			3. Add/Drop **ON DELETE** DEFAULT/NO ACTION/RESTRICT/CASCADE/SET NULL
-			4. Add/Drop **ON UPDATE** DEFAULT/NO ACTION/RESTRICT/CASCADE/SET NULL
 
 
 ## Create Table
@@ -348,6 +334,49 @@ db := []interface{}{&TestAddress{}, &TestUser{}, &TestAdminUser{}}
 s := shifter.NewShifter()
 s.SetTableModels(db)
 err := s.CreateAllTable(conn)
+```
+
+
+## Alter Table
+__AlterTable(conn *pg.DB, model interface{}, skipPrompt ...bool) (err error)__   
+
+This will alter table.  
+If __skipPrompt__ is enabled then it won't ask for confirmation before upserting unique key. Default is disable.  
+i) Directly passing struct model   
+ii) Passing table name after setting model  
+```
+
+##### i) Directly passing struct model
+```
+type TestAddress struct {
+	tableName struct{}  `sql:"test_address"`
+	AddressID int       `json:"address_id,omitempty" sql:"address_id,type:serial PRIMARY KEY"`
+	City      string    `json:"city" sql:"city,type:varchar(25) UNIQUE"`
+	Status    string    `json:"status,omitempty"
+}
+
+s := shifter.NewShifter()
+err := s.AlterTable(conn, &TestAddress{})
+```
+##### ii) Passing table name after setting model
+```
+s := shifter.NewShifter()
+s.SetTableModel(&TestAddress{})
+err = s.AlterTable(conn, "test_address")
+```
+
+## Alter All Tables
+__AlterAllTable(conn *pg.DB, skipPrompt ...bool) (err error)__  
+This will alter all tables added in shifter using SetTableModels().    
+If __skipPrompt__ is enabled then it won't ask for confirmation before upserting unique key. Default is disable.  
+
+
+```
+db := []interface{}{&TestAddress{}, &TestUser{}, &TestAdminUser{}}
+
+s := shifter.NewShifter()
+s.SetTableModels(db)
+err := s.AlterAllTable(conn)
 ```
 
 ## Drop Table

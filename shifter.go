@@ -80,6 +80,28 @@ func (s *Shifter) CreateTable(conn *pg.DB, model interface{}) (err error) {
 	return
 }
 
+// AlterTable will alter table.
+//
+// Parameters
+//  conn: postgresql connection
+//  model: struct pointer or string (table name)
+//  skipPrompt: bool (default false | if false then before execution sql it will prompt for confirmation)
+func (s *Shifter) AlterTable(conn *pg.DB, model interface{}, skipPrompt ...bool) (err error) {
+	var (
+		tx        *pg.Tx
+		tableName string
+	)
+	if tableName, err = s.getTableName(model); err == nil {
+		if tx, err = conn.Begin(); err == nil {
+			err = s.alterTable(tx, tableName, getSP(skipPrompt))
+			commitIfNil(tx, err)
+		} else {
+			err = flaw.TxError(err)
+		}
+	}
+	return
+}
+
 //DropTable will drop table if exists in database
 // Parameters
 //  conn: postgresql connection
@@ -301,13 +323,13 @@ func (s *Shifter) CreateAllTable(conn *pg.DB) (err error) {
 
 //AlterAllTable will alter all tables
 //before calling it you need to set the table model in shifter using SetTableModels()
-func (s *Shifter) AlterAllTable(conn *pg.DB, skipPromt bool) (err error) {
+func (s *Shifter) AlterAllTable(conn *pg.DB, skipPromt ...bool) (err error) {
 
 	s.Debug(conn)
 	var tx *pg.Tx
 	if tx, err = conn.Begin(); err == nil {
 		for tableName := range s.table {
-			if err = s.alterTable(tx, tableName, skipPromt); err != nil {
+			if err = s.alterTable(tx, tableName, getSP(skipPromt)); err != nil {
 				break
 			}
 		}
