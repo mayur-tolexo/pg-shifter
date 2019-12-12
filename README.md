@@ -13,6 +13,7 @@ Golang struct to postgres table shifter.
 3. [Create Index](#create-index)
 3. [Create Unique Key](#create-unique-key)
 3. [Upsert Unique Key](#upsert-unique-key)
+3. [Create All Tables](#create-all-tables)
 3. [Create Table Struct](#create-table-struct)
 4. Create history table with after update/delete triggers
 5. Alter table
@@ -36,7 +37,7 @@ Golang struct to postgres table shifter.
 ## Create Table
 __CreateTable(conn *pg.DB, model interface{}) (err error)__  
 
-This will create table from go struct.
+This will create table if not exists from go struct.
 Also, if any enum associated to the table struct then that will be created as well.  
 All the unique keys and index associated to the table struct will be created as well.
 ```
@@ -329,6 +330,21 @@ err := s.UpsertAllUniqueKey(conn, &TestAddress{})
 s := shifter.NewShifter()
 s.SetTableModel(&TestAddress{})
 err = s.UpsertAllUniqueKey(conn, "test_address")
+```
+
+
+## Create All Tables
+__CreateAllTable(conn *pg.DB) (err error)__  
+
+This will create table if not exists from go struct which are set in shifter.
+Also, if any enum associated to the table struct then that will be created as well.  
+All the unique keys and index associated to the table struct will be created as well.
+```
+db := []interface{}{&TestAddress{}, &TestUser{}, &TestAdminUser{}}
+
+s := shifter.NewShifter()
+s.SetTableModels(db)
+err := s.CreateAllTable(conn)
 ```
 
 ## Create Table Struct
