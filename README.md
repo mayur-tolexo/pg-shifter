@@ -344,7 +344,6 @@ This will alter table.
 If __skipPrompt__ is enabled then it won't ask for confirmation before upserting unique key. Default is disable.  
 i) Directly passing struct model   
 ii) Passing table name after setting model  
-```
 
 ##### i) Directly passing struct model
 ```
