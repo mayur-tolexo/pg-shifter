@@ -10,7 +10,7 @@ import (
 
 //Create history table
 func (s *Shifter) createHistory(tx *pg.Tx, tableName string) (err error) {
-	if s.IsSkip(tableName) == false {
+	if s.isSkip(tableName) == false {
 		historyTable := util.GetHistoryTableName(tableName)
 		if tableExists := util.TableExists(tx, historyTable); tableExists == false {
 			if err = s.execHistoryTable(tx, tableName, historyTable); err == nil {
@@ -67,7 +67,7 @@ func (s *Shifter) execHistoryTable(tx *pg.Tx, tableName, historyTable string) (e
 }
 
 //IsSkip will check table contain skip tags
-func (s *Shifter) IsSkip(tableName string) (flag bool) {
+func (s *Shifter) isSkip(tableName string) (flag bool) {
 	tableModel, isValid := s.table[tableName]
 	if isValid {
 		flag = util.SkipTag(tableModel)

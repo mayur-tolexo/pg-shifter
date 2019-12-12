@@ -11,9 +11,6 @@ import (
 	"github.com/mayur-tolexo/pg-shifter/util"
 )
 
-//IndexCol is then return type expected from Index() method of table struct
-type IndexCol map[string]string
-
 var (
 	tableCreated = make(map[interface{}]bool)
 	enumCreated  = make(map[interface{}]struct{})

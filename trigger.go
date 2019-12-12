@@ -11,7 +11,7 @@ import (
 
 //Create trigger
 func (s *Shifter) createTrigger(tx *pg.Tx, tableName string) (err error) {
-	if s.IsSkip(tableName) == false {
+	if s.isSkip(tableName) == false {
 		defer s.logMode(false)
 		trigger := s.GetTrigger(tableName)
 		s.logMode(s.verbose)

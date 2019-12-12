@@ -28,7 +28,7 @@ func (s *Shifter) GetStructTableName(table interface{}) (
 	return
 }
 
-//SetTableModel will set table model
+//SetTableModel will set table struct pointer to shifter
 func (s *Shifter) SetTableModel(table interface{}) (err error) {
 	var tableName string
 	if tableName, err = s.GetStructTableName(table); err == nil {
@@ -37,7 +37,8 @@ func (s *Shifter) SetTableModel(table interface{}) (err error) {
 	return
 }
 
-//SetTableModels will set table models
+// SetTableModels will set multiple table struct pointer to shifter.
+// You can set all the table struct pointers and then perform operation by table name only
 func (s *Shifter) SetTableModels(tables []interface{}) (err error) {
 	for _, table := range tables {
 		if err = s.SetTableModel(table); err != nil {
