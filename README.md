@@ -29,8 +29,8 @@ Golang struct to postgres table shifter. go1.9+ required.
 8. Add trigger
 
 ## Alter table supported operations:
-1. Add New Column
-2. Remove existing column
+1. [Add New Column](#add-new-column)
+2. [Remove existing column](#remove-existing-column)
 3. Modify existing column
 	1. Modify datatype
 	2. Modify data length (e.g. varchar(255) to varchar(100))
@@ -445,3 +445,11 @@ if conn, err := psql.Conn(true); err == nil {
 ```
 #### OUTPUT
 ![Screenshot 2019-12-08 at 10 09 43 PM](https://user-images.githubusercontent.com/20511920/70392617-db073f80-1a07-11ea-856c-cf83247db3dd.png)
+
+
+## Add New Column
+Just add new field in the table struct and run AlterTable().  
+
+## Remove Existing Column
+Remove field from the table struct which you want to remove and run AlterTable().  
+
