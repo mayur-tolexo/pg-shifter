@@ -60,7 +60,7 @@ func (s *Shifter) Verbose(enable bool) *Shifter {
 
 //CreateTable will create table if not exists
 //
-//parameters:
+//Parameters:
 //
 // - conn: postgresql connection
 //
