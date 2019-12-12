@@ -4,7 +4,12 @@
 [![Release](https://img.shields.io/github/release/mayur-tolexo/sworker.svg?style=flat-square)](https://github.com/mayur-tolexo/pg-shifter/releases)
 
 # pg-shifter
-Golang struct to postgres table shifter.
+Golang struct to postgres table shifter. go1.9+ required.
+
+## Install
+1. go get github.com/mayur-tolexo/pg-shifter
+1. go get github.com/tools/godep
+1. godep restore -v
 
 ## Features
 1. [Create Table](#create-table)
