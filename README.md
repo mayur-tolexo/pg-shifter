@@ -22,7 +22,7 @@ Golang struct to postgres table shifter.
 8. Create history table
 8. Add trigger
 
-## Alter Table Support Following Operations:
+## Alter table supported operations:
 1. Add New Column
 2. Remove existing column
 3. Modify existing column
