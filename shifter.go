@@ -228,9 +228,7 @@ func (s *Shifter) CreateAllUniqueKey(conn *pg.DB, model interface{}, skipPrompt 
 //  model: struct pointer or string (table name)
 //  skipPrompt: bool (default false | if false then before execution sql it will prompt for confirmation)
 // If model is table name then need to set shifter SetTableModel() before calling CreateAllUniqueKey().
-//
 // If composite unique key is modified then also it will update.
-//
 // If composite unique key exists in table but doesn't exists in struct UniqueKey method
 // then that will be dropped.
 func (s *Shifter) UpsertAllUniqueKey(conn *pg.DB, model interface{}, skipPrompt ...bool) (err error) {
