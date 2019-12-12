@@ -373,7 +373,7 @@ __DropAllTable(conn *pg.DB, cascade bool) (err error)__
 
 This will drop all the table from database if exists which are set in shifter. So, before calling it you need to SetTableModels() on shifter.
 Also, if history table associated to this table exists then that will be dropped as well.
-If cascade is true then it will drop table with cascade.
+If cascade is true then it will drop tables with cascade.
 
 ```
 s := shifter.NewShifter()
