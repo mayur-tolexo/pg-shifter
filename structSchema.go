@@ -97,10 +97,10 @@ func getColType(tag string) (cType string, maxLen string) {
 
 //getColIsNullable will return col nullable allowed from struct tag
 func getColIsNullable(tag string) (nullable string) {
-	nullable = Yes
+	nullable = yes
 	if strings.Contains(tag, notNullTag) ||
 		strings.Contains(tag, primaryKeyTag) {
-		nullable = No
+		nullable = no
 	}
 	return
 }
@@ -149,13 +149,13 @@ func (s *Shifter) setColConstraint(schema *model.ColSchema, tag string) {
 	}
 
 	if cSet {
-		schema.IsDeferrable = No
+		schema.IsDeferrable = no
 		if strings.Contains(tag, "deferrable") {
-			schema.IsDeferrable = Yes
+			schema.IsDeferrable = yes
 		}
-		schema.InitiallyDeferred = No
+		schema.InitiallyDeferred = no
 		if strings.Contains(tag, "initially deferred") {
-			schema.InitiallyDeferred = Yes
+			schema.InitiallyDeferred = yes
 		}
 	}
 	s.addConstraintFromUkMap(schema)
@@ -176,8 +176,8 @@ func (s *Shifter) addConstraintFromUkMap(schema *model.ColSchema) {
 	if colFound {
 		if schema.ConstraintType == "" {
 			schema.ConstraintType = uniqueKey
-			schema.IsDeferrable = No
-			schema.InitiallyDeferred = No
+			schema.IsDeferrable = no
+			schema.InitiallyDeferred = no
 		} else if schema.ConstraintType == foreignKey {
 			schema.IsFkUnique = true
 		}

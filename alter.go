@@ -91,9 +91,9 @@ func (s *Shifter) compareSchema(tx *pg.Tx, tSchema, sSchema map[string]model.Col
 	s.logMode(s.verbose)
 
 	//adding column exists in struct but missing in db table
-	if added, err = s.addRemoveCol(tx, sSchema, tSchema, Add, skipPrompt); err == nil {
+	if added, err = s.addRemoveCol(tx, sSchema, tSchema, add, skipPrompt); err == nil {
 		//removing column exists in db table but missing in struct
-		if removed, err = s.addRemoveCol(tx, tSchema, sSchema, Drop, skipPrompt); err == nil {
+		if removed, err = s.addRemoveCol(tx, tSchema, sSchema, drop, skipPrompt); err == nil {
 			//modify column
 			modify, err = s.modifyCol(tx, tSchema, sSchema, skipPrompt)
 		}
@@ -132,9 +132,9 @@ func (s *Shifter) alterCol(tx *pg.Tx, schema model.ColSchema,
 	op string, skipPrompt bool) (isAlter bool, err error) {
 
 	switch op {
-	case Add:
+	case add:
 		isAlter, err = s.addCol(tx, schema, skipPrompt)
-	case Drop:
+	case drop:
 		isAlter, err = s.dropCol(tx, schema, skipPrompt)
 	}
 	return
@@ -230,9 +230,9 @@ func getStructConstraintSQL(schema model.ColSchema) (sql string) {
 
 //getDefferSQL will reutrn deferable and initiall deferred sql
 func getDefferSQL(schema model.ColSchema) (sql string) {
-	if schema.IsDeferrable == Yes {
+	if schema.IsDeferrable == yes {
 		sql = " " + deferrable
-		if schema.InitiallyDeferred == Yes {
+		if schema.InitiallyDeferred == yes {
 			sql += " " + initiallyDeferred
 		} else {
 			sql += " " + initiallyImmediate
@@ -301,7 +301,7 @@ func getSerialType(seqDataType string) (dType string) {
 func getDefaultDTypeSQL(schema model.ColSchema) (str string) {
 
 	if schema.ColumnDefault != "" && schema.SeqName == "" {
-		str = fmt.Sprintf(" %v %v", Default, trimDefaultType(schema))
+		str = fmt.Sprintf(" %v %v", defaultField, trimDefaultType(schema))
 	}
 	return
 }
@@ -321,10 +321,10 @@ func trimDefaultType(schema model.ColSchema) (defVal string) {
 //getNullDTypeSQL will return null/not null constraint string if exists in column
 func getNullDTypeSQL(isNullable string) (str string) {
 	if isNullable != "" {
-		if isNullable == Yes {
-			str = " " + Null
+		if isNullable == yes {
+			str = " " + null
 		} else {
-			str = " " + NotNull
+			str = " " + notNull
 		}
 	}
 	return
@@ -382,9 +382,9 @@ func (s *Shifter) modifyNotNullConstraint(tx *pg.Tx, tSchema, sSchema model.ColS
 	skipPrompt bool) (isAlter bool, err error) {
 
 	if tSchema.IsNullable != sSchema.IsNullable {
-		option := Set
-		if sSchema.IsNullable == Yes {
-			option = Drop
+		option := set
+		if sSchema.IsNullable == yes {
+			option = drop
 		}
 		sql := getNotNullColSQL(sSchema.TableName, sSchema.ColumnName, option)
 		if isAlter, err = execByChoice(tx, sql, skipPrompt); err != nil {
@@ -469,7 +469,7 @@ func isSameDefault(tSchema, sSchema model.ColSchema) (isSame bool) {
 	sDefault := sSchema.ColumnDefault
 
 	if tDefault == "" {
-		if tSchema.IsNullable == Yes && sDefault != "" {
+		if tSchema.IsNullable == yes && sDefault != "" {
 			tDefault = nullTag
 		}
 		isSame = (tDefault == sDefault)
@@ -727,9 +727,9 @@ func getDeferrableSQL(schema model.ColSchema) (sql string) {
 	sql = fmt.Sprintf("ALTER TABLE %v ALTER CONSTRAINT %v ", schema.TableName, schema.ConstraintName)
 
 	//if deferrable then checking its initially deffered or initially immediate
-	if schema.IsDeferrable == Yes {
+	if schema.IsDeferrable == yes {
 		sql += deferrable
-		if schema.InitiallyDeferred == Yes {
+		if schema.InitiallyDeferred == yes {
 			sql += " " + initiallyDeferred
 		} else {
 			sql += " " + initiallyImmediate
