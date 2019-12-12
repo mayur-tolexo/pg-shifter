@@ -103,9 +103,13 @@ func (s *Shifter) CreateEnum(conn *pg.DB, model interface{}, enumName string) (e
 }
 
 //CreateAllEnum will create all enums of the given table.
+//
 //parameters:
+//
 // - conn: postgresql connection
+//
 // - model: struct pointer or string (table name)
+//
 // if model is table name then need to set shifter SetTableModel() before calling CreateAllEnum()
 func (s *Shifter) CreateAllEnum(conn *pg.DB, model interface{}) (err error) {
 	var (
@@ -128,10 +132,15 @@ func (s *Shifter) CreateAllEnum(conn *pg.DB, model interface{}) (err error) {
 }
 
 //UpsertEnum will create/update enum by enum name.
+//
 //parameters:
+//
 // - conn: postgresql connection
+//
 // - model: struct pointer or string (table name)
+//
 // - enumName: enum which you want to upsert
+//
 // if model is table name then need to set shifter SetTableModel() before calling UpsertEnum()
 func (s *Shifter) UpsertEnum(conn *pg.DB, model interface{}, enumName string) (err error) {
 	var (
@@ -150,9 +159,13 @@ func (s *Shifter) UpsertEnum(conn *pg.DB, model interface{}, enumName string) (e
 }
 
 //UpsertAllEnum will create/update all enums of the given table.
+//
 //parameters:
+//
 // - conn: postgresql connection
+//
 // - model: struct pointer or string (table name)
+//
 // if model is table name then need to set shifter SetTableModel() before calling UpsertAllEnum()
 func (s *Shifter) UpsertAllEnum(conn *pg.DB, model interface{}) (err error) {
 	var (
@@ -171,10 +184,15 @@ func (s *Shifter) UpsertAllEnum(conn *pg.DB, model interface{}) (err error) {
 }
 
 //CreateAllIndex will create all index of the given table.
+//
 //parameters:
+//
 // - conn: postgresql connection
+//
 // - model: struct pointer or string (table name)
+//
 // - skipPrompt: bool (default false | if false then before execution sql it will prompt for confirmation)
+//
 // if model is table name then need to set shifter SetTableModel() before calling CreateAllIndex()
 func (s *Shifter) CreateAllIndex(conn *pg.DB, model interface{}, skipPrompt ...bool) (err error) {
 	var (
@@ -193,10 +211,15 @@ func (s *Shifter) CreateAllIndex(conn *pg.DB, model interface{}, skipPrompt ...b
 }
 
 //CreateAllUniqueKey will create table all composite unique key.
+//
 //parameters:
+//
 // - conn: postgresql connection
+//
 // - model: struct pointer or string (table name)
+//
 // - skipPrompt: bool (default false | if false then before execution sql it will prompt for confirmation)
+//
 // if model is table name then need to set shifter SetTableModel() before calling CreateAllUniqueKey()
 func (s *Shifter) CreateAllUniqueKey(conn *pg.DB, model interface{}, skipPrompt ...bool) (err error) {
 	var (
@@ -216,12 +239,19 @@ func (s *Shifter) CreateAllUniqueKey(conn *pg.DB, model interface{}, skipPrompt 
 }
 
 //UpsertAllUniqueKey will create/alter/drop composite unique keys of table.
+//
 //parameters:
+//
 // - conn: postgresql connection
+//
 // - model: struct pointer or string (table name)
+//
 // - skipPrompt: bool (default false | if false then before execution sql it will prompt for confirmation)
+//
 // If model is table name then need to set shifter SetTableModel() before calling CreateAllUniqueKey().
+//
 // If composite unique key is modified then also it will update.
+//
 // If composite unique key exists in table but doesn't exists in struct UniqueKey method
 // then that will be dropped.
 func (s *Shifter) UpsertAllUniqueKey(conn *pg.DB, model interface{}, skipPrompt ...bool) (err error) {
