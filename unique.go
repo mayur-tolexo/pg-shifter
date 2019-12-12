@@ -10,8 +10,8 @@ import (
 	"github.com/mayur-tolexo/pg-shifter/util"
 )
 
-//GetUniqueKey will return unique key fields of struct
-func (s *Shifter) GetUniqueKey(tName string) (uk map[string]string) {
+//getUKFromMethod will return unique key fields of struct
+func (s *Shifter) getUKFromMethod(tName string) (uk map[string]string) {
 	dbModel := s.table[tName]
 	refObj := reflect.ValueOf(dbModel)
 	m := refObj.MethodByName("UniqueKey")

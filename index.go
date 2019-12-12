@@ -23,7 +23,7 @@ const (
 //Create index of given table
 func (s *Shifter) createIndex(tx *pg.Tx, tableName string, skipPrompt bool) (err error) {
 	var indexSQL string
-	for index, idxType := range s.GetIndex(tableName) {
+	for index, idxType := range s.getIndexFromMethod(tableName) {
 		indexSQL += getIndexQuery(tableName, idxType, index)
 	}
 	if indexSQL != "" {
@@ -67,8 +67,8 @@ func getIndexType(iType string) (idxType string) {
 	return
 }
 
-//GetIndex will return index fields of struct
-func (s *Shifter) GetIndex(tableName string) (idx map[string]string) {
+//getIndexFromMethod will return index fields of struct from Index() method
+func (s *Shifter) getIndexFromMethod(tableName string) (idx map[string]string) {
 	dbModel := s.table[tableName]
 	refObj := reflect.ValueOf(dbModel)
 	m := refObj.MethodByName("Index")

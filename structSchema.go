@@ -164,7 +164,7 @@ func (s *Shifter) setColConstraint(schema *model.ColSchema, tag string) {
 //addConstraintFromUkMap will add constraint from unique key map defined on struct
 func (s *Shifter) addConstraintFromUkMap(schema *model.ColSchema) {
 	var colFound bool
-	if uk := s.GetUniqueKey(schema.TableName); len(uk) > 0 {
+	if uk := s.getUKFromMethod(schema.TableName); len(uk) > 0 {
 		for _, fields := range uk {
 			if fields == schema.ColumnName {
 				colFound = true

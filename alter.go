@@ -52,7 +52,7 @@ func (s *Shifter) modifyCompositeUniqueKey(tx *pg.Tx,
 	tableName string) (tUK []model.UKSchema, isAlter bool, err error) {
 
 	defer func() { s.logMode(false) }()
-	sUK := s.GetUniqueKey(tableName)
+	sUK := s.getUKFromMethod(tableName)
 	if tUK, err = util.GetCompositeUniqueKey(tx, tableName); err == nil &&
 		(len(tUK) > 0 || len(sUK) > 0) {
 		s.logMode(s.verbose)
@@ -71,7 +71,7 @@ func (s *Shifter) getTableSchema(tx *pg.Tx, tableName string) (
 	s.logMode(false)
 	if columnSchema, err = util.GetColumnSchema(tx, tableName); err == nil {
 		if constraint, err = util.GetConstraint(tx, tableName); err == nil {
-			tSchema = MergeColumnConstraint(tableName, columnSchema, constraint)
+			tSchema = mergeColumnConstraint(tableName, columnSchema, constraint)
 		}
 	}
 	return
@@ -776,8 +776,8 @@ func printSchema(tSchema, sSchema map[string]model.ColSchema) {
 	}
 }
 
-//MergeColumnConstraint : Merge Table Schema with Constraint
-func MergeColumnConstraint(tName string, columnSchema,
+//mergeColumnConstraint : Merge Table Schema with Constraint
+func mergeColumnConstraint(tName string, columnSchema,
 	constraint []model.ColSchema) map[string]model.ColSchema {
 
 	constraintMap := make(map[string]model.ColSchema)

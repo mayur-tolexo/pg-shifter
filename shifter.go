@@ -199,7 +199,7 @@ func (s *Shifter) CreateAllUniqueKey(conn *pg.DB, model interface{}, skipPrompt 
 	)
 	if tableName, err = s.getTableName(model); err == nil {
 		if tx, err = conn.Begin(); err == nil {
-			uk := s.GetUniqueKey(tableName)
+			uk := s.getUKFromMethod(tableName)
 			_, err = addCompositeUK(tx, tableName, uk, getSP(skipPrompt))
 			commitIfNil(tx, err)
 		} else {
@@ -228,7 +228,7 @@ func (s *Shifter) UpsertAllUniqueKey(conn *pg.DB, model interface{}, skipPrompt 
 		if tx, err = conn.Begin(); err == nil {
 
 			if tUK, err = util.GetCompositeUniqueKey(tx, tableName); err == nil {
-				sUK := s.GetUniqueKey(tableName)
+				sUK := s.getUKFromMethod(tableName)
 				if len(tUK) > 0 || len(sUK) > 0 {
 					if _, err = dropCompositeUK(tx, tableName, tUK, sUK, getSP(skipPrompt)); err == nil {
 						_, err = addCompositeUK(tx, tableName, sUK, getSP(skipPrompt))
@@ -252,7 +252,7 @@ func (s *Shifter) CreateAllTable(conn *pg.DB) (err error) {
 		if tx, err = conn.Begin(); err == nil {
 			if err = s.createTable(tx, tableName, true); err == nil {
 				if err = s.createIndex(tx, tableName, true); err == nil {
-					uk := s.GetUniqueKey(tableName)
+					uk := s.getUKFromMethod(tableName)
 					_, err = addCompositeUK(tx, tableName, uk, true)
 				}
 			}
