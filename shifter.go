@@ -44,7 +44,7 @@ func NewShifter(tables ...interface{}) *Shifter {
 	return s
 }
 
-//SetLogPath will set logpath where alter struct log will be created
+// SetLogPath will set logpath where alter struct log will be created.
 //
 //deafult path is pwd/log/
 func (s *Shifter) SetLogPath(logPath string) *Shifter {
@@ -83,9 +83,9 @@ func (s *Shifter) CreateTable(conn *pg.DB, model interface{}) (err error) {
 	return
 }
 
-//CreateEnum will create enum by enum name.
+// CreateEnum will create enum by enum name.
 //
-//parameters:
+// Parameters
 //
 // - conn: postgresql connection
 //
@@ -110,9 +110,9 @@ func (s *Shifter) CreateEnum(conn *pg.DB, model interface{}, enumName string) (e
 	return
 }
 
-//CreateAllEnum will create all enums of the given table.
+// CreateAllEnum will create all enums of the given table.
 //
-//parameters:
+// Parameters
 //
 // - conn: postgresql connection
 //
@@ -139,9 +139,9 @@ func (s *Shifter) CreateAllEnum(conn *pg.DB, model interface{}) (err error) {
 	return
 }
 
-//UpsertEnum will create/update enum by enum name.
+// UpsertEnum will create/update enum by enum name.
 //
-//parameters:
+// Parameters
 //
 // - conn: postgresql connection
 //
@@ -166,9 +166,9 @@ func (s *Shifter) UpsertEnum(conn *pg.DB, model interface{}, enumName string) (e
 	return
 }
 
-//UpsertAllEnum will create/update all enums of the given table.
+// UpsertAllEnum will create/update all enums of the given table.
 //
-//parameters:
+// Parameters
 //
 // - conn: postgresql connection
 //
@@ -191,9 +191,9 @@ func (s *Shifter) UpsertAllEnum(conn *pg.DB, model interface{}) (err error) {
 	return
 }
 
-//CreateAllIndex will create all index of the given table.
+// CreateAllIndex will create all index of the given table.
 //
-//parameters:
+// Parameters
 //
 // - conn: postgresql connection
 //
@@ -218,9 +218,9 @@ func (s *Shifter) CreateAllIndex(conn *pg.DB, model interface{}, skipPrompt ...b
 	return
 }
 
-//CreateAllUniqueKey will create table all composite unique key.
+// CreateAllUniqueKey will create table all composite unique key.
 //
-//parameters:
+// Parameters
 //
 // - conn: postgresql connection
 //
@@ -246,9 +246,9 @@ func (s *Shifter) CreateAllUniqueKey(conn *pg.DB, model interface{}, skipPrompt 
 	return
 }
 
-//UpsertAllUniqueKey will create/alter/drop composite unique keys of table.
+// UpsertAllUniqueKey will create/alter/drop composite unique keys of table.
 //
-//parameters:
+// Parameters
 //
 // - conn: postgresql connection
 //
