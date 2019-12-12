@@ -15,21 +15,6 @@ Golang struct to postgres table shifter.
 6. [Upsert Unique Key](#upsert-unique-key)
 7. [Create All Tables](#create-all-tables)
 6. [Alter Table](#alter-table)
-	1. Add New Column
-	2. Remove existing column
-	3. Modify existing column
-		1. Modify datatype
-		2. Modify data length (e.g. varchar(255) to varchar(100))
-		3. Add/Drop default value
-		4. Add/Drop Not Null Constraint
-		5. Add/Drop constraint (Unique/Foreign Key)
-		6. Modify constraint
-			1. Set constraint deferrable
-				1. Initially deferred
-				1. Initially immediate
-			2. Set constraint not deferrable
-			3. Add/Drop FOREIGN KEY **ON DELETE** DEFAULT/NO ACTION/RESTRICT/CASCADE/SET NULL
-			4. Add/Drop FOREIGN KEY **ON UPDATE** DEFAULT/NO ACTION/RESTRICT/CASCADE/SET NULL
 6. [Alter All Tables](#alter-all-tables)
 6. [Drop Table](#drop-table)
 6. [Drop All Tables](#drop-all-tables)
@@ -37,6 +22,22 @@ Golang struct to postgres table shifter.
 8. Create history table
 8. Add trigger
 
+## Alter Table Support Following Operations:
+1. Add New Column
+2. Remove existing column
+3. Modify existing column
+	1. Modify datatype
+	2. Modify data length (e.g. varchar(255) to varchar(100))
+	3. Add/Drop default value
+	4. Add/Drop Not Null Constraint
+	5. Add/Drop constraint (Unique/Foreign Key)
+	6. Modify constraint
+		1. Set constraint deferrable
+			1. Initially deferred
+			1. Initially immediate
+		2. Set constraint not deferrable
+		3. Add/Drop FOREIGN KEY **ON DELETE** DEFAULT/NO ACTION/RESTRICT/CASCADE/SET NULL
+		4. Add/Drop FOREIGN KEY **ON UPDATE** DEFAULT/NO ACTION/RESTRICT/CASCADE/SET NULL
 
 ## Create Table
 __CreateTable(conn *pg.DB, model interface{}) (err error)__  
