@@ -62,9 +62,9 @@ func (s *Shifter) Verbose(enable bool) *Shifter {
 //
 // Parameters
 //
-// - conn: postgresql connection
+//  conn: postgresql connection
 //
-// - model: struct pointer or string (table name)
+//  model: struct pointer or string (table name)
 //
 // if model is table name then need to set shifter SetTableModel() before calling CreateTable()
 func (s *Shifter) CreateTable(conn *pg.DB, model interface{}) (err error) {
