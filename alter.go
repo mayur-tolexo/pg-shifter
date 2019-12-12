@@ -69,8 +69,8 @@ func (s *Shifter) getTableSchema(tx *pg.Tx, tableName string) (
 		constraint   []model.ColSchema
 	)
 	s.logMode(false)
-	if columnSchema, err = util.GetColumnSchema(tx, tableName); err == nil {
-		if constraint, err = util.GetConstraint(tx, tableName); err == nil {
+	if columnSchema, err = getColumnSchema(tx, tableName); err == nil {
+		if constraint, err = getConstraint(tx, tableName); err == nil {
 			tSchema = mergeColumnConstraint(tableName, columnSchema, constraint)
 		}
 	}

@@ -23,49 +23,6 @@ const (
 	historyTag = "_history"
 )
 
-//GetColumnSchema : Get Column Schema of given table
-func GetColumnSchema(tx *pg.Tx, tableName string) (columnSchema []model.ColSchema, err error) {
-	query := `SELECT col.column_name, col.column_default, col.data_type,
-	col.ordinal_position as position,
-	col.udt_name, col.is_nullable, col.character_maximum_length 
-	, sq.sequence_name AS seq_name
-	, sq.data_type AS seq_data_type
-	FROM information_schema.columns col
-	left join information_schema.sequences sq
-	ON concat(sq.sequence_schema,'.',sq.sequence_name) = pg_get_serial_sequence(table_name, column_name)
-	WHERE col.table_name = ?;`
-	if _, err = tx.Query(&columnSchema, query, tableName); err != nil {
-		msg := fmt.Sprintf("Table: %v", tableName)
-		err = flaw.SelectError(err, msg)
-		fmt.Println("DB Column Schema Error:", msg, err)
-	}
-	return
-}
-
-//GetConstraint : Get Constraint of table from database
-func GetConstraint(tx *pg.Tx, tableName string) (constraint []model.ColSchema, err error) {
-	query := `SELECT tc.constraint_type,
-    tc.constraint_name, tc.is_deferrable, tc.initially_deferred, 
-    kcu.column_name AS column_name, ccu.table_name AS foreign_table_name, 
-    ccu.column_name AS foreign_column_name, pgc.confupdtype, pgc.confdeltype  
-    FROM 
-    information_schema.table_constraints AS tc 
-    JOIN information_schema.key_column_usage AS kcu 
-    ON tc.constraint_name = kcu.constraint_name 
-    JOIN information_schema.constraint_column_usage AS ccu 
-    ON ccu.constraint_name = tc.constraint_name 
-    JOIN pg_constraint AS pgc ON pgc.conname = tc.constraint_name AND 
-    conrelid=?::regclass::oid WHERE tc.constraint_type 
-    IN('FOREIGN KEY','PRIMARY KEY','UNIQUE') AND tc.table_name = ?
-    AND array_length(pgc.conkey,1) = 1;`
-	if _, err = tx.Query(&constraint, query, tableName, tableName); err != nil {
-		msg := fmt.Sprintf("Table: %v", tableName)
-		err = flaw.SelectError(err, msg)
-		fmt.Println("DB Constraint Error:", msg, err)
-	}
-	return
-}
-
 //GetCompositeUniqueKey : Get composite unique key name and columns
 func GetCompositeUniqueKey(tx *pg.Tx, tableName string) (ukSchema []model.UKSchema, err error) {
 	query := `
@@ -124,18 +81,6 @@ func EnumExists(tx *pg.Tx, enumName string) (flag bool) {
 	var num int
 	enumSQL := `SELECT 1 FROM pg_type WHERE typname = ?;`
 	if _, err := tx.Query(pg.Scan(&num), enumSQL, enumName); err == nil && num == 1 {
-		flag = true
-	}
-	return
-}
-
-//TableExists : Check if Table Exists in database
-func TableExists(tx *pg.Tx, tableName string) (flag bool) {
-	var num int
-	sql := `SELECT 1 FROM pg_tables WHERE tablename = ?;`
-	if _, err := tx.Query(pg.Scan(&num), sql, tableName); err != nil {
-		err = flaw.SelectError(err)
-	} else if num == 1 {
 		flag = true
 	}
 	return

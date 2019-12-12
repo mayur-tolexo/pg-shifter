@@ -12,8 +12,10 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/go-pg/pg"
 	"github.com/iancoleman/strcase"
 	"github.com/mayur-tolexo/pg-shifter/model"
+	"github.com/mayur-tolexo/pg-shifter/util"
 )
 
 //sLog : structure log model
@@ -52,33 +54,55 @@ var pgToGoType = map[string]string{
 	"timestamp with time zone":    "time.Time",
 }
 
-// //createAlterStructLog will create alter struct log
-// func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema,
-// 	ukSchema []model.UKSchema, idx []model.Index, wt bool) (err error) {
-
-// 	var logStr string
-// 	log := s.getSLogModel(schema, ukSchema, idx, wt)
-// 	if logStr, err = execLogTmpl(log); err == nil {
-// 		err = s.logTableChange(logStr, log, wt)
-// 	}
-// 	if err != nil {
-// 		err = errors.New("Log Creation Error: " + err.Error())
-// 	}
-// 	return
-// }
-
-//getTableStructSchema will return table schema from database as in struct form
+//createAlterStructLog will create alter struct log
 func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema,
 	ukSchema []model.UKSchema, idx []model.Index, wt bool) (err error) {
 
+	var (
+		log   sLog
+		fData []byte
+	)
+	if log, fData, err = s.getTableStructSchema(schema, ukSchema, idx, wt); err == nil {
+		err = s.logTableChange(log, fData)
+	}
+	return
+}
+
+//generateTableStructSchema will generate table schema from database in struct form
+func (s *Shifter) generateTableStructSchema(tx *pg.Tx, tableName string, wt bool) (
+	log sLog, fData []byte, exists bool, err error) {
+
+	var (
+		tUK     []model.UKSchema
+		idx     []model.Index
+		tSchema map[string]model.ColSchema
+	)
+
+	exists = tableExists(tx, tableName)
+	if exists {
+		if tSchema, err = s.getTableSchema(tx, tableName); err == nil {
+			if tUK, err = util.GetCompositeUniqueKey(tx, tableName); err == nil {
+				if idx, err = util.GetIndex(tx, tableName); err == nil {
+					log, fData, err = s.getTableStructSchema(tSchema, tUK, idx, wt)
+				}
+			}
+		}
+	}
+
+	return
+}
+
+//getTableStructSchema will return table schema from database as in struct form
+func (s *Shifter) getTableStructSchema(schema map[string]model.ColSchema,
+	ukSchema []model.UKSchema, idx []model.Index, wt bool) (log sLog, fData []byte, err error) {
+
 	var logStr string
-	log := s.getSLogModel(schema, ukSchema, idx, wt)
+	log = s.getSLogModel(schema, ukSchema, idx, wt)
 	if logStr, err = execLogTmpl(log); err == nil {
 
 		prefix := getWarning(wt) + getPkg(log.StructName) + getImportPkg(log.importedPkg)
 		logStr = prefix + logStr
-		fData, _ := format.Source([]byte(logStr))
-		err = s.logTableChange(log, fData)
+		fData, _ = format.Source([]byte(logStr))
 	}
 	if err != nil {
 		err = errors.New("Log Creation Error: " + err.Error())

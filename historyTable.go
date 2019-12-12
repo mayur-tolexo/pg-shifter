@@ -12,7 +12,7 @@ import (
 func (s *Shifter) createHistory(tx *pg.Tx, tableName string) (err error) {
 	if s.isSkip(tableName) == false {
 		historyTable := util.GetHistoryTableName(tableName)
-		if tableExists := util.TableExists(tx, historyTable); tableExists == false {
+		if tableExists := tableExists(tx, historyTable); tableExists == false {
 			if err = s.execHistoryTable(tx, tableName, historyTable); err == nil {
 				if err = s.dropHistoryConstraint(tx, historyTable); err == nil {
 					err = s.createTrigger(tx, tableName)
@@ -26,7 +26,7 @@ func (s *Shifter) createHistory(tx *pg.Tx, tableName string) (err error) {
 //dropHistory will drop history table
 func (s *Shifter) dropHistory(tx *pg.Tx, tableName string, cascade bool) (err error) {
 	historyTable := util.GetHistoryTableName(tableName)
-	if tableExists := util.TableExists(tx, historyTable); tableExists == true {
+	if tableExists := tableExists(tx, historyTable); tableExists == true {
 		err = execTableDrop(tx, historyTable, cascade)
 	}
 	return

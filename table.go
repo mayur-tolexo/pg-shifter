@@ -72,8 +72,18 @@ func (s *Shifter) execTableCreation(tx *pg.Tx, tableName string) (err error) {
 
 //dropTable will drop table
 func (s *Shifter) dropTable(tx *pg.Tx, tableName string, cascade bool) (err error) {
-	if err = execTableDrop(tx, tableName, cascade); err == nil {
-		err = s.dropHistory(tx, tableName, cascade)
+	var (
+		log    sLog
+		fData  []byte
+		exists bool
+	)
+	if log, fData, exists, err = s.generateTableStructSchema(tx, tableName, true); err == nil &&
+		exists {
+		if err = execTableDrop(tx, tableName, cascade); err == nil {
+			if err = s.dropHistory(tx, tableName, cascade); err == nil {
+				err = s.logTableChange(log, fData)
+			}
+		}
 	}
 	return
 }
