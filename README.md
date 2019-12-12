@@ -15,6 +15,7 @@ Golang struct to postgres table shifter.
 6. [Upsert Unique Key](#upsert-unique-key)
 7. [Create All Tables](#create-all-tables)
 6. [Drop Table](#drop-table)
+6. [Drop All Tables](#drop-all-tables)
 8. [Create Table Struct](#create-table-struct)
 8. Create history table
 8. Add trigger
@@ -366,6 +367,19 @@ err := s.DropTable(conn, &TestAddress{}, true)
 s := shifter.NewShifter()
 err := s.DropTable(conn, "test_address", true)
 ```
+
+## Drop All Table
+__DropAllTable(conn *pg.DB, cascade bool) (err error)__  
+
+This will drop all the table from database if exists which are set in shifter. So, before calling it you need to SetTableModels() on shifter.
+Also, if history table associated to this table exists then that will be dropped as well.
+If cascade is true then it will drop table with cascade.
+
+```
+s := shifter.NewShifter()
+err := s.DropAllTable(conn, true)
+```
+
 
 ## Create Table Struct
 CreateStruct(conn *pg.DB, tableName string, filePath string) (err error)

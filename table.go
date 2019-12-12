@@ -71,19 +71,9 @@ func (s *Shifter) execTableCreation(tx *pg.Tx, tableName string) (err error) {
 }
 
 //dropTable will drop table
-func (s *Shifter) dropTable(conn *pg.DB, tableName string, cascade bool) (err error) {
-	var tx *pg.Tx
-	if tx, err = conn.Begin(); err == nil {
-		if err = execTableDrop(tx, tableName, cascade); err == nil {
-			err = s.dropHistory(tx, tableName, cascade)
-		}
-		if err == nil {
-			tx.Commit()
-		} else {
-			tx.Rollback()
-		}
-	} else {
-		err = flaw.TxError(err, "Table", tableName)
+func (s *Shifter) dropTable(tx *pg.Tx, tableName string, cascade bool) (err error) {
+	if err = execTableDrop(tx, tableName, cascade); err == nil {
+		err = s.dropHistory(tx, tableName, cascade)
 	}
 	return
 }

@@ -86,9 +86,17 @@ func (s *Shifter) CreateTable(conn *pg.DB, model interface{}) (err error) {
 //  model: struct pointer or string (table name)
 //  cascade: if enable then it will drop with cascade
 func (s *Shifter) DropTable(conn *pg.DB, model interface{}, cascade bool) (err error) {
-	var tableName string
+	var (
+		tx        *pg.Tx
+		tableName string
+	)
 	if tableName, err = s.getTableName(model); err == nil {
-		err = s.dropTable(conn, tableName, cascade)
+		if tx, err = conn.Begin(); err == nil {
+			err = s.dropTable(tx, tableName, cascade)
+			commitIfNil(tx, err)
+		} else {
+			err = flaw.TxError(err)
+		}
 	}
 	return
 }
@@ -282,11 +290,7 @@ func (s *Shifter) CreateAllTable(conn *pg.DB) (err error) {
 					_, err = addCompositeUK(tx, tableName, uk, true)
 				}
 			}
-			if err == nil {
-				tx.Commit()
-			} else {
-				tx.Rollback()
-			}
+			commitIfNil(tx, err)
 		} else {
 			err = flaw.TxError(err)
 			break
@@ -307,13 +311,27 @@ func (s *Shifter) AlterAllTable(conn *pg.DB, skipPromt bool) (err error) {
 				break
 			}
 		}
-		if err == nil {
-			tx.Commit()
-		} else {
-			tx.Rollback()
-		}
+		commitIfNil(tx, err)
 	} else {
 		err = flaw.TxError(err)
+	}
+	return
+}
+
+//DropAllTable will drop all tables
+//before calling it you need to set the table model in shifter using SetTableModels()
+func (s *Shifter) DropAllTable(conn *pg.DB, cascade bool) (err error) {
+	for tableName := range s.table {
+		var tx *pg.Tx
+		if tx, err = conn.Begin(); err == nil {
+			if err = s.dropTable(tx, tableName, cascade); err != nil {
+				break
+			}
+			commitIfNil(tx, err)
+		} else {
+			err = flaw.TxError(err)
+			break
+		}
 	}
 	return
 }
@@ -341,11 +359,7 @@ func (s *Shifter) CreateStruct(conn *pg.DB, tableName string,
 			}
 		}
 
-		if err == nil {
-			tx.Commit()
-		} else {
-			tx.Rollback()
-		}
+		commitIfNil(tx, err)
 	}
 	return
 }

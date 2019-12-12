@@ -190,3 +190,14 @@ func TestDropTable(t *testing.T) {
 		assert.NoError(err)
 	}
 }
+
+func TestDropAllTable(t *testing.T) {
+
+	if conn, err := psql.Conn(true); err == nil {
+		s := NewShifter()
+		addAllTables(s)
+		err := s.DropAllTable(conn, true)
+		assert := assert.New(t)
+		assert.NoError(err)
+	}
+}
