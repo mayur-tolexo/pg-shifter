@@ -133,12 +133,12 @@ func getImportPkg(pkg map[string]struct{}) (impPkg string) {
 
 //makeStructLogDir will create struct log dir if not exists
 func (s *Shifter) makeStructLogDir(structName string) (logDir string, err error) {
-	if s.LogPath == "" {
-		s.LogPath, err = os.Getwd()
-		s.LogPath += "/log/"
+	if s.logPath == "" {
+		s.logPath, err = os.Getwd()
+		s.logPath += "/log/"
 	}
 	if err == nil {
-		logDir = s.LogPath + "/" + structName
+		logDir = s.logPath + "/" + structName
 		if _, err = os.Stat(logDir); os.IsNotExist(err) {
 			err = os.MkdirAll(logDir, os.ModePerm)
 		}

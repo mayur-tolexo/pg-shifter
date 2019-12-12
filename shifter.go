@@ -16,14 +16,14 @@ var (
 	enumCreated  = make(map[interface{}]struct{})
 )
 
-//Shifter model
+//Shifter model contains all the methods to migrate go struct to postgresql
 type Shifter struct {
 	table     map[string]interface{}
 	enumList  map[string][]string
 	hisExists bool
 	logSQL    bool
 	verbose   bool
-	LogPath   string
+	logPath   string
 }
 
 func (s *Shifter) logMode(enable bool) {
@@ -41,6 +41,14 @@ func NewShifter(tables ...interface{}) *Shifter {
 			log.Fatalln(err)
 		}
 	}
+	return s
+}
+
+//SetLogPath will set logpath where alter struct log will be created
+//
+//deafult path is pwd/log/
+func (s *Shifter) SetLogPath(logPath string) *Shifter {
+	s.logPath = logPath
 	return s
 }
 
@@ -350,8 +358,10 @@ func (s *Shifter) CreateStruct(conn *pg.DB, tableName string,
 		if tSchema, err = s.getTableSchema(tx, tableName); err == nil {
 			if tUK, err = util.GetCompositeUniqueKey(tx, tableName); err == nil {
 				if idx, err = util.GetIndex(tx, tableName); err == nil {
-					s.LogPath = filePath
+					curLogPath := s.logPath
+					s.logPath = filePath
 					err = s.createAlterStructLog(tSchema, tUK, idx, false)
+					s.logPath = curLogPath
 				}
 			}
 		}
