@@ -15,7 +15,8 @@ Golang struct to postgres table shifter.
 6. [Upsert Unique Key](#upsert-unique-key)
 7. [Create All Tables](#create-all-tables)
 8. [Create Table Struct](#create-table-struct)
-8. Create history table with after update/delete triggers
+8. Create history table
+8. Add trigger
 8. Alter table
 	1. Add New Column
 	2. Remove existing column
