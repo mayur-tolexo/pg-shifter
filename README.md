@@ -376,7 +376,10 @@ Also, if history table associated to this table exists then that will be dropped
 If cascade is true then it will drop tables with cascade.
 
 ```
+db := []interface{}{&TestAddress{}, &TestUser{}, &TestAdminUser{}}
+
 s := shifter.NewShifter()
+s.SetTableModels(db)
 err := s.DropAllTable(conn, true)
 ```
 
