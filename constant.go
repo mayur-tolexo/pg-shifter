@@ -39,8 +39,8 @@ const (
 	primaryKeySuffix    = "pkey"
 	uniqueKeySuffix     = "key"
 	foreignKeySuffix    = "fkey"
-	TriggerTag          = "trigger" //used to create triggers on table.
-	HistoryTag          = "history" //used to create history table. Default table_history if after trigger given
+	TriggerTag          = "trigger" //use to create triggers on table.
+	HistoryTag          = "history" //use to create history table. Default table_history if after trigger given
 	afterInsertTrigger  = "ai"
 	afterUpdateTrigger  = "au"
 	afterDeleteTrigger  = "ad"
