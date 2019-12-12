@@ -51,9 +51,13 @@ func (s *Shifter) Verbose(enable bool) *Shifter {
 }
 
 //CreateTable will create table if not exists
+//
 //parameters:
+//
 // - conn: postgresql connection
+//
 // - model: struct pointer or string (table name)
+//
 // if model is table name then need to set shifter SetTableModel() before calling CreateTable()
 func (s *Shifter) CreateTable(conn *pg.DB, model interface{}) (err error) {
 	var (
@@ -72,10 +76,15 @@ func (s *Shifter) CreateTable(conn *pg.DB, model interface{}) (err error) {
 }
 
 //CreateEnum will create enum by enum name.
+//
 //parameters:
+//
 // - conn: postgresql connection
+//
 // - model: struct pointer or string (table name)
+//
 // - enumName: enum which you want to create
+//
 // if model is table name then need to set shifter SetTableModel() before calling CreateEnum()
 func (s *Shifter) CreateEnum(conn *pg.DB, model interface{}, enumName string) (err error) {
 	var (
