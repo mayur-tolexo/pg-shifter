@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"go/format"
 	"os"
-	"os/exec"
 	"reflect"
 	"sort"
 	"strings"
@@ -53,14 +52,33 @@ var pgToGoType = map[string]string{
 	"timestamp with time zone":    "time.Time",
 }
 
-//createAlterStructLog will create alter struct log
+// //createAlterStructLog will create alter struct log
+// func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema,
+// 	ukSchema []model.UKSchema, idx []model.Index, wt bool) (err error) {
+
+// 	var logStr string
+// 	log := s.getSLogModel(schema, ukSchema, idx, wt)
+// 	if logStr, err = execLogTmpl(log); err == nil {
+// 		err = s.logTableChange(logStr, log, wt)
+// 	}
+// 	if err != nil {
+// 		err = errors.New("Log Creation Error: " + err.Error())
+// 	}
+// 	return
+// }
+
+//getTableStructSchema will return table schema from database as in struct form
 func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema,
 	ukSchema []model.UKSchema, idx []model.Index, wt bool) (err error) {
 
 	var logStr string
 	log := s.getSLogModel(schema, ukSchema, idx, wt)
 	if logStr, err = execLogTmpl(log); err == nil {
-		err = s.logTableChange(logStr, log, wt)
+
+		prefix := getWarning(wt) + getPkg(log.StructName) + getImportPkg(log.importedPkg)
+		logStr = prefix + logStr
+		fData, _ := format.Source([]byte(logStr))
+		err = s.logTableChange(log, fData)
 	}
 	if err != nil {
 		err = errors.New("Log Creation Error: " + err.Error())
@@ -68,8 +86,12 @@ func (s *Shifter) createAlterStructLog(schema map[string]model.ColSchema,
 	return
 }
 
+func getPkg(structName string) string {
+	return "package " + structName + "\n\n"
+}
+
 //logTableChange will log table change in file
-func (s *Shifter) logTableChange(logStr string, log sLog, wt bool) (err error) {
+func (s *Shifter) logTableChange(log sLog, logStr []byte) (err error) {
 	var (
 		fp     *os.File
 		logDir string
@@ -78,12 +100,7 @@ func (s *Shifter) logTableChange(logStr string, log sLog, wt bool) (err error) {
 
 		file := logDir + "/" + log.StructNameWT + ".go"
 		if fp, err = os.Create(file); err == nil {
-			fData, _ := format.Source([]byte(logStr))
-			fp.WriteString(getWarning(wt))
-			fp.WriteString("package " + log.StructName + "\n")
-			fp.WriteString(getImportPkg(log.importedPkg))
-			fp.Write(fData)
-			exec.Command("gofmt", "-w", file).Run()
+			fp.Write(logStr)
 		}
 	}
 	return

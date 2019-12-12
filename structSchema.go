@@ -85,6 +85,7 @@ func getColDefault(tag string) (def string, exists bool) {
 func getColType(tag string) (cType string, maxLen string) {
 	val := strings.Split(tag, "type:")
 	if len(val) > 1 {
+		val[1] = strings.TrimSpace(val[1])
 		cType = strings.Split(val[1], " ")[0]
 		maxLen = getColMaxChar(cType)
 		cType = strings.Split(cType, "(")[0]
