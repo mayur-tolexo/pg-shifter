@@ -54,13 +54,6 @@ err := s.CreateTable(conn, &TestAddress{})
 ```
 ##### ii) Passing table name after setting model
 ```
-type TestAddress struct {
-	tableName struct{} `sql:"test_address"`
-	AddressID int      `sql:"address_id,type:serial NOT NULL PRIMARY KEY"`
-	Address   string   `sql:"address,type:text"`
-	City      string   `sql:"city,type:varchar(25) NULL"`
-}
-
 s := shifter.NewShifter()
 s.SetTableModel(&TestAddress{})
 err := s.CreateTable(conn, "test_address")
