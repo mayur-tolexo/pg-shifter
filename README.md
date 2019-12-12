@@ -5,6 +5,11 @@
 
 # pg-shifter
 Golang struct to postgres table shifter. go1.9+ required.
+The main assumption is that the actual database table schema should be same as given golang table struct.  
+If any column is missing is struct which is their in the database table then that column will be dropped.  
+If any column is extra in struct which is not their in the database table then that column will be added.  
+If any modification in column type/constraint in struct which is not matching with database then that will be modified.  
+So, to make sure that your go table struct tells you the actual schema of table and to make alter easy we have created this migrator.  
 
 ## Install
 1. go get github.com/mayur-tolexo/pg-shifter
@@ -445,6 +450,7 @@ if conn, err := psql.Conn(true); err == nil {
 ```
 #### OUTPUT
 ![Screenshot 2019-12-08 at 10 09 43 PM](https://user-images.githubusercontent.com/20511920/70392617-db073f80-1a07-11ea-856c-cf83247db3dd.png)
+
 
 
 ## Add New Column
