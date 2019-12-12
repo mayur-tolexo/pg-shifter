@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/go-pg/pg"
-	"github.com/mayur-tolexo/flaw"
 	"github.com/mayur-tolexo/pg-shifter/util"
 )
 
@@ -65,9 +64,7 @@ func (s *Shifter) createEnum(tx *pg.Tx, tableName, enumName, enumSQL string) (er
 		enumCreated[enumName] = struct{}{}
 		fmt.Printf("Enum %v created\n", enumName)
 	} else {
-		msg := fmt.Sprintf("Table: %v Enum: %v", tableName, enumName)
-		err = flaw.CreateError(err, msg)
-		fmt.Println("Enum Error:", msg, err.Error())
+		err = getWrapError(tableName, "create enum", enumSQL, err)
 	}
 	return
 }
@@ -87,9 +84,7 @@ func (s *Shifter) updateEnum(tx *pg.Tx, tableName, enumName string) (err error) 
 			if choice == util.Yes {
 				if _, err = tx.Exec(enumAlterSQL); err == nil {
 				} else {
-					msg := fmt.Sprintf("Table: %v Enum: %v", tableName, enumName)
-					err = flaw.UpdateError(err, msg)
-					fmt.Println("Enum Alter Error:", msg, err.Error())
+					err = getWrapError(tableName, "update enum", enumAlterSQL, err)
 				}
 			}
 		}

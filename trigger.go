@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/go-pg/pg"
-	"github.com/mayur-tolexo/flaw"
 	"github.com/mayur-tolexo/pg-shifter/util"
 )
 
@@ -17,9 +16,7 @@ func (s *Shifter) createTrigger(tx *pg.Tx, tableName string) (err error) {
 		trigger := s.GetTrigger(tableName)
 		s.logMode(s.verbose)
 		if _, err = tx.Exec(trigger); err != nil {
-			msg := fmt.Sprintf("Table: %v", tableName)
-			err = flaw.ExecError(err, msg)
-			fmt.Println("Trigger Error:", msg, err)
+			err = getWrapError(tableName, "create trigger", trigger, err)
 		}
 	}
 	return

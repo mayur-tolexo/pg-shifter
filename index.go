@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/go-pg/pg"
-	"github.com/mayur-tolexo/flaw"
 	"github.com/mayur-tolexo/pg-shifter/util"
 )
 
@@ -30,9 +29,7 @@ func (s *Shifter) createIndex(tx *pg.Tx, tableName string, skipPrompt bool) (err
 		choice := util.GetChoice("INDEX:\n"+indexSQL, skipPrompt)
 		if choice == util.Yes {
 			if _, err = tx.Exec(indexSQL); err != nil {
-				msg := fmt.Sprintf("Table: %v Index: %v", tableName)
-				err = flaw.CreateError(err, msg)
-				fmt.Println("Index Error:", msg, err.Error())
+				err = getWrapError(tableName, "create index", indexSQL, err)
 			}
 		}
 	}
