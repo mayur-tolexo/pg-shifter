@@ -352,7 +352,7 @@ err := s.CreateAllTable(conn)
 ## Drop Table
 __DropTable(conn *pg.DB, model interface{}, cascade bool) (err error)__  
 
-This will drop the table from database if exists. Also, if history table associated to this table exists then that will be dropped as well.  
+This will drop the table from database if exists. Also, if history table associated to this table exists then that will be dropped as well.
 If cascade is true then it will drop table with cascade.
 
 ##### i) Directly passing struct model
