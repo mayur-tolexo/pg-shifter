@@ -177,3 +177,16 @@ func TestCreateTrigger(t *testing.T) {
 		assert.NoError(err)
 	}
 }
+
+func TestDropTable(t *testing.T) {
+
+	if conn, err := psql.Conn(true); err == nil {
+		s := NewShifter()
+		err := s.DropTable(conn, &db.TestAddress{}, true)
+		assert := assert.New(t)
+		assert.NoError(err)
+
+		err = s.DropTable(conn, "test_user", true)
+		assert.NoError(err)
+	}
+}

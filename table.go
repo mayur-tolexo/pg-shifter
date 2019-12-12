@@ -97,8 +97,7 @@ func execTableDrop(tx *pg.Tx, tableName string, cascade bool) (err error) {
 	if _, err = tx.Exec(sql); err == nil {
 		fmt.Println("Table Dropped if exists: ", tableName)
 	} else {
-		err = flaw.DropError(err)
-		fmt.Println("Drop Error:", tableName, err.Error())
+		err = getWrapError(tableName, "drop table", sql, err)
 	}
 	return
 }

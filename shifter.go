@@ -80,6 +80,19 @@ func (s *Shifter) CreateTable(conn *pg.DB, model interface{}) (err error) {
 	return
 }
 
+//DropTable will drop table if exists in database
+// Parameters
+//  conn: postgresql connection
+//  model: struct pointer or string (table name)
+//  cascade: if enable then it will drop with cascade
+func (s *Shifter) DropTable(conn *pg.DB, model interface{}, cascade bool) (err error) {
+	var tableName string
+	if tableName, err = s.getTableName(model); err == nil {
+		err = s.dropTable(conn, tableName, cascade)
+	}
+	return
+}
+
 // CreateEnum will create enum by enum name.
 //
 // Parameters
@@ -279,13 +292,6 @@ func (s *Shifter) CreateAllTable(conn *pg.DB) (err error) {
 			break
 		}
 	}
-	return
-}
-
-//DropTable will drop table if exists
-//before calling it you need to set the table model in shifter using SetTableModel()
-func (s *Shifter) DropTable(conn *pg.DB, tableName string, cascade bool) (err error) {
-	err = s.dropTable(conn, tableName, cascade)
 	return
 }
 

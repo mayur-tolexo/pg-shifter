@@ -14,6 +14,7 @@ Golang struct to postgres table shifter.
 5. [Create Unique Key](#create-unique-key)
 6. [Upsert Unique Key](#upsert-unique-key)
 7. [Create All Tables](#create-all-tables)
+6. [Drop Table](#drop-table)
 8. [Create Table Struct](#create-table-struct)
 8. Create history table
 8. Add trigger
@@ -346,6 +347,24 @@ db := []interface{}{&TestAddress{}, &TestUser{}, &TestAdminUser{}}
 s := shifter.NewShifter()
 s.SetTableModels(db)
 err := s.CreateAllTable(conn)
+```
+
+## Drop Table
+__DropTable(conn *pg.DB, model interface{}, cascade bool) (err error)__  
+
+This will drop the table from database if exists. Also, if history table associated to this table exists then that will be dropped as well.  
+If cascade is true then it will drop table with cascade.
+
+##### i) Directly passing struct model
+```
+s := shifter.NewShifter()
+err := s.DropTable(conn, &TestAddress{}, true)
+```
+
+##### ii) Passing table name
+```
+s := shifter.NewShifter()
+err := s.DropTable(conn, "test_address", true)
 ```
 
 ## Create Table Struct
