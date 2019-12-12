@@ -56,7 +56,7 @@ func (s *Shifter) GetStructSchema(tableName string) (sSchema map[string]model.Co
 			schema.TableName = tableName
 			schema.StructColumnName = field.Name
 			schema.ColumnName = getColName(tag)
-			schema.ColumnDefault = getColDefault(tag)
+			schema.ColumnDefault, schema.DefaultExists = getColDefault(tag)
 			schema.DataType, schema.CharMaxLen = getColType(tag)
 			schema.IsNullable = getColIsNullable(tag)
 			s.setColConstraint(&schema, tag)
@@ -72,10 +72,11 @@ func getColName(tag string) string {
 }
 
 //getColDefault will return col default value from struct tag
-func getColDefault(tag string) (def string) {
+func getColDefault(tag string) (def string, exists bool) {
 	val := strings.Split(tag, "default ")
 	if len(val) > 1 {
 		def = strings.Split(val[1], " ")[0]
+		exists = true
 	}
 	return
 }

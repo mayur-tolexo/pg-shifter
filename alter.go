@@ -301,8 +301,20 @@ func getSerialType(seqDataType string) (dType string) {
 func getDefaultDTypeSQL(schema model.ColSchema) (str string) {
 
 	if schema.ColumnDefault != "" && schema.SeqName == "" {
-		str = fmt.Sprintf(" %v %v", Default, schema.ColumnDefault)
+		str = fmt.Sprintf(" %v %v", Default, trimDefaultType(schema))
 	}
+	return
+}
+
+//trimDefaultType will trim default type if not customer type
+func trimDefaultType(schema model.ColSchema) (defVal string) {
+
+	defVal = schema.ColumnDefault
+	if strings.Contains(defVal, "::") {
+		defVal = strings.TrimSuffix(defVal, "::"+schema.DataType)
+		defVal = strings.TrimSuffix(defVal, "::"+pgAlias[schema.DataType])
+	}
+
 	return
 }
 
@@ -458,11 +470,11 @@ func isSameDefault(tSchema, sSchema model.ColSchema) (isSame bool) {
 
 	if tDefault == "" {
 		if tSchema.IsNullable == Yes && sDefault != "" {
-			tDefault = Null
+			tDefault = nullTag
 		}
-		tDefault = strings.ToLower(tDefault)
 		isSame = (tDefault == sDefault)
-	} else if tSchema.ConstraintType != primaryKey && tSchema.SeqName == "" {
+	} else if tSchema.ConstraintType != primaryKey && tSchema.SeqName == "" &&
+		sSchema.DefaultExists {
 
 		if strings.Contains(tDefault, "::") &&
 			strings.Contains(sDefault, "::") == false {

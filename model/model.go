@@ -23,6 +23,7 @@ type ColSchema struct {
 	Position          int    `sql:"position"`
 	IsFkUnique        bool   `sql:"-"`
 	FkUniqueName      string `sql:"-"`
+	DefaultExists     bool   `sql:"-"`
 }
 
 //UKSchema : Unique Schema Model
