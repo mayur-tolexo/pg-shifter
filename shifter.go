@@ -61,7 +61,6 @@ func (s *Shifter) Verbose(enable bool) *Shifter {
 // CreateTable will create table if not exists.
 //
 // Parameters
-//
 //  conn: postgresql connection
 //  model: struct pointer or string (table name)
 //

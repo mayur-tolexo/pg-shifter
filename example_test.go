@@ -7,6 +7,7 @@ import (
 	"github.com/mayur-tolexo/contour/adapter/psql"
 )
 
+// Create table from go struct
 func ExampleCreateTable() {
 	if conn, err := psql.Conn(true); err == nil {
 		s := NewShifter()
