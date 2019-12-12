@@ -36,8 +36,8 @@ Golang struct to postgres table shifter.
 ## Create Table
 __CreateTable(conn *pg.DB, model interface{}) (err error)__  
 This will create table from go struct.  
-Also, if any enum associated to table struct then that will be created as well.  
-All then unique keys and index associated to table struct will be created as well.
+Also, if any enum associated to the table struct then that will be created as well.  
+All the unique keys and index associated to the table struct will be created as well.
 ```
 i) Directly passing struct model  
 ii) Passing table name after setting model  
