@@ -121,22 +121,6 @@ ii) Passing table name after setting model
 
 ##### i) Directly passing struct model
 ```
-type TestAddress struct {
-	tableName struct{} `sql:"test_address"`
-	AddressID int      `sql:"address_id,type:serial NOT NULL PRIMARY KEY"`
-	Address   string   `sql:"address,type:text"`
-	City      string   `sql:"city,type:varchar(25) NULL"`
-	Status    string   `sql:"status,type:address_status"`
-}
-
-//Enum of the table.
-func (TestAddress) Enum() map[string][]string {
-	enm := map[string][]string{
-		"address_status": {"enable", "disable"},
-	}
-	return enm
-}
-
 s := shifter.NewShifter()
 err := s.CreateEnum(conn, &TestAddress{}, "address_status")
 ```
@@ -194,9 +178,9 @@ err = s.UpsertAllEnum(conn, "test_address")
 
 ---------------
 
-__CreateEnum(conn *pg.DB, model interface{}, enumName string) (err error)__  
+__UpsertEnum(conn *pg.DB, model interface{}, enumName string) (err error)__  
 
-This will create given enum if associated to given table  
+This will create/update given enum if associated to given table  
 ```
 i) Directly passing struct model   
 ii) Passing table name after setting model  
@@ -204,22 +188,6 @@ ii) Passing table name after setting model
 
 ##### i) Directly passing struct model
 ```
-type TestAddress struct {
-	tableName struct{} `sql:"test_address"`
-	AddressID int      `sql:"address_id,type:serial NOT NULL PRIMARY KEY"`
-	Address   string   `sql:"address,type:text"`
-	City      string   `sql:"city,type:varchar(25) NULL"`
-	Status    string   `sql:"status,type:address_status"`
-}
-
-//Enum of the table.
-func (TestAddress) Enum() map[string][]string {
-	enm := map[string][]string{
-		"address_status": {"enable", "disable"},
-	}
-	return enm
-}
-
 s := shifter.NewShifter()
 err := s.UpsertEnum(conn, &TestAddress{}, "address_status")
 ```
