@@ -14,6 +14,17 @@ func addAllTables(s *Shifter) {
 	s.SetTableModel(&db.TestUser{})
 }
 
+func TestCreateAllTable(t *testing.T) {
+
+	if conn, err := psql.Conn(true); err == nil {
+		s := NewShifter()
+		addAllTables(s)
+		assert := assert.New(t)
+		err = s.CreateAllTable(conn)
+		assert.NoError(err)
+	}
+}
+
 func TestCreateStruct(t *testing.T) {
 
 	if conn, err := psql.Conn(true); err == nil {
@@ -140,17 +151,6 @@ func TestUpsertAllUniqueKey(t *testing.T) {
 		err = s.SetTableModel(&db.TestUser{})
 		assert.NoError(err)
 		err = s.UpsertAllUniqueKey(conn, "test_user", true)
-		assert.NoError(err)
-	}
-}
-
-func TestCreateAllTable(t *testing.T) {
-
-	if conn, err := psql.Conn(true); err == nil {
-		s := NewShifter()
-		addAllTables(s)
-		assert := assert.New(t)
-		err = s.CreateAllTable(conn)
 		assert.NoError(err)
 	}
 }
