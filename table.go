@@ -59,13 +59,23 @@ func (s *Shifter) createTableDependencies(tx *pg.Tx, tableModel interface{}) (er
 //execTableCreation will execute table creation
 func (s *Shifter) execTableCreation(tx *pg.Tx, tableName string) (err error) {
 	tableModel := s.table[tableName]
-	if err = tx.CreateTable(tableModel,
-		&orm.CreateTableOptions{IfNotExists: true}); err == nil {
-		fmt.Println("Table Created if not exists: ", tableName)
-		err = s.createHistory(tx, tableName)
+
+	exists := false
+	if tableExists(tx, tableName) {
+		exists = true
+	}
+
+	if exists == false {
+		if err = tx.CreateTable(tableModel,
+			&orm.CreateTableOptions{IfNotExists: true}); err == nil {
+			fmt.Println("Table created: ", tableName)
+			err = s.createHistory(tx, tableName)
+		} else {
+			err = flaw.CreateError(err)
+			fmt.Println("Table Error:", tableName, err.Error())
+		}
 	} else {
-		err = flaw.CreateError(err)
-		fmt.Println("Table Error:", tableName, err.Error())
+		fmt.Println("Table already exists: ", tableName)
 	}
 	return
 }
