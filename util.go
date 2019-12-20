@@ -49,6 +49,12 @@ func (s *Shifter) SetTableModels(tables []interface{}) (err error) {
 	return
 }
 
+//SetEnum will set global enum list
+func (s *Shifter) SetEnum(enum map[string][]string) (err error) {
+	s.enumList = enum
+	return
+}
+
 //getTableTriggersTag will return trigger tag which need to create on table
 func (s *Shifter) getTableTriggersTag(tableName string) (tag []string) {
 	tag = make([]string, 0)
