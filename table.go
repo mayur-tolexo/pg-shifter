@@ -2,6 +2,8 @@ package shifter
 
 import (
 	"fmt"
+	"reflect"
+	"strings"
 
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
@@ -68,8 +70,18 @@ func (s *Shifter) execTableCreation(tx *pg.Tx, tableName string) (err error) {
 	if exists == false {
 		if err = tx.CreateTable(tableModel,
 			&orm.CreateTableOptions{IfNotExists: true}); err == nil {
-			fmt.Println("Table created: ", tableName)
-			err = s.createHistory(tx, tableName)
+
+			if err = s.createHistory(tx, tableName); err == nil {
+				if sql := s.getPostCreateSQLFromMethod(tableName); sql != "" {
+					if _, err = tx.Exec(sql); err != nil {
+						err = getWrapError(tableName, "Post Table Create SQL", sql, err)
+					}
+				}
+			}
+
+			if err == nil {
+				fmt.Println("Table created: ", tableName)
+			}
 		} else {
 			err = flaw.CreateError(err)
 			fmt.Println("Table Error:", tableName, err.Error())
@@ -108,6 +120,22 @@ func execTableDrop(tx *pg.Tx, tableName string, cascade bool) (err error) {
 		fmt.Println("Table Dropped if exists: ", tableName)
 	} else {
 		err = getWrapError(tableName, "drop table", sql, err)
+	}
+	return
+}
+
+//getPostCreateSQLFromMethod will return post table creation sql need to executed
+//as defined in PostCreateSQL() method
+func (s *Shifter) getPostCreateSQLFromMethod(tName string) (sql string) {
+	dbModel := s.table[tName]
+	refObj := reflect.ValueOf(dbModel)
+	m := refObj.MethodByName("PostCreateSQL")
+	if m.IsValid() {
+		out := m.Call([]reflect.Value{})
+		if len(out) > 0 && out[0].Kind() == reflect.String {
+			sql = out[0].Interface().(string)
+			strings.TrimSpace(sql)
+		}
 	}
 	return
 }
