@@ -207,9 +207,11 @@ func TestDropAllEnum(t *testing.T) {
 	if conn, err := psql.Conn(true); err == nil {
 		assert := assert.New(t)
 		s := NewShifter()
-		err := s.DropAllEnum(conn, &db.TestAddress{}, true)
-		assert.NoError(err)
 		err = s.DropAllEnum(conn, &db.TestUser{}, true)
+		assert.NoError(err)
+		err = s.DropAllEnum(conn, &db.TestAdminUser{}, true)
+		assert.NoError(err)
+		err = s.DropAllEnum(conn, &db.TestAddress{}, true)
 		assert.NoError(err)
 	}
 }
