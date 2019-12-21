@@ -73,40 +73,79 @@ func (s *Shifter) createEnum(tx *pg.Tx, tableName, enumName, enumSQL string) (er
 func (s *Shifter) updateEnum(tx *pg.Tx, tableName,
 	enumName string, sEnumValue []string) (err error) {
 
-	var tEnumVal []string
-	if tEnumVal, err = getDBEnumValue(tx, enumName); err == nil {
-		//comparing old and new enum values
-		if newValue := compareEnumValue(tEnumVal, sEnumValue); len(newValue) > 0 {
+	var tEnumValue []string
+	if tEnumValue, err = getDBEnumValue(tx, enumName); err == nil {
 
-			for _, curValue := range newValue {
-				sql := getEnumAddSQL(enumName, curValue)
-				if _, err = execByChoice(tx, sql, false); err != nil {
-					err = getWrapError(tableName, "update enum", sql, err)
-					break
-				}
-			}
+		if _, err = addRemoveEnum(tx, tableName, enumName,
+			sEnumValue, tEnumValue, add); err == nil {
+
+			// _, err = addRemoveEnum(tx, tableName, enumName,
+			// 	tEnumValue, sEnumValue, drop)
 		}
 	}
 	return
 }
 
-//Compare enum values
-func compareEnumValue(dbEnumVal, structEnumValue []string) (newValue []string) {
+//addRemoveEnum will add or remove enum which exists in a but not in b
+func addRemoveEnum(tx *pg.Tx, tableName, enumName string,
+	a, b []string, op string) (isAlter bool, err error) {
+
 	var enumValueMap = make(map[string]struct{})
-	for _, curEnumVal := range dbEnumVal {
+	for _, curEnumVal := range b {
 		enumValueMap[curEnumVal] = struct{}{}
 	}
-	for _, curEnumVal := range structEnumValue {
+
+	for _, curEnumVal := range a {
+		var curIsAlter bool
 		if _, exists := enumValueMap[curEnumVal]; exists == false {
-			newValue = append(newValue, curEnumVal)
+			switch op {
+			case add:
+				curIsAlter, err = addEnum(tx, tableName, enumName, curEnumVal)
+			case drop:
+				curIsAlter, err = dropEnum(tx, tableName, enumName, curEnumVal)
+			}
+			if err != nil {
+				break
+			}
+			isAlter = isAlter || curIsAlter
 		}
 	}
+	return
+}
+
+//addEnum will add enum
+func addEnum(tx *pg.Tx, tableName, enumName string, value string) (
+	isAlter bool, err error) {
+
+	sql := getEnumAddSQL(enumName, value)
+	if isAlter, err = execByChoice(tx, sql, false); err != nil {
+		err = getWrapError(tableName, "add enum", sql, err)
+	}
+
+	return
+}
+
+//dropEnum will drop enum
+func dropEnum(tx *pg.Tx, tableName, enumName string, value string) (
+	isAlter bool, err error) {
+
+	sql := getEnumDropSQL(enumName, value)
+	if isAlter, err = execByChoice(tx, sql, false); err != nil {
+		err = getWrapError(tableName, "add enum", sql, err)
+	}
+
 	return
 }
 
 //getEnumAddSQL will return enum add new value sql
-func getEnumAddSQL(enumName string, newValue string) (sql string) {
-	sql = fmt.Sprintf("ALTER type %v ADD VALUE '%v';", enumName, newValue)
+func getEnumAddSQL(enumName string, value string) (sql string) {
+	sql = fmt.Sprintf("ALTER type %v ADD VALUE IF NOT EXISTS '%v';", enumName, value)
+	return
+}
+
+//getEnumDropSQL will return enum drop value sql
+func getEnumDropSQL(enumName string, value string) (sql string) {
+	sql = fmt.Sprintf("ALTER type %v DROP VALUE IF EXISTS '%v';", enumName, value)
 	return
 }
 
