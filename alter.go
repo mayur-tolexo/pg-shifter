@@ -41,7 +41,7 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string,
 						//TODO: check index to update
 					}
 					if err == nil && (colAlter || ukAlter) {
-						if idx, err = util.GetIndex(tx, tableName); err == nil {
+						if idx, err = getDBIndex(tx, tableName); err == nil {
 							err = s.createAlterStructLog(tSchema, tUK, idx, true)
 						}
 					}
@@ -60,7 +60,7 @@ func (s *Shifter) modifyCompositeUniqueKey(tx *pg.Tx,
 
 	defer func() { s.logMode(false) }()
 	sUK := s.getUKFromMethod(tableName)
-	if tUK, err = util.GetCompositeUniqueKey(tx, tableName); err == nil &&
+	if tUK, err = getDBCompositeUniqueKey(tx, tableName); err == nil &&
 		(len(tUK) > 0 || len(sUK) > 0) {
 		s.logMode(s.verbose)
 		isAlter, err = s.checkUniqueKeyToAlter(tx, tableName, tUK, sUK)

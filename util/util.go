@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/go-pg/pg"
-	"github.com/mayur-tolexo/pg-shifter/model"
 )
 
 //variables
@@ -21,59 +20,6 @@ var (
 const (
 	historyTag = "_history"
 )
-
-//GetCompositeUniqueKey : Get composite unique key name and columns
-func GetCompositeUniqueKey(tx *pg.Tx, tableName string) (ukSchema []model.UKSchema, err error) {
-	query := `
-	with comp as (
-		select  c.column_name, pgc.conname
-		, array_position(pgc.conkey::int[],c.ordinal_position::int) as position
-		from pg_constraint as pgc join
-		information_schema.table_constraints tc on pgc.conname = tc.constraint_name,
-		unnest(pgc.conkey::int[]) as colNo join information_schema.columns as c
-		on c.ordinal_position = colNo and c.table_name = ?
-		where array_length(pgc.conkey,1)>1 and pgc.contype='u'
-		and pgc.conrelid=c.table_name::regclass::oid
-		order by position
-	)
-	select string_agg(column_name,',') as col, conname
-	from comp group by conname;`
-	_, err = tx.Query(&ukSchema, query, tableName)
-	return
-}
-
-//GetIndex : Get index of table
-func GetIndex(tx *pg.Tx, tableName string) (idx []model.Index, err error) {
-	query := `
-	with idx as (
-		select
-		--    t.relname as table_name
-		    i.relname as index_name
-		    , c.column_name
-		    , am.amname
-		    , array_position(ix.indkey::int[],c.ordinal_position::int) as position
-		from
-			pg_index ix
-			join pg_class t on  t.oid = ix.indrelid
-		    join pg_class i on i.oid = ix.indexrelid
-		    JOIN pg_am am ON am.oid = i.relam
-		    join unnest(ix.indkey::int[]) as colNo on true 
-		    join information_schema.columns as c 
-			on c.ordinal_position = colNo and c.table_name = t.relname
-		where
-		    t.relkind = 'r'
-		    and ix.indisunique = false
-		    and t.relname = ?
-		   order by i.relname, position
-	)
-	select index_name 
-	, string_agg(distinct amname,',') as itype
-	, string_agg(column_name,',') as col
-	from idx
-	group by index_name;`
-	_, err = tx.Query(&idx, query, tableName)
-	return
-}
 
 //GetStructField will return struct fields
 func GetStructField(model interface{}) (fields map[reflect.Value]reflect.StructField) {

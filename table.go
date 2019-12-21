@@ -8,6 +8,7 @@ import (
 	"github.com/go-pg/pg"
 	"github.com/go-pg/pg/orm"
 	"github.com/mayur-tolexo/flaw"
+	"github.com/mayur-tolexo/pg-shifter/model"
 	"github.com/mayur-tolexo/pg-shifter/util"
 )
 
@@ -136,6 +137,57 @@ func (s *Shifter) getPostCreateSQLFromMethod(tName string) (sql string) {
 			sql = out[0].Interface().(string)
 			strings.TrimSpace(sql)
 		}
+	}
+	return
+}
+
+//getConstraint : Get Constraint of table from database
+func getConstraint(tx *pg.Tx, tableName string) (constraint []model.ColSchema, err error) {
+	query := `SELECT tc.constraint_type,
+    tc.constraint_name, tc.is_deferrable, tc.initially_deferred, 
+    kcu.column_name AS column_name, ccu.table_name AS foreign_table_name, 
+    ccu.column_name AS foreign_column_name, pgc.confupdtype, pgc.confdeltype  
+    FROM 
+    information_schema.table_constraints AS tc 
+    JOIN information_schema.key_column_usage AS kcu 
+    ON tc.constraint_name = kcu.constraint_name 
+    JOIN information_schema.constraint_column_usage AS ccu 
+    ON ccu.constraint_name = tc.constraint_name 
+    JOIN pg_constraint AS pgc ON pgc.conname = tc.constraint_name AND 
+    conrelid=?::regclass::oid WHERE tc.constraint_type 
+    IN('FOREIGN KEY','PRIMARY KEY','UNIQUE') AND tc.table_name = ?
+    AND array_length(pgc.conkey,1) = 1;`
+	if _, err = tx.Query(&constraint, query, tableName, tableName); err != nil {
+		err = getWrapError(tableName, "table constraint", query, err)
+	}
+	return
+}
+
+//getColumnSchema : Get Column Schema of given table
+func getColumnSchema(tx *pg.Tx, tableName string) (columnSchema []model.ColSchema, err error) {
+	query := `SELECT col.column_name, col.column_default, col.data_type,
+	col.ordinal_position as position,
+	col.udt_name, col.is_nullable, col.character_maximum_length 
+	, sq.sequence_name AS seq_name
+	, sq.data_type AS seq_data_type
+	FROM information_schema.columns col
+	left join information_schema.sequences sq
+	ON concat(sq.sequence_schema,'.',sq.sequence_name) = pg_get_serial_sequence(table_name, column_name)
+	WHERE col.table_name = ?;`
+	if _, err = tx.Query(&columnSchema, query, tableName); err != nil {
+		err = getWrapError(tableName, "column schema", query, err)
+	}
+	return
+}
+
+//tableExists : Check if table exists in database
+func tableExists(tx *pg.Tx, tableName string) (flag bool) {
+	var num int
+	sql := `SELECT 1 FROM pg_tables WHERE tablename = ?;`
+	if _, err := tx.Query(pg.Scan(&num), sql, tableName); err != nil {
+		fmt.Println("Table exists check error", err)
+	} else if num == 1 {
+		flag = true
 	}
 	return
 }

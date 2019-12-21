@@ -100,3 +100,23 @@ func getUniqueKeyQuery(tableName string, constraintName string,
 	return fmt.Sprintf("ALTER TABLE %v DROP CONSTRAINT IF EXISTS %v;\nALTER TABLE %v ADD CONSTRAINT %v UNIQUE (%v);\n",
 		tableName, constraintName, tableName, constraintName, column)
 }
+
+//getDBCompositeUniqueKey : Get composite unique key name and columns from database
+func getDBCompositeUniqueKey(tx *pg.Tx, tableName string) (ukSchema []model.UKSchema, err error) {
+	query := `
+	with comp as (
+		select  c.column_name, pgc.conname
+		, array_position(pgc.conkey::int[],c.ordinal_position::int) as position
+		from pg_constraint as pgc join
+		information_schema.table_constraints tc on pgc.conname = tc.constraint_name,
+		unnest(pgc.conkey::int[]) as colNo join information_schema.columns as c
+		on c.ordinal_position = colNo and c.table_name = ?
+		where array_length(pgc.conkey,1)>1 and pgc.contype='u'
+		and pgc.conrelid=c.table_name::regclass::oid
+		order by position
+	)
+	select string_agg(column_name,',') as col, conname
+	from comp group by conname;`
+	_, err = tx.Query(&ukSchema, query, tableName)
+	return
+}

@@ -8,7 +8,6 @@ import (
 	"github.com/go-pg/pg"
 	"github.com/mayur-tolexo/flaw"
 	m "github.com/mayur-tolexo/pg-shifter/model"
-	"github.com/mayur-tolexo/pg-shifter/util"
 )
 
 var (
@@ -306,7 +305,7 @@ func (s *Shifter) UpsertAllUniqueKey(conn *pg.DB, model interface{}, skipPrompt 
 	if tableName, err = s.getTableName(model); err == nil {
 		if tx, err = conn.Begin(); err == nil {
 
-			if tUK, err = util.GetCompositeUniqueKey(tx, tableName); err == nil {
+			if tUK, err = getDBCompositeUniqueKey(tx, tableName); err == nil {
 				sUK := s.getUKFromMethod(tableName)
 				if len(tUK) > 0 || len(sUK) > 0 {
 					if _, err = dropCompositeUK(tx, tableName, tUK, sUK, getSP(skipPrompt)); err == nil {
@@ -394,8 +393,8 @@ func (s *Shifter) CreateStruct(conn *pg.DB, tableName string,
 	if tx, err = conn.Begin(); err == nil {
 
 		if tSchema, err = s.getTableSchema(tx, tableName); err == nil {
-			if tUK, err = util.GetCompositeUniqueKey(tx, tableName); err == nil {
-				if idx, err = util.GetIndex(tx, tableName); err == nil {
+			if tUK, err = getDBCompositeUniqueKey(tx, tableName); err == nil {
+				if idx, err = getDBIndex(tx, tableName); err == nil {
 					curLogPath := s.logPath
 					s.logPath = filePath
 					err = s.createAlterStructLog(tSchema, tUK, idx, false)

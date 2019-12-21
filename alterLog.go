@@ -15,7 +15,6 @@ import (
 	"github.com/go-pg/pg"
 	"github.com/iancoleman/strcase"
 	"github.com/mayur-tolexo/pg-shifter/model"
-	"github.com/mayur-tolexo/pg-shifter/util"
 )
 
 //sLog : structure log model
@@ -81,8 +80,8 @@ func (s *Shifter) generateTableStructSchema(tx *pg.Tx, tableName string, wt bool
 	exists = tableExists(tx, tableName)
 	if exists {
 		if tSchema, err = s.getTableSchema(tx, tableName); err == nil {
-			if tUK, err = util.GetCompositeUniqueKey(tx, tableName); err == nil {
-				if idx, err = util.GetIndex(tx, tableName); err == nil {
+			if tUK, err = getDBCompositeUniqueKey(tx, tableName); err == nil {
+				if idx, err = getDBIndex(tx, tableName); err == nil {
 					log, fData, err = s.getTableStructSchema(tSchema, tUK, idx, wt)
 				}
 			}

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/go-pg/pg"
+	"github.com/mayur-tolexo/pg-shifter/model"
 	"github.com/mayur-tolexo/pg-shifter/util"
 )
 
@@ -75,5 +76,38 @@ func (s *Shifter) getIndexFromMethod(tableName string) (idx map[string]string) {
 			idx, _ = out[0].Interface().(map[string]string)
 		}
 	}
+	return
+}
+
+//getDBIndex : Get index of table from database
+func getDBIndex(tx *pg.Tx, tableName string) (idx []model.Index, err error) {
+	query := `
+	with idx as (
+		select
+		--    t.relname as table_name
+		    i.relname as index_name
+		    , c.column_name
+		    , am.amname
+		    , array_position(ix.indkey::int[],c.ordinal_position::int) as position
+		from
+			pg_index ix
+			join pg_class t on  t.oid = ix.indrelid
+		    join pg_class i on i.oid = ix.indexrelid
+		    JOIN pg_am am ON am.oid = i.relam
+		    join unnest(ix.indkey::int[]) as colNo on true 
+		    join information_schema.columns as c 
+			on c.ordinal_position = colNo and c.table_name = t.relname
+		where
+		    t.relkind = 'r'
+		    and ix.indisunique = false
+		    and t.relname = ?
+		   order by i.relname, position
+	)
+	select index_name 
+	, string_agg(distinct amname,',') as itype
+	, string_agg(column_name,',') as col
+	from idx
+	group by index_name;`
+	_, err = tx.Query(&idx, query, tableName)
 	return
 }
