@@ -27,6 +27,28 @@ func (s *Shifter) upsertAllEnum(tx *pg.Tx, tableName string) (err error) {
 	return
 }
 
+//dropAllEnum will drop all enum associated to table
+func (s *Shifter) dropAllEnum(tx *pg.Tx, tableName string, skipPrompt bool) (
+	err error) {
+
+	tableModel := s.table[tableName]
+	fields := util.GetStructField(tableModel)
+
+	for _, refFeild := range fields {
+		fType := util.FieldType(refFeild)
+		// fmt.Println(tableName, fType, s.isEnum(tableName, fType))
+		// enm := s.getEnumFromMethod(tableName)
+		// fmt.Println(enm, enm[fType])
+		if s.isEnum(tableName, fType) {
+			// fmt.Println("IN for ", fType)
+			if _, err = dropEnum(tx, tableName, fType, skipPrompt); err != nil {
+				break
+			}
+		}
+	}
+	return
+}
+
 //upsertEnum will create/update enum of the given table
 func (s *Shifter) upsertEnum(tx *pg.Tx, tableName string,
 	enumName string) (err error) {
@@ -100,9 +122,9 @@ func addRemoveEnum(tx *pg.Tx, tableName, enumName string,
 		if _, exists := enumValueMap[curEnumVal]; exists == false {
 			switch op {
 			case add:
-				curIsAlter, err = addEnum(tx, tableName, enumName, curEnumVal)
+				curIsAlter, err = addEnumVal(tx, tableName, enumName, curEnumVal)
 			case drop:
-				curIsAlter, err = dropEnum(tx, tableName, enumName, curEnumVal)
+				curIsAlter, err = dropEnumVal(tx, tableName, enumName, curEnumVal)
 			}
 			if err != nil {
 				break
@@ -113,38 +135,52 @@ func addRemoveEnum(tx *pg.Tx, tableName, enumName string,
 	return
 }
 
-//addEnum will add enum
-func addEnum(tx *pg.Tx, tableName, enumName string, value string) (
+//addEnumVal will add enum value
+func addEnumVal(tx *pg.Tx, tableName, enumName string, value string) (
 	isAlter bool, err error) {
 
-	sql := getEnumAddSQL(enumName, value)
+	sql := getEnumAddValSQL(enumName, value)
 	if isAlter, err = execByChoice(tx, sql, false); err != nil {
-		err = getWrapError(tableName, "add enum", sql, err)
+		err = getWrapError(tableName, "add enum value", sql, err)
+	}
+
+	return
+}
+
+//dropEnumVal will drop enum value
+func dropEnumVal(tx *pg.Tx, tableName, enumName string, value string) (
+	isAlter bool, err error) {
+
+	sql := getEnumDropValSQL(enumName, value)
+	if isAlter, err = execByChoice(tx, sql, false); err != nil {
+		err = getWrapError(tableName, "drop enum value", sql, err)
 	}
 
 	return
 }
 
 //dropEnum will drop enum
-func dropEnum(tx *pg.Tx, tableName, enumName string, value string) (
+func dropEnum(tx *pg.Tx, tableName, enumName string, skipPrompt bool) (
 	isAlter bool, err error) {
 
-	sql := getEnumDropSQL(enumName, value)
-	if isAlter, err = execByChoice(tx, sql, false); err != nil {
+	sql := fmt.Sprintf("DROP TYPE %v;", enumName)
+	if isAlter, err = execByChoice(tx, sql, skipPrompt); err != nil {
 		err = getWrapError(tableName, "drop enum", sql, err)
+	} else if isAlter {
+		fmt.Printf("Enum Dropped: %v\n", enumName)
 	}
 
 	return
 }
 
-//getEnumAddSQL will return enum add new value sql
-func getEnumAddSQL(enumName string, value string) (sql string) {
+//getEnumAddValSQL will return enum add new value sql
+func getEnumAddValSQL(enumName string, value string) (sql string) {
 	sql = fmt.Sprintf("ALTER type %v ADD VALUE IF NOT EXISTS '%v';", enumName, value)
 	return
 }
 
-//getEnumDropSQL will return enum drop value sql
-func getEnumDropSQL(enumName string, value string) (sql string) {
+//getEnumDropValSQL will return enum drop value sql
+func getEnumDropValSQL(enumName string, value string) (sql string) {
 	sql = fmt.Sprintf("ALTER type %v DROP VALUE IF EXISTS '%v';", enumName, value)
 	return
 }
@@ -183,14 +219,14 @@ func (s *Shifter) getEnum(tableName, enumName string) (
 }
 
 //isEnum will check given type is enum or not
-func (s *Shifter) isEnum(tableName, fType string) (flag bool) {
+func (s *Shifter) isEnum(tableName, enumName string) (flag bool) {
 
-	var exists bool
 	enum := s.getEnumFromMethod(tableName)
+
 	//checking table local enum list
-	if _, flag = enum[fType]; exists == false {
+	if _, flag = enum[enumName]; flag == false {
 		//checking global enum list
-		_, flag = s.enumList[fType]
+		_, flag = s.enumList[enumName]
 	}
 	return
 }

@@ -217,6 +217,29 @@ func (s *Shifter) UpsertAllEnum(conn *pg.DB, model interface{}) (err error) {
 	return
 }
 
+// DropAllEnum will drop all enums of the given table.
+//
+// Parameters
+//  conn: postgresql connection
+//  model: struct pointer or string (table name)
+//  skipPrompt: bool (default false | if false then before execution sql it will prompt for confirmation)
+// if model is table name then need to set shifter SetTableModel() before calling DropAllEnum()
+func (s *Shifter) DropAllEnum(conn *pg.DB, model interface{}, skipPrompt bool) (err error) {
+	var (
+		tx        *pg.Tx
+		tableName string
+	)
+	if tableName, err = s.getTableName(model); err == nil {
+		if tx, err = conn.Begin(); err == nil {
+			err = s.dropAllEnum(tx, tableName, skipPrompt)
+			commitIfNil(tx, err)
+		} else {
+			err = flaw.TxError(err)
+		}
+	}
+	return
+}
+
 // CreateAllIndex will create all index of the given table.
 //
 // Parameters

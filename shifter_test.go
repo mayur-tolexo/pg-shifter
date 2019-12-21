@@ -201,3 +201,13 @@ func TestDropAllTable(t *testing.T) {
 		assert.NoError(err)
 	}
 }
+
+func TestDropAllEnum(t *testing.T) {
+
+	if conn, err := psql.Conn(true); err == nil {
+		s := NewShifter()
+		err := s.DropAllEnum(conn, &db.TestAddress{}, true)
+		assert := assert.New(t)
+		assert.NoError(err)
+	}
+}
