@@ -61,7 +61,7 @@ func TestCreateEnum(t *testing.T) {
 
 		err = s.SetTableModel(&db.TestUser{})
 		assert.NoError(err)
-		err = s.CreateEnum(conn, "test_user", "yesno_type")
+		err = s.CreateEnum(conn, "test_user", "user_yesno_type")
 		assert.NoError(err)
 	}
 }
@@ -91,7 +91,7 @@ func TestUpsertEnum(t *testing.T) {
 
 		err = s.SetTableModel(&db.TestUser{})
 		assert.NoError(err)
-		err = s.UpsertEnum(conn, "test_user", "yesno_type")
+		err = s.UpsertEnum(conn, "test_user", "user_yesno_type")
 		assert.NoError(err)
 	}
 }
@@ -205,9 +205,11 @@ func TestDropAllTable(t *testing.T) {
 func TestDropAllEnum(t *testing.T) {
 
 	if conn, err := psql.Conn(true); err == nil {
+		assert := assert.New(t)
 		s := NewShifter()
 		err := s.DropAllEnum(conn, &db.TestAddress{}, true)
-		assert := assert.New(t)
+		assert.NoError(err)
+		err = s.DropAllEnum(conn, &db.TestUser{}, true)
 		assert.NoError(err)
 	}
 }

@@ -17,13 +17,13 @@ type TestUser struct {
 	Landline         string                 `json:"landline" default:"null" sql:"landline,type:text NULL DEFAULT NULL"`
 	Department       string                 `json:"department" default:"null" sql:"department,type:varchar(100)"`
 	Designation      string                 `json:"designation" default:"null" sql:"designation,type:varchar(100)"`
-	EmailVerified    string                 `json:"email_verified,omitempty" sql:"email_verified,type:yesno_type NOT NULL DEFAULT 'no'"`
-	PhoneVerified    string                 `json:"phone_verified,omitempty" sql:"phone_verified,type:yesno_type NOT NULL DEFAULT 'no'"`
-	WhatsappVerified string                 `json:"whatsapp_verified,omitempty" sql:"whatsapp_verified,type:yesno_type NOT NULL DEFAULT 'no'"`
+	EmailVerified    string                 `json:"email_verified,omitempty" sql:"email_verified,type:user_yesno_type NOT NULL DEFAULT 'no'"`
+	PhoneVerified    string                 `json:"phone_verified,omitempty" sql:"phone_verified,type:user_yesno_type NOT NULL DEFAULT 'no'"`
+	WhatsappVerified string                 `json:"whatsapp_verified,omitempty" sql:"whatsapp_verified,type:user_yesno_type NOT NULL DEFAULT 'no'"`
 	Attribute        map[string]interface{} `json:"attribute,omitempty" sql:"attribute,type:jsonb NOT NULL DEFAULT '{}'::jsonb"`
-	Status           string                 `json:"status" sql:"status,type:user_status_type DEFAULT 'notverified'"`
+	Status           string                 `json:"status" sql:"status,type:test_user_status_type DEFAULT 'notverified'"`
 	LastLogin        time.Time              `json:"last_login" sql:"last_login,type:timestamp"`
-	CreatedBy        int                    `json:"-" sql:"created_by,type:int NOT NULL REFERENCES pra_user(user_id) ON DELETE RESTRICT ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED"`
+	CreatedBy        int                    `json:"-" sql:"created_by,type:int NOT NULL REFERENCES test_user(user_id) ON DELETE RESTRICT ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED"`
 	CreatedAt        time.Time              `json:"-" sql:"created_at,type:timestamp NOT NULL DEFAULT NOW()"`
 	UpdatedAt        time.Time              `json:"-" sql:"updated_at,type:timestamp NOT NULL DEFAULT NOW()"`
 }
@@ -52,8 +52,8 @@ func (TestUser) UniqueKey() []string {
 //Enum of the table.
 func (TestUser) Enum() map[string][]string {
 	enm := map[string][]string{
-		"user_status_type": {"enable", "disable", "notverified"},
-		"yesno_type":       {"yes", "no"},
+		"test_user_status_type": {"enable", "disable", "notverified"},
+		"user_yesno_type":       {"yes", "no"},
 	}
 	return enm
 }

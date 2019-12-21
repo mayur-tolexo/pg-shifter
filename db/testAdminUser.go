@@ -7,7 +7,7 @@ type TestAdminUser struct {
 	tableName   struct{}  `sql:"test_admin_user"`
 	AdminUserID int       `json:"admin_user_id" sql:"admin_user_id,type:serial PRIMARY KEY"`
 	FkUserID    int       `json:"user_id" sql:"fk_user_id,type:int NOT NULL REFERENCES pra_user(user_id) ON DELETE RESTRICT ON UPDATE CASCADE"`
-	CreatedBy   int       `json:"-" sql:"created_by,type:int NOT NULL REFERENCES pra_user(user_id) ON DELETE RESTRICT ON UPDATE CASCADE"`
+	CreatedBy   int       `json:"-" sql:"created_by,type:int NOT NULL REFERENCES test_user(user_id) ON DELETE RESTRICT ON UPDATE CASCADE"`
 	CreatedAt   time.Time `json:"-" sql:"created_at,type:timestamp NOT NULL DEFAULT NOW()"`
 	UpdatedAt   time.Time `json:"-" sql:"updated_at,type:timestamp NOT NULL DEFAULT NOW()"`
 	MyAdminID   int       `json:"-" sql:"mysql_admin_id,type:int NULL UNIQUE"`

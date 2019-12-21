@@ -43,7 +43,6 @@ type TestUser struct {
 	PhoneVerified    string                 `json:"phone_verified,omitempty" sql:"phone_verified,type:yesno_type NOT NULL DEFAULT 'no'"`
 	WhatsappVerified string                 `json:"whatsapp_verified,omitempty" sql:"whatsapp_verified,type:yesno_type NOT NULL DEFAULT 'no'"`
 	Attribute        map[string]interface{} `json:"attribute,omitempty" sql:"attribute,type:jsonb NOT NULL DEFAULT '{}'::jsonb"`
-	Status           string                 `json:"status" sql:"status,type:user_status_type DEFAULT 'notverified'"`
 	LastLogin        time.Time              `json:"last_login" sql:"last_login,type:timestamp"`
 	CreatedBy        int                    `json:"-" sql:"created_by,type:int NOT NULL REFERENCES pra_user(user_id) ON DELETE RESTRICT ON UPDATE CASCADE DEFERRABLE INITIALLY DEFERRED"`
 	CreatedAt        time.Time              `json:"-" sql:"created_at,type:timestamp NOT NULL DEFAULT NOW()"`

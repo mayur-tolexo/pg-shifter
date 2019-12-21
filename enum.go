@@ -163,11 +163,11 @@ func dropEnumVal(tx *pg.Tx, tableName, enumName string, value string) (
 func dropEnum(tx *pg.Tx, tableName, enumName string, skipPrompt bool) (
 	isAlter bool, err error) {
 
-	sql := fmt.Sprintf("DROP TYPE %v;", enumName)
+	sql := fmt.Sprintf("DROP TYPE IF EXISTS %v;", enumName)
 	if isAlter, err = execByChoice(tx, sql, skipPrompt); err != nil {
 		err = getWrapError(tableName, "drop enum", sql, err)
 	} else if isAlter {
-		fmt.Printf("Enum Dropped: %v\n", enumName)
+		fmt.Printf("Enum Dropped if exists: %v\n", enumName)
 	}
 
 	return
