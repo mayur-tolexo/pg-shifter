@@ -9,7 +9,6 @@ type TestUser struct {
 	Username         string                 `json:"username" sql:"username,type:varchar(255)"`
 	Password         string                 `json:"-" sql:"password,type:varchar(255) NULL"`
 	PassSalt         string                 `json:"-" sql:"pass_salt,type:varchar(255) NULL"`
-	CountryID        int                    `json:"country_id" sql:"fk_country_id,type:int NULL REFERENCES country(country_id) ON DELETE RESTRICT ON UPDATE CASCADE"`
 	Email            string                 `json:"email" sql:"email,type:varchar(255) UNIQUE"`
 	Name             string                 `json:"name" sql:"name,type:varchar(255)"`
 	AltContactNo     string                 `json:"alt_contact_no" default:"true" sql:"alt_contact_no,type:varchar(20)"`
@@ -32,11 +31,10 @@ type TestUser struct {
 //Default index type is btree. For gin index use gin value
 func (TestUser) Index() map[string]string {
 	idx := map[string]string{
-		"username":      "",
-		"email":         "",
-		"name":          "",
-		"status":        "",
-		"fk_country_id": "",
+		"username": "",
+		"email":    "",
+		"name":     "",
+		"status":   "",
 	}
 	return idx
 }
@@ -44,7 +42,7 @@ func (TestUser) Index() map[string]string {
 //UniqueKey of the table. This is for composite unique keys
 func (TestUser) UniqueKey() []string {
 	uk := []string{
-		"username,fk_country_id",
+		"username,status",
 	}
 	return uk
 }

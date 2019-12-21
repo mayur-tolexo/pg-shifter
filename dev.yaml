@@ -5,7 +5,7 @@ database:
         password: "Bvd^412"
         host:     "staging2"
         port:     "5432"
-        db:       "tachyon"
+        db:       "test"
     slaves:
         - database.slave1
     slave1:
@@ -14,4 +14,4 @@ database:
         password: "Bvd^412"
         host:     "staging2"
         port:     "5432"
-        db:       "tachyon"
+        db:       "test"
