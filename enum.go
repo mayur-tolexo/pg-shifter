@@ -131,7 +131,7 @@ func dropEnum(tx *pg.Tx, tableName, enumName string, value string) (
 
 	sql := getEnumDropSQL(enumName, value)
 	if isAlter, err = execByChoice(tx, sql, false); err != nil {
-		err = getWrapError(tableName, "add enum", sql, err)
+		err = getWrapError(tableName, "drop enum", sql, err)
 	}
 
 	return
