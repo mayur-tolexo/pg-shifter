@@ -26,17 +26,24 @@ func (s *Shifter) alterTable(tx *pg.Tx, tableName string,
 	defer s.logMode(false)
 
 	if isValid == true {
+
 		if tSchema, err = s.getTableSchema(tx, tableName); err == nil {
 			sSchema := s.GetStructSchema(tableName)
 
 			if s.hisExists, err = util.IsAfterUpdateTriggerExists(tx, tableName); err == nil {
 
-				if colAlter, err = s.compareSchema(tx, tSchema, sSchema, skipPrompt); err == nil {
-					tUK, ukAlter, err = s.modifyCompositeUniqueKey(tx, tableName)
-				}
-				if err == nil && (colAlter || ukAlter) {
-					if idx, err = util.GetIndex(tx, tableName); err == nil {
-						err = s.createAlterStructLog(tSchema, tUK, idx, true)
+				//checking enum to update
+				if err = s.upsertAllEnum(tx, tableName); err == nil {
+					//checking column to update
+					if colAlter, err = s.compareSchema(tx, tSchema, sSchema, skipPrompt); err == nil {
+						//checking composite unique key to update
+						tUK, ukAlter, err = s.modifyCompositeUniqueKey(tx, tableName)
+						//TODO: check index to update
+					}
+					if err == nil && (colAlter || ukAlter) {
+						if idx, err = util.GetIndex(tx, tableName); err == nil {
+							err = s.createAlterStructLog(tSchema, tUK, idx, true)
+						}
 					}
 				}
 			}

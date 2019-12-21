@@ -186,7 +186,7 @@ func (s *Shifter) UpsertEnum(conn *pg.DB, model interface{}, enumName string) (e
 	)
 	if tableName, err = s.getTableName(model); err == nil {
 		if tx, err = conn.Begin(); err == nil {
-			err = s.updateEnum(tx, tableName, enumName)
+			err = s.upsertEnum(tx, tableName, enumName)
 			commitIfNil(tx, err)
 		} else {
 			err = flaw.TxError(err)

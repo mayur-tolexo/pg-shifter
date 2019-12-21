@@ -31,13 +31,13 @@ func (s *Shifter) upsertAllEnum(tx *pg.Tx, tableName string) (err error) {
 func (s *Shifter) upsertEnum(tx *pg.Tx, tableName string,
 	enumName string) (err error) {
 
-	var enumValue []string
-	if enumValue, err = s.getEnum(tableName, enumName); err == nil {
+	var sEnumValue []string
+	if sEnumValue, err = s.getEnum(tableName, enumName); err == nil {
 		if _, created := enumCreated[enumName]; created == false {
-			if enumSQL, enumExists := getEnumQuery(tx, enumName, enumValue); enumExists == false {
+			if enumSQL, enumExists := getEnumQuery(tx, enumName, sEnumValue); enumExists == false {
 				err = s.createEnum(tx, tableName, enumName, enumSQL)
 			} else {
-				err = s.updateEnum(tx, tableName, enumName)
+				err = s.updateEnum(tx, tableName, enumName, sEnumValue)
 			}
 		}
 	}
@@ -70,21 +70,19 @@ func (s *Shifter) createEnum(tx *pg.Tx, tableName, enumName, enumSQL string) (er
 }
 
 //updateEnum will update enum if changed in enum map
-func (s *Shifter) updateEnum(tx *pg.Tx, tableName, enumName string) (err error) {
-	var dbEnumVal []string
-	enumValue := s.enumList[enumName]
+func (s *Shifter) updateEnum(tx *pg.Tx, tableName,
+	enumName string, sEnumValue []string) (err error) {
 
-	if dbEnumVal, err = util.GetEnumValue(tx, enumName); err == nil {
+	var tEnumVal []string
+	if tEnumVal, err = getDBEnumValue(tx, enumName); err == nil {
 		//comparing old and new enum values
-		if newValue := compareEnumValue(dbEnumVal, enumValue); len(newValue) > 0 {
+		if newValue := compareEnumValue(tEnumVal, sEnumValue); len(newValue) > 0 {
 
-			enumAlterSQL := getEnumAlterQuery(enumName, newValue)
-			choice := util.GetChoice(enumAlterSQL, false)
-
-			if choice == util.Yes {
-				if _, err = tx.Exec(enumAlterSQL); err == nil {
-				} else {
-					err = getWrapError(tableName, "update enum", enumAlterSQL, err)
+			for _, curValue := range newValue {
+				sql := getEnumAddSQL(enumName, curValue)
+				if _, err = execByChoice(tx, sql, false); err != nil {
+					err = getWrapError(tableName, "update enum", sql, err)
+					break
 				}
 			}
 		}
@@ -106,11 +104,9 @@ func compareEnumValue(dbEnumVal, structEnumValue []string) (newValue []string) {
 	return
 }
 
-//Create enum alter query by enumType and new values
-func getEnumAlterQuery(enumName string, newValue []string) (enumAlterSQL string) {
-	for _, curValue := range newValue {
-		enumAlterSQL += fmt.Sprintf("ALTER type %v ADD VALUE '%v'; ", enumName, curValue)
-	}
+//getEnumAddSQL will return enum add new value sql
+func getEnumAddSQL(enumName string, newValue string) (sql string) {
+	sql = fmt.Sprintf("ALTER type %v ADD VALUE '%v';", enumName, newValue)
 	return
 }
 
@@ -118,7 +114,7 @@ func getEnumAlterQuery(enumName string, newValue []string) (enumAlterSQL string)
 func getEnumQuery(tx *pg.Tx, enumName string, enumValue []string) (
 	query string, enumExists bool) {
 
-	if enumExists = util.EnumExists(tx, enumName); enumExists == false {
+	if enumExists = dbEnumExists(tx, enumName); enumExists == false {
 		query += fmt.Sprintf("CREATE type %v AS ENUM('%v'); ",
 			enumName, strings.Join(enumValue, "','"))
 	}

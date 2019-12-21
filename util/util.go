@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/go-pg/pg"
-	"github.com/mayur-tolexo/flaw"
 	"github.com/mayur-tolexo/pg-shifter/model"
 )
 
@@ -73,28 +72,6 @@ func GetIndex(tx *pg.Tx, tableName string) (idx []model.Index, err error) {
 	from idx
 	group by index_name;`
 	_, err = tx.Query(&idx, query, tableName)
-	return
-}
-
-//EnumExists : Check if Enum Type Exists in database
-func EnumExists(tx *pg.Tx, enumName string) (flag bool) {
-	var num int
-	enumSQL := `SELECT 1 FROM pg_type WHERE typname = ?;`
-	if _, err := tx.Query(pg.Scan(&num), enumSQL, enumName); err == nil && num == 1 {
-		flag = true
-	}
-	return
-}
-
-//GetEnumValue enum values by enumType
-func GetEnumValue(tx *pg.Tx, enumName string) (enumValue []string, err error) {
-	enumSQL := `SELECT e.enumlabel as enum_value
-	  FROM pg_enum e
-	  JOIN pg_type t ON e.enumtypid = t.oid
-	  WHERE t.typname = ?;`
-	if _, err = tx.Query(&enumValue, enumSQL, enumName); err != nil {
-		err = flaw.SelectError(err, "Enum", enumName)
-	}
 	return
 }
 
