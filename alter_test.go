@@ -21,9 +21,37 @@ func TestLocalAlterTable(t *testing.T) {
 		s.SetTableModel(&localUser{})
 		err = s.createTable(tx, tName, true)
 		assert.NoError(err)
+
+		//drop column
 		s.SetTableModel(&localUserColRemoved{})
 		err = s.alterTable(tx, tName, true)
 		assert.NoError(err)
+
+		//add column
+		s.SetTableModel(&localUser{})
+		err = s.alterTable(tx, tName, true)
+		assert.NoError(err)
+
+		//remove column nullable
+		s.SetTableModel(&localUserNullRemoved{})
+		err = s.alterTable(tx, tName, true)
+		assert.NoError(err)
+
+		//add column nullable
+		s.SetTableModel(&localUser{})
+		err = s.alterTable(tx, tName, true)
+		assert.NoError(err)
+
+		//remove column default
+		s.SetTableModel(&localUserDefaultRemoved{})
+		err = s.alterTable(tx, tName, true)
+		assert.NoError(err)
+
+		//add column default
+		s.SetTableModel(&localUser{})
+		err = s.alterTable(tx, tName, true)
+		assert.NoError(err)
+
 		err = s.dropTable(tx, tName, true)
 		assert.NoError(err)
 	}
@@ -31,21 +59,30 @@ func TestLocalAlterTable(t *testing.T) {
 
 type localUser struct {
 	tableName struct{}  `sql:"local_user"`
-	UserID    int       `json:"user_id" sql:"user_id,type:serial PRIMARY KEY"`
-	CreatedAt time.Time `json:"-" sql:"created_at,type:timestamp NOT NULL DEFAULT NOW()"`
-	UpdatedAt time.Time `json:"-" sql:"updated_at,type:timestamp NOT NULL DEFAULT NOW()"`
+	UserID    int       `sql:"user_id,type:serial PRIMARY KEY"`
+	Password  string    `sql:"password,type:varchar(255) NULL DEFAULT NULL"`
+	CreatedAt time.Time `sql:"created_at,type:timestamp NOT NULL DEFAULT NOW()"`
+	UpdatedAt time.Time `sql:"updated_at,type:timestamp NOT NULL DEFAULT NOW()"`
 }
 
 type localUserColRemoved struct {
 	tableName struct{}  `sql:"local_user"`
-	UserID    int       `json:"user_id" sql:"user_id,type:serial PRIMARY KEY"`
-	CreatedAt time.Time `json:"-" sql:"created_at,type:timestamp NOT NULL DEFAULT NOW()"`
+	UserID    int       `sql:"user_id,type:serial PRIMARY KEY"`
+	Password  string    `sql:"password,type:varchar(255) NULL DEFAULT NULL"`
+	CreatedAt time.Time `sql:"created_at,type:timestamp NOT NULL DEFAULT NOW()"`
 }
 
-type localUserColAdded struct {
+type localUserNullRemoved struct {
 	tableName struct{}  `sql:"local_user"`
-	UserID    int       `json:"user_id" sql:"user_id,type:serial PRIMARY KEY"`
-	Password  string    `json:"-" sql:"password,type:varchar(255) NULL"`
-	CreatedAt time.Time `json:"-" sql:"created_at,type:timestamp NOT NULL DEFAULT NOW()"`
-	UpdatedAt time.Time `json:"-" sql:"updated_at,type:timestamp NOT NULL DEFAULT NOW()"`
+	UserID    int       `sql:"user_id,type:serial PRIMARY KEY"`
+	CreatedAt time.Time `sql:"created_at,type:timestamp NOT NULL DEFAULT NOW()"`
+	UpdatedAt time.Time `sql:"updated_at,type:timestamp NOT NULL DEFAULT NOW()"`
+}
+
+type localUserDefaultRemoved struct {
+	tableName struct{}  `sql:"local_user"`
+	UserID    int       `sql:"user_id,type:serial PRIMARY KEY"`
+	Password  string    `sql:"password,type:varchar(255) NULL"`
+	CreatedAt time.Time `sql:"created_at,type:timestamp NOT NULL DEFAULT NOW()"`
+	UpdatedAt time.Time `sql:"updated_at,type:timestamp NOT NULL DEFAULT NOW()"`
 }
