@@ -3,7 +3,7 @@ database:
         engine: "postgres"
         username: "tachyon"
         password: "Bvd^412"
-        host:     "staging2"
+        host:     "localhost"
         port:     "5432"
         db:       "test"
     slaves:
@@ -12,6 +12,6 @@ database:
         engine: "postgres"
         username: "tachyon"
         password: "Bvd^412"
-        host:     "staging2"
+        host:     "localhost"
         port:     "5432"
         db:       "test"

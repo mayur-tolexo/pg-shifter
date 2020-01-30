@@ -162,7 +162,7 @@ func (s *Shifter) addCol(tx *pg.Tx, schema model.ColSchema,
 	}
 
 	//checking history table exists
-	if s.hisExists {
+	if s.hisExists && schema.ColumnName != "updated_at" {
 		hName := util.GetHistoryTableName(schema.TableName)
 		dType = getStructDataType(schema)
 		sql += getAddColSQL(hName, schema.ColumnName, dType)
@@ -187,7 +187,7 @@ func (s *Shifter) dropCol(tx *pg.Tx, schema model.ColSchema,
 
 	sql := getDropColSQL(schema.TableName, schema.ColumnName)
 	//checking history table exists
-	if s.hisExists {
+	if s.hisExists && schema.ColumnName != "updated_at" {
 		hName := util.GetHistoryTableName(schema.TableName)
 		sql += getDropColSQL(hName, schema.ColumnName)
 	}
