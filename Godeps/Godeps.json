@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/mayur-tolexo/pg-shifter",
-	"GoVersion": "go1.9",
+	"GoVersion": "go1.13",
 	"GodepVersion": "v80",
 	"Packages": [
 		"./..."
@@ -13,7 +13,7 @@
 		},
 		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
-			"Comment": "v1.1.0-12-g8991bc2",
+			"Comment": "v1.1.1",
 			"Rev": "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
 		},
 		{
@@ -59,6 +59,11 @@
 		{
 			"ImportPath": "github.com/iancoleman/strcase",
 			"Rev": "3605ed457bf7f8caa1371b4fafadadc026673479"
+		},
+		{
+			"ImportPath": "github.com/inconshreveable/mousetrap",
+			"Comment": "v1.0",
+			"Rev": "76626ae9c91c4f2a10f34cad8ce83ea42c93bb75"
 		},
 		{
 			"ImportPath": "github.com/jacobstr/confer",
@@ -119,7 +124,7 @@
 		},
 		{
 			"ImportPath": "github.com/mayur-tolexo/contour/adapter/psql",
-			"Rev": "bac093b799f5cd6de86652fb92baab4043fb4a5a"
+			"Rev": "bfbc283d744bd562fbe814ebe783aa6f2225e13f"
 		},
 		{
 			"ImportPath": "github.com/mayur-tolexo/flaw",
@@ -140,13 +145,18 @@
 			"Rev": "acbeb36b902d72a7a4c18e8f3241075e7ab763e4"
 		},
 		{
+			"ImportPath": "github.com/spf13/cobra",
+			"Comment": "v1.0.0",
+			"Rev": "a684a6d7f5e37385d954dd3b5a14fc6912c6ab9d"
+		},
+		{
 			"ImportPath": "github.com/spf13/jwalterweatherman",
 			"Rev": "0efa5202c04663c757d84f90f5219c1250baf94f"
 		},
 		{
 			"ImportPath": "github.com/spf13/pflag",
-			"Comment": "v1.0.0",
-			"Rev": "e57e3eeb33f795204c1ca35f56c44f83227c6e66"
+			"Comment": "v1.0.3",
+			"Rev": "298182f68c66c05229eb03ac171abe6e309ee79a"
 		},
 		{
 			"ImportPath": "github.com/stretchr/testify/assert",
@@ -163,13 +173,13 @@
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
-			"Comment": "v2.2.1",
-			"Rev": "5420a8b6744d3b0345ab293f6fcba19c978f1183"
+			"Comment": "v2.2.8",
+			"Rev": "53403b58ad1b561927d19068c655246f2db79d48"
 		},
 		{
 			"ImportPath": "mellium.im/sasl",
-			"Comment": "v0.2.1-6-g80f447d",
-			"Rev": "80f447d8107c05f712682c349a26e081488de60c"
+			"Comment": "v0.2.1-42-g81ced1c",
+			"Rev": "81ced1c7c3256cd662ddd0b650aa302828f31eca"
 		}
 	]
 }
